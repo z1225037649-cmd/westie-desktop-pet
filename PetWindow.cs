@@ -114,7 +114,7 @@ namespace WestiePet
             toolbar.Child = actions;
             // A separate popup keeps its hit area and text size even at 70% pet size.
             // The grace period lets the pointer cross transparent space to the buttons.
-            quickActions.Child = toolbar; quickActions.PlacementTarget = petHitArea;
+            quickActions.Child = toolbar; quickActions.PlacementTarget = this;
             quickActions.Placement = PlacementMode.Bottom; quickActions.StaysOpen = true;
             quickActions.AllowsTransparency = true;
             MouseEnter += delegate { ShowQuickActions(); };
@@ -147,7 +147,10 @@ namespace WestiePet
         {
             if (verify || !IsLoaded || closing || pressed || menuOpen || (home != null && home.IsMouseOver)) return;
             toolbar.Measure(new Size(double.PositiveInfinity, double.PositiveInfinity));
-            quickActions.HorizontalOffset = (Width - toolbar.DesiredSize.Width) / 2 - 7 * settings.Size;
+            // Position in window coordinates so the Viewbox does not scale the offset again.
+            Rect petBounds = petHitArea.TransformToAncestor(this).TransformBounds(new Rect(petHitArea.RenderSize));
+            quickActions.PlacementRectangle = petBounds;
+            quickActions.HorizontalOffset = (petBounds.Width - toolbar.DesiredSize.Width) / 2;
             quickActions.VerticalOffset = -8 * settings.Size;
             quickActions.IsOpen = true;
             toolbarHideAt = clock.Elapsed.TotalSeconds + 1.5;
