@@ -78,9 +78,61 @@ static class MotionChecks
             }
             Require(floorHigh - floorLow < .006, "Playing bounced the whole body off the floor.");
             Console.WriteLine("PASS: playing keeps rear legs planted; body height range " + (floorHigh - floorLow).ToString("F4") + ".");
+            CheckInteractions(model);
             return 0;
         }
         catch (Exception error) { Console.WriteLine("FAIL: " + error); return 1; }
+    }
+
+    static T Field<T>(WestieModel model, string name)
+    { return (T)typeof(WestieModel).GetField(name, BindingFlags.NonPublic | BindingFlags.Instance).GetValue(model); }
+
+    static void CheckInteractions(WestieModel model)
+    {
+        model.LookAt(1, 1, 1);
+        for (int i = 0; i < 80; i++) Step(model, "idle");
+        double low = 100, high = -100, narrowestEye = 1;
+        for (int i = 0; i < 86; i++)
+        {
+            time += .042; model.Animate(time, "pet", i * .042);
+            if (i < 18 || i > 68) continue;
+            low = Math.Min(low, Angle(model, tilt)); high = Math.Max(high, Angle(model, tilt));
+            narrowestEye = Math.Min(narrowestEye, Field<ScaleTransform3D[]>(model, "eyes")[0].ScaleY);
+        }
+        Require(high - low > 6, "Petting must visibly sway the head, even with cursor tracking enabled.");
+        Require(narrowestEye < .3, "Petting must squint contentedly.");
+        Console.WriteLine("PASS: petting sways the head " + (high - low).ToString("F1") + " degrees and squints.");
+
+        double jawLow = 10, jawHigh = 0, lowestNod = 0;
+        for (int i = 0; i < 108; i++)
+        {
+            time += .042; model.Animate(time, "feed", i * .042);
+            double treat = Field<ScaleTransform3D>(model, "biscuitSize").ScaleX;
+            if (i == 15) Require(treat > .99, "Feeding must show a full treat approaching the muzzle.");
+            if (i == 55) Require(treat > .45 && treat < .55, "The treat must lose pieces as it is bitten.");
+            if (i > 85) Require(treat == 0, "The treat must disappear after being eaten.");
+            if (i > 30 && i < 85)
+            {
+                double jaw = Field<double>(model, "jawOpen");
+                jawLow = Math.Min(jawLow, jaw); jawHigh = Math.Max(jawHigh, jaw);
+                lowestNod = Math.Max(lowestNod, Angle(model, nod));
+            }
+        }
+        Require(lowestNod > 20 && jawHigh - jawLow > .6, "Feeding must lower the head and visibly chew.");
+        Console.WriteLine("PASS: feeding lowers the head, chews, and consumes the treat in stages.");
+
+        time += .042; model.Animate(time, "feed", .5);
+        Require(Field<ScaleTransform3D>(model, "biscuitSize").ScaleX > .99, "Repeated feeding must restart the treat.");
+        foreach (string state in new[] { "pet", "play", "sleep", "idle" })
+        {
+            time += .042; model.Animate(time, state, 0);
+            Require(Field<ScaleTransform3D>(model, "biscuitSize").ScaleX == 0, "Interrupted feeding left a treat in " + state);
+            foreach (ScaleTransform3D crumb in Field<ScaleTransform3D[]>(model, "crumbSizes"))
+                Require(crumb.ScaleX == 0, "Interrupted feeding left crumbs in " + state);
+        }
+        for (int i = 0; i < 100; i++) Step(model, "idle");
+        Require(Math.Abs(Field<TranslateTransform3D>(model, "headRest").OffsetY) < .001, "Interaction head pose did not return to idle.");
+        Console.WriteLine("PASS: repeated feeding restarts; interruptions clear food and restore the resting pose.");
     }
 
     static void Edge(double left, double direction, double minimum, double maximum)

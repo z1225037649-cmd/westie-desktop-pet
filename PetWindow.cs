@@ -556,6 +556,28 @@ namespace WestiePet
                     using (FileStream stream = File.Create(System.IO.Path.Combine(directory, "play-motion-" + frame.ToString("00") + ".png"))) encoder.Save(stream);
                 }
                 log.Add("PASS: 24 synchronized play frames using production ball and model motion");
+                foreach (string action in new[] { "pet", "feed" })
+                {
+                    // Render the actual model without dialogue or floating symbols:
+                    // text alone must never count as evidence of an action animation.
+                    mode = "idle";
+                    for (int tick = 0; tick < 60; tick++) model.Animate(20 + tick / 24.0, "idle", tick / 24.0);
+                    mode = action; bubble.Visibility = Visibility.Hidden; effect.Visibility = Visibility.Hidden;
+                    HashSet<string> motionHashes = new HashSet<string>();
+                    for (int frame = 0; frame < (action == "feed" ? 28 : 23); frame++)
+                    {
+                        for (int tick = 0; tick < 4; tick++)
+                            model.Animate(24 + frame / 6.0 + tick / 24.0, action, frame / 6.0 + tick / 24.0);
+                        design.UpdateLayout();
+                        RenderTargetBitmap bitmap = new RenderTargetBitmap(640, 700, 192, 192, PixelFormats.Pbgra32); bitmap.Render(design);
+                        byte[] pixels = new byte[640 * 700 * 4]; bitmap.CopyPixels(pixels, 640 * 4, 0);
+                        using (var sha = System.Security.Cryptography.SHA256.Create()) motionHashes.Add(Convert.ToBase64String(sha.ComputeHash(pixels)));
+                        PngBitmapEncoder encoder = new PngBitmapEncoder(); encoder.Frames.Add(BitmapFrame.Create(bitmap));
+                        using (FileStream stream = File.Create(System.IO.Path.Combine(directory, action + "-motion-" + frame.ToString("00") + ".png"))) encoder.Save(stream);
+                    }
+                    if (motionHashes.Count < 20) throw new InvalidOperationException("Model animation is missing: " + action);
+                    log.Add("PASS: " + action + " animates without dialogue or effect overlays (" + motionHashes.Count + " distinct frames)");
+                }
                 // Exercise the same transition paths used by toolbar and menu actions.
                 foreach (string action in new[] { "pet", "feed", "play", "sleep", "wake", "walk" })
                 {

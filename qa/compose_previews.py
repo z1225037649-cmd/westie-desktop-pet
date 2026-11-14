@@ -3,7 +3,7 @@ import argparse
 from PIL import Image, ImageOps, ImageDraw
 
 root = Path(__file__).resolve().parent
-parser = argparse.ArgumentParser(description='Compose rendered Westie play frames into a GIF.')
+parser = argparse.ArgumentParser(description='Compose rendered Westie interaction frames into GIFs.')
 parser.add_argument('--frames-dir', type=Path, default=root)
 options = parser.parse_args()
 background = (226, 230, 224, 255)
@@ -20,6 +20,21 @@ sheet = Image.new('RGB', (872, 784), background[:3])
 for index, number in enumerate([0, 6, 12, 18]):
     sheet.paste(frames[number], ((index % 2) * 436, (index // 2) * 392))
 sheet.save(root / 'play-contact.png')
+for action, expected in [('pet', 23), ('feed', 28)]:
+    action_frames = []
+    for path in sorted(options.frames_dir.glob(f'{action}-motion-*.png')):
+        frame = Image.open(path).convert('RGBA')
+        canvas = Image.new('RGBA', frame.size, background)
+        canvas.alpha_composite(frame)
+        action_frames.append(canvas.convert('RGB').crop((55, 130, 600, 620)).resize((436, 392)))
+    if len(action_frames) != expected:
+        raise RuntimeError(f'Expected {expected} {action} frames, got {len(action_frames)}')
+    action_frames[0].save(root / f'{action}-preview.gif', save_all=True,
+                         append_images=action_frames[1:], duration=167, loop=0)
+    contact = Image.new('RGB', (1308, 784), background[:3])
+    for index, number in enumerate([0, 4, 8, 12, 17, expected - 1]):
+        contact.paste(action_frames[number], ((index % 3) * 436, (index // 3) * 392))
+    contact.save(root / f'{action}-contact.png')
 sleep_source = root / 'details' / 'full-sleep.png'
 if sleep_source.exists():
     sleep = Image.open(sleep_source).convert('RGB')

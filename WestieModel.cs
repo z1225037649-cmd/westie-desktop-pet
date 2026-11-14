@@ -15,6 +15,11 @@ namespace WestiePet
         readonly TranslateTransform3D lift = new TranslateTransform3D();
         readonly SculptedCoat sculpt;
         readonly TennisToy playToy;
+        readonly Model3DGroup biscuit = new Model3DGroup();
+        readonly ScaleTransform3D biscuitSize = new ScaleTransform3D(0, 0, 0);
+        readonly TranslateTransform3D biscuitPosition = new TranslateTransform3D();
+        readonly ScaleTransform3D[] crumbSizes = new ScaleTransform3D[5];
+        readonly TranslateTransform3D[] crumbPositions = new TranslateTransform3D[5];
         readonly Transform3DGroup headSkinTransform = new Transform3DGroup();
         readonly Transform3DGroup tailSkinTransform = new Transform3DGroup();
         readonly TranslateTransform3D headRest = new TranslateTransform3D();
@@ -49,6 +54,7 @@ namespace WestiePet
         readonly Material iris = Shiny(75, 58, 43);
         readonly Material sclera = Matte(246, 244, 235);
         static readonly MeshGeometry3D sphere = Sphere(24, 16);
+        static readonly MeshGeometry3D treatSphere = Sphere(12, 8);
         public int TriangleCount { get; private set; }
         public bool WalkingPaused { get; set; }
 
@@ -167,7 +173,59 @@ namespace WestiePet
             Transform3DGroup noseTransform = new Transform3DGroup();
             noseTransform.Children.Add(noseBreath); noseTransform.Children.Add(noseMotion);
             nose.Transform = noseTransform; Nose(nose); head.Children.Add(nose);
+            BuildTreat(head);
             playToy = new TennisToy(); dog.Children.Add(playToy.Model); TriangleCount += playToy.TriangleCount;
+        }
+
+        void BuildTreat(Model3DGroup head)
+        {
+            // The treat shares the muzzle transform, so it stays at the mouth
+            // while the dog lowers its head and chews, including in the home preview.
+            Transform3DGroup transform = new Transform3DGroup();
+            transform.Children.Add(biscuitSize); transform.Children.Add(biscuitPosition);
+            biscuit.Transform = transform; head.Children.Add(biscuit);
+            Material baked = Matte(191, 121, 48), edge = Matte(219, 159, 79), holes = Matte(132, 80, 34);
+            Ball(biscuit, 0, 0, 0, .105, .043, .035, baked, true);
+            for (int side = -1; side <= 1; side += 2)
+                for (int tip = -1; tip <= 1; tip += 2)
+                    Ball(biscuit, side * .091, tip * .030, 0, .042, .038, .036, edge, true);
+            for (int i = -1; i <= 1; i++) Ball(biscuit, i * .044, 0, .034, .006, .006, .002, holes, true);
+            for (int i = 0; i < crumbSizes.Length; i++)
+            {
+                Model3DGroup crumb = new Model3DGroup();
+                crumbSizes[i] = new ScaleTransform3D(0, 0, 0); crumbPositions[i] = new TranslateTransform3D();
+                Transform3DGroup ct = new Transform3DGroup();
+                ct.Children.Add(crumbSizes[i]); ct.Children.Add(crumbPositions[i]); crumb.Transform = ct;
+                Ball(crumb, 0, 0, 0, .013, .010, .011, edge, true); head.Children.Add(crumb);
+            }
+        }
+
+        void AnimateTreat(bool feeding, double stateTime)
+        {
+            double approach = SmoothStep(stateTime / .85);
+            double eaten = stateTime < 1.25 ? 1 : stateTime < 2.0 ? .76 : stateTime < 2.75 ? .50 : stateTime < 3.5 ? .26 : 0;
+            double size = feeding ? SmoothStep(stateTime / .18) * eaten : 0;
+            biscuitSize.ScaleX = biscuitSize.ScaleY = biscuitSize.ScaleZ = size;
+            biscuitPosition.OffsetX = .08 * (1 - approach);
+            biscuitPosition.OffsetY = -.34 + .11 * approach;
+            biscuitPosition.OffsetZ = 1.10 - .54 * approach;
+            for (int i = 0; i < crumbSizes.Length; i++)
+            {
+                double age = stateTime - 1.25;
+                if (age >= 0) age %= .75;
+                bool visible = feeding && stateTime >= 1.25 && stateTime < 4 && age < .45;
+                double scale = visible ? 1 - age / .45 : 0;
+                crumbSizes[i].ScaleX = crumbSizes[i].ScaleY = crumbSizes[i].ScaleZ = scale;
+                crumbPositions[i].OffsetX = (i - 2) * (.019 + Math.Max(0, age) * .11);
+                crumbPositions[i].OffsetY = -.23 - Math.Max(0, age) * Math.Max(0, age) * .9;
+                crumbPositions[i].OffsetZ = .59 + i * .012;
+            }
+        }
+
+        static double SmoothStep(double value)
+        {
+            double t = Math.Max(0, Math.Min(1, value));
+            return t * t * (3 - 2 * t);
         }
 
         public void LookAt(double x, double y, double strength)
@@ -179,6 +237,7 @@ namespace WestiePet
         public void Animate(double time, string state, double stateTime)
         {
             bool walking = state == "walk", sleeping = state == "sleep", playing = state == "play";
+            bool petting = state == "pet", feeding = state == "feed";
             bool moving = walking && !WalkingPaused;
             bool happy = state == "pet" || state == "feed" || state == "play";
             double dt = double.IsNaN(previousTime) || time <= previousTime ? .042 : Math.Min(.10, time - previousTime);
@@ -186,7 +245,12 @@ namespace WestiePet
             double ease = 1 - Math.Exp(-dt * 9);
             sleepPose += ((sleeping ? 1 : 0) - sleepPose) * (1 - Math.Exp(-dt * 4.6));
             expression += ((happy ? 1 : 0) - expression) * ease;
-            attention += (((sleeping || walking || playing || state == "feed") ? 0 : attentionStrength) - attention) * (1 - Math.Exp(-dt * 5));
+            attention += (((sleeping || walking || playing || feeding || petting) ? 0 : attentionStrength) - attention) * (1 - Math.Exp(-dt * 5));
+            double petPose = petting ? SmoothStep(stateTime / .30) * SmoothStep((3.6 - stateTime) / .55) : 0;
+            double feedPose = feeding ? SmoothStep(stateTime / .6) * SmoothStep((4.5 - stateTime) / .65) : 0;
+            double nuzzle = Math.Sin(stateTime * 4.5);
+            double chew = feeding && stateTime > .85 && stateTime < 3.95 ? .5 + .5 * Math.Sin((stateTime - .85) * Math.PI * 2 / .75) : 0;
+            AnimateTreat(feeding, stateTime);
             Vector3D playBall = PlayBallMotion(stateTime);
             playToy.Update(playing, playBall);
             double curiosityTarget = sleeping ? 0 : (state == "play" ? .85 : .24 + attention * .55);
@@ -212,18 +276,23 @@ namespace WestiePet
             sniff += (sniffTarget - sniff) * (1 - Math.Exp(-dt * 20));
             double bounce = moving ? Math.Abs(Math.Sin(time * 8)) * .025 : Math.Sin(time * 2.2) * .002;
             lift.OffsetY += ((-.36 * sleepPose + (1 - sleepPose) * bounce) - lift.OffsetY) * ease;
-            headRest.OffsetY = -.43 * sleepPose; headRest.OffsetZ = .060 * sleepPose;
+            headRest.OffsetX += ((petPose * .045 * nuzzle) - headRest.OffsetX) * ease;
+            headRest.OffsetY += ((-.43 * sleepPose + .035 * petPose - .075 * feedPose) - headRest.OffsetY) * ease;
+            headRest.OffsetZ += ((.060 * sleepPose + .045 * petPose + .065 * feedPose) - headRest.OffsetZ) * ease;
             double breath = Math.Sin(time * (sleeping ? 1.7 : 2.2));
-            double tiltTarget = sleeping ? -4 : state == "pet" ? -3.5 : -headLookX * .75;
-            double nodTarget = state == "feed" ? 11 + Math.Sin(stateTime * 4) * .8
+            double tiltTarget = sleeping ? -4 : petting ? petPose * (-7 + nuzzle * 11) : -headLookX * .75;
+            double nodTarget = feeding ? feedPose * (23 + chew * 5)
+                : petting ? petPose * (-10 + Math.Cos(stateTime * 4.5) * 4)
                 : sleeping ? 8 : playing ? 7 - playBall.Y * .8 : -1.5 + breath * .20 - headLookY * .7;
             double aimYaw = walking ? (Heading.Angle < 0 ? 12 : -12) : -19 + (sleeping ? -3 : headLookX * (playing ? 7 : 2.5));
-            headTilt.Angle = MoveHeadAngle(headTilt.Angle, tiltTarget, dt, 9);
-            headNod.Angle = MoveHeadAngle(headNod.Angle, nodTarget, dt, 14);
+            if (petting) aimYaw += petPose * nuzzle * 9;
+            headTilt.Angle = MoveHeadAngle(headTilt.Angle, tiltTarget, dt, petting ? 60 : 9);
+            headNod.Angle = MoveHeadAngle(headNod.Angle, nodTarget, dt, feeding || petting ? 52 : 14);
             headYaw.Angle = MoveHeadAngle(headYaw.Angle, aimYaw, dt, 12);
             double wagSpeed = playing ? 8 : happy ? 15 : walking ? 9 : 4;
-            double wag = Math.Sin(time * wagSpeed) + Math.Sin(time * wagSpeed * 2 + .4) * .14;
-            tailWag.Angle += ((sleeping ? 54 : wag * (playing ? 14 : happy ? 25 : walking ? 15 : 8)) - tailWag.Angle) * ease;
+            double wagTime = petting || feeding ? stateTime : time;
+            double wag = Math.Sin(wagTime * wagSpeed) + Math.Sin(wagTime * wagSpeed * 2 + .4) * .14;
+            tailWag.Angle += ((sleeping ? 54 : wag * (petting ? 38 : playing ? 14 : happy ? 25 : walking ? 15 : 8)) - tailWag.Angle) * ease;
             tailRest.Angle = -65 * sleepPose;
             for (int i = 0; i < legs.Length; i++)
             {
@@ -236,6 +305,7 @@ namespace WestiePet
             {
                 double blink = Blink(time - i * .018);
                 double eyeHeight = sleeping ? .07 : (.96 + curious * .06 - expression * .09) * (1 - blink * .94);
+                eyeHeight *= 1 - petPose * .78;
                 eyes[i].ScaleY = eyeHeight;
                 double shut = SculptedCoat.FaceClosure(sleepPose);
                 closedEyes[i].ScaleX = closedEyes[i].ScaleY = closedEyes[i].ScaleZ = .001 + shut * .999;
@@ -247,9 +317,9 @@ namespace WestiePet
                 pupils[i].ScaleX = pupilScale; pupils[i].ScaleY = pupilScale;
                 double earPhase = (time + i * 2.7) % 9.3;
                 double twitch = earPhase < .42 ? Math.Sin(earPhase / .42 * Math.PI * 2) * 5 : 0;
-                earTurns[i].Angle += ((sleeping ? (i == 0 ? -6 : 6) : (i == 0 ? 2 : -1.5) + twitch) - earTurns[i].Angle) * ease;
+                earTurns[i].Angle += ((sleeping ? (i == 0 ? -6 : 6) : (i == 0 ? 1 : -1) * (2 + petPose * 16) + twitch) - earTurns[i].Angle) * ease;
             }
-            double mouthTarget = sleeping ? 0 : playing ? .08 : happy ? (state == "feed" ? .40 + Math.Sin(time * 7) * .25 : .38 + Math.Sin(time * 5.3) * .08) : .10 + Math.Sin(time * 1.7) * .05;
+            double mouthTarget = sleeping ? 0 : feeding ? feedPose * (.15 + chew * 2.7) : playing ? .08 : happy ? .38 + Math.Sin(time * 5.3) * .08 : .10 + Math.Sin(time * 1.7) * .05;
             jawOpen += (mouthTarget - jawOpen) * ease;
             mouthRest += ((sleeping ? .48 : playing ? .65 : happy ? .32 : .48 + sniff * .22) - mouthRest) * ease;
             closedMouth.ScaleX = closedMouth.ScaleY = closedMouth.ScaleZ = .001 + SculptedCoat.FaceClosure(sleepPose) * .999;
@@ -582,14 +652,15 @@ namespace WestiePet
             model.BackMaterial = material; model.Freeze(); parent.Children.Add(model);
         }
 
-        void Ball(Model3DGroup parent, double x, double y, double z, double sx, double sy, double sz, Material material)
+        void Ball(Model3DGroup parent, double x, double y, double z, double sx, double sy, double sz, Material material, bool smallProp = false)
         {
-            GeometryModel3D m = new GeometryModel3D(sphere, material);
+            MeshGeometry3D mesh = smallProp ? treatSphere : sphere;
+            GeometryModel3D m = new GeometryModel3D(mesh, material);
             Transform3DGroup tr = new Transform3DGroup();
             tr.Children.Add(new ScaleTransform3D(sx, sy, sz));
             tr.Children.Add(new TranslateTransform3D(x, y, z));
             tr.Freeze(); m.Transform = tr; m.Freeze(); parent.Children.Add(m);
-            TriangleCount += sphere.TriangleIndices.Count / 3;
+            TriangleCount += mesh.TriangleIndices.Count / 3;
         }
 
         void Bone(Model3DGroup parent, Point3D from, Point3D to, double radius, Material material)
