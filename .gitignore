@@ -1,0 +1,23 @@
+# Local preferences, generated binaries and diagnostics
+*.exe
+*.pdb
+*.log
+*.tmp
+*.settings.xml
+backup-*/
+dist/
+.vs/
+.vscode/
+bin/
+obj/
+
+# Research/install notes are not part of the application
+assetfurnace-install-review.ps1
+
+# Keep reproducible QA sources; exclude screenshots, logs and build products
+qa/*
+!qa/RenderDetails.cs
+!qa/MotionChecks.cs
+!qa/InteractionHarness.cs
+!qa/compose_previews.py
+!qa/run.ps1
