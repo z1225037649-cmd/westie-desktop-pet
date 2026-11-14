@@ -5,6 +5,7 @@ using System.Windows.Controls.Primitives;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Media3D;
+using System.Windows.Threading;
 using WestiePet;
 
 static class MotionChecks
@@ -158,20 +159,30 @@ static class MotionChecks
 
     static void CheckSizeSlider()
     {
+        Application application = new Application { ShutdownMode = ShutdownMode.OnExplicitShutdown };
         Window window = new Window { Width = 420, Height = 150, ShowInTaskbar = false, Title = "Slider regression checks" };
         try
         {
-            window.Show();
+            window.Show(); window.Activate();
+            System.Drawing.Point cursor = System.Windows.Forms.Cursor.Position;
+            Point pointer = PresentationSource.FromVisual(window).CompositionTarget.TransformFromDevice.Transform(new Point(cursor.X, cursor.Y));
+            window.Left = pointer.X - 210; window.Top = pointer.Y - 75;
             foreach (double scale in new[] { 1.0, 1.5 })
             {
                 SizeSlider slider = new SizeSlider { Minimum = PetSettings.MinimumSize, Maximum = PetSettings.MaximumSize,
                     Value = 1, SmallChange = .01, LargeChange = .1, Width = 230,
                     VerticalAlignment = VerticalAlignment.Center, LayoutTransform = new ScaleTransform(scale, scale) };
                 window.Content = slider; window.UpdateLayout();
+                DispatcherFrame frame = new DispatcherFrame();
+                window.Dispatcher.BeginInvoke(DispatcherPriority.ApplicationIdle, new Action(delegate { frame.Continue = false; }));
+                Dispatcher.PushFrame(frame);
                 Track track = (Track)slider.Template.FindName("PART_Track", slider);
                 double half = track.Thumb.ActualWidth / 2, travel = track.ActualWidth - half * 2;
                 Point grab = track.Thumb.TranslatePoint(new Point(half + 3, track.Thumb.ActualHeight / 2), slider);
-                Require(slider.BeginPointerDrag(grab) && slider.IsMouseCaptured, "Slider did not capture a thumb press.");
+                bool began = slider.BeginPointerDrag(grab);
+                Require(began && slider.IsMouseCaptured, "Slider did not capture a thumb press: began=" + began
+                    + ", visible=" + slider.IsVisible + ", enabled=" + slider.IsEnabled + ", active=" + window.IsActive
+                    + ", captured=" + Mouse.Captured + ", thumb=" + track.Thumb.ActualWidth + ", travel=" + travel);
                 Require(Math.Abs(slider.Value - 1) < .0001, "Grabbing the edge of the thumb shifted its value.");
                 slider.ContinuePointerDrag(new Point(grab.X + 4, grab.Y));
                 Require(Math.Abs(slider.Value - (1 + 4 / travel * 1.2)) < .0001, "Small thumb drag jumped or did not move.");

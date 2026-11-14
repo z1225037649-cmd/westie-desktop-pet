@@ -21,7 +21,7 @@ namespace WestiePet
     internal sealed class SizeSlider : Slider
     {
         Track dragTrack;
-        double grabOffset;
+        double dragStartX, dragStartValue;
 
         internal bool BeginPointerDrag(Point position)
         {
@@ -32,8 +32,9 @@ namespace WestiePet
             if (!CaptureMouse()) return false;
             dragTrack = track;
             Point thumbPoint = TranslatePoint(position, track.Thumb);
-            grabOffset = new Rect(track.Thumb.RenderSize).Contains(thumbPoint)
-                ? thumbPoint.X - track.Thumb.ActualWidth / 2 : 0;
+            bool onThumb = new Rect(track.Thumb.RenderSize).Contains(thumbPoint);
+            dragStartX = onThumb ? TranslatePoint(position, track).X : track.Thumb.ActualWidth / 2;
+            dragStartValue = onThumb ? Value : (track.IsDirectionReversed ? Maximum : Minimum);
             ContinuePointerDrag(position);
             return true;
         }
@@ -44,10 +45,9 @@ namespace WestiePet
             double halfThumb = dragTrack.Thumb.ActualWidth / 2;
             double travel = dragTrack.ActualWidth - halfThumb * 2;
             if (travel <= 0) return;
-            double fraction = (TranslatePoint(position, dragTrack).X - halfThumb - grabOffset) / travel;
-            fraction = Math.Max(0, Math.Min(1, fraction));
-            if (dragTrack.IsDirectionReversed) fraction = 1 - fraction;
-            SetCurrentValue(ValueProperty, Minimum + fraction * (Maximum - Minimum));
+            double delta = (TranslatePoint(position, dragTrack).X - dragStartX) / travel * (Maximum - Minimum);
+            if (dragTrack.IsDirectionReversed) delta = -delta;
+            SetCurrentValue(ValueProperty, Math.Max(Minimum, Math.Min(Maximum, dragStartValue + delta)));
         }
 
         internal void EndPointerDrag()
