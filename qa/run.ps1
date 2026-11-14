@@ -14,6 +14,11 @@ foreach ($name in @('PresentationCore.dll','PresentationFramework.dll','WindowsB
     $commonArgs += "/reference:$assemblyPath"
 }
 $sources = @("$projectRoot\Program.cs", "$projectRoot\PetWindow.cs", "$projectRoot\WestieModel.cs", "$projectRoot\SculptedCoat.cs")
+$startupPath = Join-Path $PSScriptRoot 'StartupChecks.exe'
+& $compilerPath ($commonArgs + @('/target:exe','/main:StartupChecks',"/out:$startupPath") + $sources + @("$PSScriptRoot\StartupChecks.cs"))
+if ($LASTEXITCODE -ne 0) { throw 'Startup checks did not compile.' }
+& $startupPath
+if ($LASTEXITCODE -ne 0) { throw 'Startup checks failed.' }
 $motionPath = Join-Path $PSScriptRoot 'MotionChecks.exe'
 & $compilerPath ($commonArgs + @('/target:exe','/main:MotionChecks',"/out:$motionPath") + $sources + @("$PSScriptRoot\MotionChecks.cs"))
 if ($LASTEXITCODE -ne 0) { throw 'Motion checks did not compile.' }

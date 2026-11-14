@@ -4,9 +4,47 @@ using System.IO;
 using System.Threading;
 using System.Windows;
 using System.Xml.Linq;
+using Microsoft.Win32;
 
 namespace WestiePet
 {
+    internal static class StartupRegistration
+    {
+        const string RunKey = @"Software\Microsoft\Windows\CurrentVersion\Run";
+        internal const string ValueName = "WestiePet.Mimo.2026";
+
+        // Windows is the source of truth; simply opening the app never registers it.
+        internal static bool IsEnabled
+        {
+            get
+            {
+                using (RegistryKey key = Registry.CurrentUser.OpenSubKey(RunKey))
+                    return IsRegistered(key);
+            }
+        }
+
+        internal static void SetEnabled(bool enabled)
+        {
+            using (RegistryKey key = Registry.CurrentUser.CreateSubKey(RunKey))
+                UpdateRegistration(key, enabled, typeof(Program).Assembly.Location);
+        }
+
+        internal static bool IsRegistered(RegistryKey key)
+        {
+            string command = key == null ? null : key.GetValue(ValueName) as string;
+            return !string.IsNullOrWhiteSpace(command);
+        }
+
+        internal static void UpdateRegistration(RegistryKey key, bool enabled, string executable)
+        {
+            if (key == null) throw new IOException("无法访问当前用户的启动项。");
+            if (enabled)
+                key.SetValue(ValueName, "\"" + Path.GetFullPath(executable) + "\" --autostart", RegistryValueKind.String);
+            else
+                key.DeleteValue(ValueName, false);
+        }
+    }
+
     public sealed class PetSettings
     {
         public const double MinimumSize = .4, MaximumSize = 1.6, DefaultSize = .6;
@@ -74,7 +112,8 @@ namespace WestiePet
                     MessageBox.Show("小白遇到了一点问题。错误已记录到程序旁的 error.log。\n" + e.Exception.Message, "西高地桌面宠物");
                     e.Handled = true; app.Shutdown(1);
                 };
-                PetWindow pet = new PetWindow(verify ? new PetSettings { Roam = false } : PetSettings.Load(), verify);
+                PetWindow pet = new PetWindow(verify ? new PetSettings { Roam = false } : PetSettings.Load(), verify,
+                    Array.IndexOf(args, "--autostart") >= 0);
                 app.Run(pet);
                 return pet.TestFailed ? 1 : 0;
             }

@@ -18,6 +18,7 @@ assetfurnace-install-review.ps1
 qa/*
 !qa/RenderDetails.cs
 !qa/MotionChecks.cs
+!qa/StartupChecks.cs
 !qa/InteractionHarness.cs
 !qa/compose_previews.py
 !qa/run.ps1

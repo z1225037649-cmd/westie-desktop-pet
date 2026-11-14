@@ -111,6 +111,7 @@ namespace WestiePet
         Window home;
         Viewport3D homePreview;
         TextBlock homeStatus;
+        CheckBox startup;
         string mode = "idle";
         double stateStart, stateUntil, bubbleUntil = 9, nextAction = 22, lastTick;
         double heading = 52, targetHeading = 52, walkDirection = -1;
@@ -122,7 +123,7 @@ namespace WestiePet
         public bool TestFailed { get; private set; }
         static readonly Brush Ink = Brush("#2B443D"), Muted = Brush("#78867D"), Sage = Brush("#6B927E"), Paper = Brush("#FCFBF6");
 
-        public PetWindow(PetSettings settings, bool verify)
+        public PetWindow(PetSettings settings, bool verify, bool startQuietly = false)
         {
             this.settings = settings; this.verify = verify;
             Title = "小白 · 西高地桌面宠物";
@@ -213,7 +214,7 @@ namespace WestiePet
             {
                 PositionInitially();
                 if (verify) Dispatcher.BeginInvoke(DispatcherPriority.ApplicationIdle, new Action(SelfTest));
-                else { CreateTray(); timer.Start(); ShowHome(); UpdateDialogue(); }
+                else { CreateTray(); timer.Start(); if (!startQuietly) ShowHome(); UpdateDialogue(); }
             };
             timer.Interval = TimeSpan.FromMilliseconds(42);
             timer.Tick += Tick;
@@ -623,7 +624,7 @@ namespace WestiePet
         {
             quickActions.IsOpen = false;
             if (home != null) { home.Activate(); return; }
-            home = new Window { Title = "小白的小窝", Icon = HomeWindowIcon, Width = 414, Height = 600, ResizeMode = ResizeMode.NoResize,
+            home = new Window { Title = "小白的小窝", Icon = HomeWindowIcon, Width = 414, Height = 632, ResizeMode = ResizeMode.NoResize,
                 WindowStartupLocation = WindowStartupLocation.CenterScreen, Background = Brush("#F8F8F1"),
                 FontFamily = FontFamily, Foreground = Ink, Topmost = settings.Topmost };
             StackPanel page = new StackPanel { Margin = new Thickness(28, 21, 28, 20) };
@@ -654,9 +655,45 @@ namespace WestiePet
             sizeRow.Children.Add(size); page.Children.Add(sizeRow);
             CheckBox roam = new CheckBox { Content = "让小白自由散步", IsChecked = settings.Roam, FontSize = 12, Margin = new Thickness(0, 14, 0, 0), Foreground = Ink };
             roam.Click += delegate { settings.Roam = roam.IsChecked == true; if (!settings.Roam && mode == "walk") SetState("idle", 0); settings.Save(); }; page.Children.Add(roam);
+            startup = new CheckBox { Content = "开机自启动", FontSize = 12, Margin = new Thickness(0, 12, 0, 0), Foreground = Ink,
+                ToolTip = "默认关闭。开启后，登录 Windows 时自动让小白来到桌面。" };
+            startup.Click += delegate
+            {
+                try { StartupRegistration.SetEnabled(startup.IsChecked == true); }
+                catch (Exception error)
+                {
+                    if (!IsStartupAccessError(error)) throw;
+                    MessageBox.Show(home, "无法更改开机自启动设置，请重试。\n" + error.Message, "小白的小窝", MessageBoxButton.OK, MessageBoxImage.Warning);
+                }
+                RefreshStartupSetting();
+            };
+            page.Children.Add(startup);
             page.Children.Add(new TextBlock { Text = "拖动小狗移动位置 · 右键打开菜单 · 滚轮调整大小\n关闭小窝后，小白依然会在桌面陪你。", FontSize = 10, Foreground = Muted, Margin = new Thickness(0, 15, 0, 0), LineHeight = 18 });
-            home.Closed += delegate { home = null; homeStatus = null; if (!closing) nextAction = clock.Elapsed.TotalSeconds + 20; };
+            home.Activated += delegate { RefreshStartupSetting(); };
+            home.Closed += delegate { home = null; homeStatus = null; startup = null; if (!closing) nextAction = clock.Elapsed.TotalSeconds + 20; };
             home.Show(); home.Activate();
+        }
+
+        static bool IsStartupAccessError(Exception error)
+        {
+            return error is IOException || error is UnauthorizedAccessException || error is System.Security.SecurityException;
+        }
+
+        void RefreshStartupSetting()
+        {
+            if (startup == null) return;
+            try
+            {
+                startup.IsChecked = StartupRegistration.IsEnabled;
+                startup.IsEnabled = true;
+                startup.ToolTip = "默认关闭。开启后，登录 Windows 时自动让小白来到桌面。";
+            }
+            catch (Exception error)
+            {
+                if (!IsStartupAccessError(error)) throw;
+                startup.IsChecked = false; startup.IsEnabled = false;
+                startup.ToolTip = "无法读取开机自启动设置：" + error.Message;
+            }
         }
         void UniformGridButtons(StackPanel page)
         {
