@@ -57,6 +57,7 @@ namespace WestiePet
         static readonly MeshGeometry3D treatSphere = Sphere(12, 8);
         public int TriangleCount { get; private set; }
         public bool WalkingPaused { get; set; }
+        internal Rect3D DogBounds { get { return dog.Bounds; } }
 
         public WestieModel()
         {

@@ -16,6 +16,75 @@ using Drawing = System.Drawing;
 
 namespace WestiePet
 {
+    // Capture the entire gesture, including presses on the track. WPF's
+    // IsMoveToPointEnabled handles the press without starting a thumb drag.
+    internal sealed class SizeSlider : Slider
+    {
+        Track dragTrack;
+        double grabOffset;
+
+        internal bool BeginPointerDrag(Point position)
+        {
+            ApplyTemplate();
+            Track track = Template.FindName("PART_Track", this) as Track;
+            if (track == null || track.Thumb == null) return false;
+            Focus();
+            if (!CaptureMouse()) return false;
+            dragTrack = track;
+            Point thumbPoint = TranslatePoint(position, track.Thumb);
+            grabOffset = new Rect(track.Thumb.RenderSize).Contains(thumbPoint)
+                ? thumbPoint.X - track.Thumb.ActualWidth / 2 : 0;
+            ContinuePointerDrag(position);
+            return true;
+        }
+
+        internal void ContinuePointerDrag(Point position)
+        {
+            if (dragTrack == null || !IsMouseCaptured) return;
+            double halfThumb = dragTrack.Thumb.ActualWidth / 2;
+            double travel = dragTrack.ActualWidth - halfThumb * 2;
+            if (travel <= 0) return;
+            double fraction = (TranslatePoint(position, dragTrack).X - halfThumb - grabOffset) / travel;
+            fraction = Math.Max(0, Math.Min(1, fraction));
+            if (dragTrack.IsDirectionReversed) fraction = 1 - fraction;
+            SetCurrentValue(ValueProperty, Minimum + fraction * (Maximum - Minimum));
+        }
+
+        internal void EndPointerDrag()
+        {
+            dragTrack = null;
+            if (IsMouseCaptured) ReleaseMouseCapture();
+        }
+
+        protected override void OnPreviewMouseLeftButtonDown(MouseButtonEventArgs e)
+        {
+            if (BeginPointerDrag(e.GetPosition(this))) e.Handled = true;
+            else base.OnPreviewMouseLeftButtonDown(e);
+        }
+
+        protected override void OnPreviewMouseMove(MouseEventArgs e)
+        {
+            if (dragTrack == null) { base.OnPreviewMouseMove(e); return; }
+            if (e.LeftButton == MouseButtonState.Pressed) ContinuePointerDrag(e.GetPosition(this));
+            else EndPointerDrag();
+            e.Handled = true;
+        }
+
+        protected override void OnPreviewMouseLeftButtonUp(MouseButtonEventArgs e)
+        {
+            if (dragTrack == null) { base.OnPreviewMouseLeftButtonUp(e); return; }
+            ContinuePointerDrag(e.GetPosition(this));
+            EndPointerDrag();
+            e.Handled = true;
+        }
+
+        protected override void OnLostMouseCapture(MouseEventArgs e)
+        {
+            dragTrack = null;
+            base.OnLostMouseCapture(e);
+        }
+    }
+
     public sealed class PetWindow : Window
     {
         readonly PetSettings settings;
@@ -27,6 +96,9 @@ namespace WestiePet
         readonly Grid design = new Grid { Width = 320, Height = 350 };
         readonly TextBlock bubbleText = new TextBlock();
         readonly Border bubble = new Border();
+        readonly Popup dialogue = new Popup();
+        readonly Grid dialogueShell = new Grid { IsHitTestVisible = false };
+        readonly Polygon dialogueTail = new Polygon { IsHitTestVisible = false };
         readonly Border toolbar = new Border();
         readonly Popup quickActions = new Popup();
         readonly TextBlock effect = new TextBlock();
@@ -87,14 +159,27 @@ namespace WestiePet
             petHitArea.MouseRightButtonUp += delegate(object s, MouseButtonEventArgs e) { OpenMenu(); e.Handled = true; };
             petHitArea.MouseWheel += delegate(object s, MouseWheelEventArgs e) { ChangeSize(settings.Size + (e.Delta > 0 ? .1 : -.1)); e.Handled = true; };
 
-            bubble.Background = Paper; bubble.CornerRadius = new CornerRadius(17, 17, 17, 4);
+            bubble.Background = Paper; bubble.CornerRadius = new CornerRadius(17);
             bubble.BorderBrush = Brush("#E4E7DE"); bubble.BorderThickness = new Thickness(1);
             bubble.Padding = new Thickness(15, 10, 15, 10); bubble.MaxWidth = 286;
             bubble.HorizontalAlignment = HorizontalAlignment.Center; bubble.VerticalAlignment = VerticalAlignment.Top;
-            bubble.Margin = new Thickness(0, 4, 0, 0); bubble.IsHitTestVisible = false;
+            bubble.IsHitTestVisible = false;
+            bubble.Margin = new Thickness(0, 0, 0, 14);
             bubbleText.Text = "你好呀，我是小白。右键看看我的小窝！";
-            bubbleText.FontSize = 12; bubbleText.Foreground = Ink; bubbleText.TextWrapping = TextWrapping.Wrap;
-            bubble.Child = bubbleText; design.Children.Add(bubble);
+            bubbleText.FontSize = 14; bubbleText.Foreground = Ink; bubbleText.TextWrapping = TextWrapping.Wrap;
+            TextOptions.SetTextFormattingMode(bubbleText, TextFormattingMode.Display);
+            bubble.Child = bubbleText;
+            // Dialogue lives outside the scaled model, so its text and padding stay readable.
+            dialogueTail.Fill = Paper; dialogueTail.Stroke = bubble.BorderBrush; dialogueTail.StrokeThickness = 1;
+            dialogueTail.Width = 20; dialogueTail.Height = 15; dialogueTail.Stretch = Stretch.Fill;
+            dialogueTail.HorizontalAlignment = HorizontalAlignment.Left; dialogueTail.VerticalAlignment = VerticalAlignment.Top;
+            dialogueShell.Children.Add(dialogueTail); dialogueShell.Children.Add(bubble);
+            dialogue.Child = dialogueShell; dialogue.PlacementTarget = this;
+            dialogue.Placement = PlacementMode.Relative; dialogue.StaysOpen = true;
+            dialogue.AllowsTransparency = true; dialogue.IsHitTestVisible = false;
+            dialogue.Focusable = false;
+            LocationChanged += delegate { PositionDialogue(); };
+            SizeChanged += delegate { PositionDialogue(); };
 
             effects.Width = 320; effects.Height = 350;
             effect.FontFamily = new FontFamily("Segoe UI Symbol"); effect.FontSize = 29;
@@ -112,7 +197,7 @@ namespace WestiePet
             actions.Children.Add(SmallButton("小窝", "打开小白的小窝", ShowHome));
             foreach (Button button in actions.Children) { button.MinWidth = 54; button.MinHeight = 34; }
             toolbar.Child = actions;
-            // A separate popup keeps its hit area and text size even at 70% pet size.
+            // A separate popup keeps its hit area and text size even at the smallest pet size.
             // The grace period lets the pointer cross transparent space to the buttons.
             quickActions.Child = toolbar; quickActions.PlacementTarget = this;
             quickActions.Placement = PlacementMode.Bottom; quickActions.StaysOpen = true;
@@ -128,7 +213,7 @@ namespace WestiePet
             {
                 PositionInitially();
                 if (verify) Dispatcher.BeginInvoke(DispatcherPriority.ApplicationIdle, new Action(SelfTest));
-                else { CreateTray(); timer.Start(); ShowHome(); }
+                else { CreateTray(); timer.Start(); ShowHome(); UpdateDialogue(); }
             };
             timer.Interval = TimeSpan.FromMilliseconds(42);
             timer.Tick += Tick;
@@ -136,11 +221,79 @@ namespace WestiePet
             {
                 closing = true; timer.Stop();
                 quickActions.IsOpen = false;
+                dialogue.IsOpen = false;
                 if (home != null) home.Close();
                 if (tray != null) { tray.Visible = false; tray.Dispose(); }
                 if (trayIcon != null) trayIcon.Dispose();
                 if (!verify) { settings.Left = Left; settings.Top = Top; settings.Save(); }
             };
+        }
+
+        internal static Rect DialogueBounds(Rect pet, Size size, Rect area)
+        {
+            const double gap = 8;
+            double left = Math.Max(area.Left + 6, Math.Min(pet.Left + pet.Width * .75 - size.Width * .6,
+                area.Right - 6 - size.Width));
+            double top = pet.Top - size.Height - gap;
+            // At the top edge, put the entire bubble below the dog instead of over its face.
+            if (top < area.Top + 6) top = pet.Bottom + gap;
+            return new Rect(new Point(left, top), size);
+        }
+
+        Rect VisibleDogBounds()
+        {
+            OrthographicCamera camera = (OrthographicCamera)viewport.Camera;
+            Vector3D forward = camera.LookDirection; forward.Normalize();
+            Vector3D right = Vector3D.CrossProduct(forward, camera.UpDirection); right.Normalize();
+            Vector3D up = Vector3D.CrossProduct(right, forward); up.Normalize();
+            Rect3D modelBounds = model.DogBounds;
+            Rect projected = Rect.Empty;
+            double pixels = viewport.ActualWidth / camera.Width;
+            for (int corner = 0; corner < 8; corner++)
+            {
+                Point3D point = new Point3D(modelBounds.X + ((corner & 1) == 0 ? 0 : modelBounds.SizeX),
+                    modelBounds.Y + ((corner & 2) == 0 ? 0 : modelBounds.SizeY),
+                    modelBounds.Z + ((corner & 4) == 0 ? 0 : modelBounds.SizeZ));
+                Vector3D delta = point - camera.Position;
+                projected.Union(new Point(viewport.ActualWidth / 2 + Vector3D.DotProduct(delta, right) * pixels,
+                    viewport.ActualHeight / 2 - Vector3D.DotProduct(delta, up) * pixels));
+            }
+            return viewport.TransformToAncestor(this).TransformBounds(projected);
+        }
+
+        void PositionDialogue()
+        {
+            if (!dialogue.IsOpen) return;
+            // Measure the text directly; a previous popup layout must not retain extra blank space.
+            bubbleText.Measure(new Size(254, double.PositiveInfinity));
+            double width = bubbleText.DesiredSize.Width + 32, height = bubbleText.DesiredSize.Height + 36;
+            bubble.Width = width; bubble.Height = height - 14;
+            Rect pet = VisibleDogBounds();
+            Point mouth = petHitArea.TransformToAncestor(this).Transform(new Point(235, 140));
+            Rect area = CurrentArea();
+            Rect bounds = DialogueBounds(new Rect(Left + pet.Left, Top + pet.Top, pet.Width, pet.Height),
+                new Size(width, height), area);
+            double offset = bounds.Left - Left;
+            bool below = bounds.Top > Top + pet.Bottom;
+            bubble.Margin = below ? new Thickness(0, 14, 0, 0) : new Thickness(0, 0, 0, 14);
+            double tip = Math.Max(18, Math.Min(width - 18, mouth.X - offset));
+            dialogueShell.Width = width; dialogueShell.Height = height;
+            dialogueTail.Margin = new Thickness(tip - 10, below ? 0 : height - 15, 0, 0);
+            dialogueTail.Points = below
+                ? new PointCollection { new Point(0, 15), new Point(10, 0), new Point(20, 15) }
+                : new PointCollection { new Point(0, 0), new Point(10, 15), new Point(20, 0) };
+            // WPF popups need an offset change to follow a moving owner window.
+            dialogue.HorizontalOffset = offset + .01;
+            dialogue.HorizontalOffset = offset;
+            dialogue.VerticalOffset = bounds.Top - Top;
+        }
+
+        void UpdateDialogue()
+        {
+            bool visible = !verify && !closing && IsLoaded && bubble.Visibility == Visibility.Visible;
+            if (dialogue.IsOpen == visible) return;
+            dialogue.IsOpen = visible;
+            PositionDialogue();
         }
 
         void ShowQuickActions()
@@ -192,7 +345,7 @@ namespace WestiePet
         }
         static Button SmallButton(string text, string tip, Action action)
         {
-            Button b = new Button { Content = text, ToolTip = tip, FontSize = 12, Foreground = Ink,
+            Button b = new Button { Content = text, ToolTip = tip, FontSize = 14, Foreground = Ink,
                 Padding = new Thickness(10, 5, 10, 5), Cursor = Cursors.Hand,
                 Background = Brushes.Transparent, BorderThickness = new Thickness(0) };
             b.Template = ButtonTemplate();
@@ -284,18 +437,19 @@ namespace WestiePet
             else Act("pet");
             ShowQuickActions();
         }
-        void ChangeSize(double size)
+        void ChangeSize(double size, bool save = true)
         {
             quickActions.IsOpen = false;
             double oldHeight = Height, oldWidth = Width;
-            settings.Size = Math.Round(Math.Max(.7, Math.Min(1.6, size)), 2);
+            settings.Size = Math.Round(Math.Max(PetSettings.MinimumSize, Math.Min(PetSettings.MaximumSize, size)), 2);
             Width = 320 * settings.Size; Height = 350 * settings.Size;
             Left -= (Width - oldWidth) / 2; Top -= Height - oldHeight;
-            ClampPosition(); settings.Save();
+            ClampPosition(); if (save) settings.Save();
         }
         void Say(string text, double seconds)
         {
             bubbleText.Text = text; bubble.Visibility = Visibility.Visible; bubbleUntil = clock.Elapsed.TotalSeconds + seconds;
+            UpdateDialogue(); PositionDialogue();
         }
         void SetState(string state, double seconds)
         {
@@ -384,15 +538,17 @@ namespace WestiePet
             model.LookAt(attentionX, attentionY, proximity);
             model.WalkingPaused = blocked && mode == "walk";
             model.Animate(t, mode, t - stateStart);
+            PositionDialogue();
             UpdateEffects(t);
             if (t > bubbleUntil) bubble.Visibility = Visibility.Hidden;
+            UpdateDialogue();
         }
         void UpdateEffects(double t)
         {
             bool heart = mode == "pet", sleep = mode == "sleep", feed = mode == "feed";
             effect.Visibility = heart || sleep || feed ? Visibility.Visible : Visibility.Hidden;
             effect.Text = sleep ? "z Z" : feed ? "✦" : "♥";
-            effect.FontSize = sleep ? 21 : 29;
+            effect.FontSize = sleep ? 21 / settings.Size : 29;
             effect.Foreground = sleep ? Sage : feed ? Brush("#C4A165") : Brush("#D98D87");
             Canvas.SetTop(effect, 100 - (t * 18 % 26)); effect.Opacity = .6 + Math.Sin(t * 3) * .3;
         }
@@ -490,8 +646,12 @@ namespace WestiePet
             Border rule = new Border { Height = 1, Background = Brush("#E2E7DC"), Margin = new Thickness(0, 18, 0, 14) }; page.Children.Add(rule);
             StackPanel sizeRow = new StackPanel { Orientation = Orientation.Horizontal };
             sizeRow.Children.Add(new TextBlock { Text = "小狗大小", FontSize = 12, VerticalAlignment = VerticalAlignment.Center, Width = 76 });
-            Slider size = new Slider { Minimum = .7, Maximum = 1.6, Value = settings.Size, TickFrequency = .1, IsSnapToTickEnabled = true, Width = 230, VerticalAlignment = VerticalAlignment.Center };
-            size.ValueChanged += delegate { if (home != null && home.IsLoaded) ChangeSize(size.Value); }; sizeRow.Children.Add(size); page.Children.Add(sizeRow);
+            SizeSlider size = new SizeSlider { Minimum = PetSettings.MinimumSize, Maximum = PetSettings.MaximumSize, Value = settings.Size,
+                SmallChange = .01, LargeChange = .1, IsSnapToTickEnabled = false,
+                Width = 230, VerticalAlignment = VerticalAlignment.Center };
+            size.ValueChanged += delegate { if (home != null && home.IsLoaded) ChangeSize(size.Value, !size.IsMouseCaptured); };
+            size.LostMouseCapture += delegate { settings.Save(); };
+            sizeRow.Children.Add(size); page.Children.Add(sizeRow);
             CheckBox roam = new CheckBox { Content = "让小白自由散步", IsChecked = settings.Roam, FontSize = 12, Margin = new Thickness(0, 14, 0, 0), Foreground = Ink };
             roam.Click += delegate { settings.Roam = roam.IsChecked == true; if (!settings.Roam && mode == "walk") SetState("idle", 0); settings.Save(); }; page.Children.Add(roam);
             page.Children.Add(new TextBlock { Text = "拖动小狗移动位置 · 右键打开菜单 · 滚轮调整大小\n关闭小窝后，小白依然会在桌面陪你。", FontSize = 10, Foreground = Muted, Margin = new Thickness(0, 15, 0, 0), LineHeight = 18 });

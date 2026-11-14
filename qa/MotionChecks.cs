@@ -1,5 +1,9 @@
 using System;
 using System.Reflection;
+using System.Windows;
+using System.Windows.Controls.Primitives;
+using System.Windows.Input;
+using System.Windows.Media;
 using System.Windows.Media.Media3D;
 using WestiePet;
 
@@ -19,6 +23,23 @@ static class MotionChecks
     {
         try
         {
+            CheckSizeSlider();
+            foreach (double scale in new[] { .4, .5, .6, 1.0, 1.4, 1.6 })
+            foreach (double screenLeft in new[] { -1920.0, 0.0 })
+            foreach (double x in new[] { 0.0, 700.0, 1400.0 })
+            foreach (double y in new[] { 0.0, 450.0, 560.0 })
+            foreach (Size text in new[] { new Size(180, 55), new Size(286, 85) })
+            {
+                Rect area = new Rect(screenLeft, 0, 1920, 1040);
+                Rect pet = new Rect(screenLeft + x, y, 306 * scale, 260 * scale);
+                Rect dialogue = PetWindow.DialogueBounds(pet, text, area);
+                Require(!dialogue.IntersectsWith(pet), "Dialogue overlaps the dog at scale " + scale);
+                Require(area.Contains(dialogue), "Dialogue leaves the monitor at scale " + scale);
+                if (pet.Top >= text.Height + 14)
+                    Require(dialogue.Bottom <= pet.Top - 8, "Dialogue must clear the dog's ears.");
+            }
+            Console.WriteLine("PASS: dialogue clears the dog at 40%-160%, with long text and monitor edges.");
+
             Edge(0, -1, 5, 995); Edge(1000, 1, 5, 995);
             Edge(-1920, -1, -1915, -325); Edge(-320, 1, -1915, -325);
             double direction = -1;
@@ -133,6 +154,54 @@ static class MotionChecks
         for (int i = 0; i < 100; i++) Step(model, "idle");
         Require(Math.Abs(Field<TranslateTransform3D>(model, "headRest").OffsetY) < .001, "Interaction head pose did not return to idle.");
         Console.WriteLine("PASS: repeated feeding restarts; interruptions clear food and restore the resting pose.");
+    }
+
+    static void CheckSizeSlider()
+    {
+        Window window = new Window { Width = 420, Height = 150, ShowInTaskbar = false, Title = "Slider regression checks" };
+        try
+        {
+            window.Show();
+            foreach (double scale in new[] { 1.0, 1.5 })
+            {
+                SizeSlider slider = new SizeSlider { Minimum = PetSettings.MinimumSize, Maximum = PetSettings.MaximumSize,
+                    Value = 1, SmallChange = .01, LargeChange = .1, Width = 230,
+                    VerticalAlignment = VerticalAlignment.Center, LayoutTransform = new ScaleTransform(scale, scale) };
+                window.Content = slider; window.UpdateLayout();
+                Track track = (Track)slider.Template.FindName("PART_Track", slider);
+                double half = track.Thumb.ActualWidth / 2, travel = track.ActualWidth - half * 2;
+                Point grab = track.Thumb.TranslatePoint(new Point(half + 3, track.Thumb.ActualHeight / 2), slider);
+                Require(slider.BeginPointerDrag(grab) && slider.IsMouseCaptured, "Slider did not capture a thumb press.");
+                Require(Math.Abs(slider.Value - 1) < .0001, "Grabbing the edge of the thumb shifted its value.");
+                slider.ContinuePointerDrag(new Point(grab.X + 4, grab.Y));
+                Require(Math.Abs(slider.Value - (1 + 4 / travel * 1.2)) < .0001, "Small thumb drag jumped or did not move.");
+                window.UpdateLayout();
+                slider.ContinuePointerDrag(new Point(grab.X - 4, grab.Y));
+                Require(Math.Abs(slider.Value - (1 - 4 / travel * 1.2)) < .0001, "Reversing a drag accumulated an offset.");
+                slider.EndPointerDrag();
+                Require(!slider.IsMouseCaptured, "Slider retained capture after release.");
+                window.UpdateLayout();
+                Point quarter = track.TranslatePoint(new Point(half + travel * .25, track.ActualHeight / 2), slider);
+                Require(slider.BeginPointerDrag(quarter), "Slider did not capture a track press.");
+                Require(Math.Abs(slider.Value - .7) < .0001, "Track press did not locate the pointer.");
+                slider.ContinuePointerDrag(track.TranslatePoint(new Point(half + travel * .65, -100), slider));
+                Require(Math.Abs(slider.Value - 1.18) < .0001, "Track press could not continue dragging outside the row.");
+                slider.ContinuePointerDrag(track.TranslatePoint(new Point(-50, 0), slider));
+                Require(slider.Value == PetSettings.MinimumSize, "Dragging past the left end did not clamp.");
+                slider.ContinuePointerDrag(track.TranslatePoint(new Point(track.ActualWidth + 50, 0), slider));
+                Require(slider.Value == PetSettings.MaximumSize, "Dragging past the right end did not clamp.");
+                slider.ContinuePointerDrag(quarter);
+                Require(Math.Abs(slider.Value - .7) < .0001, "Slider did not recover after dragging beyond an end.");
+                Mouse.Capture(null);
+                slider.ContinuePointerDrag(grab);
+                Require(Math.Abs(slider.Value - .7) < .0001, "Slider changed after losing capture.");
+                slider.Value = 1;
+                System.Windows.Controls.Slider.IncreaseSmall.Execute(null, slider);
+                Require(Math.Abs(slider.Value - 1.01) < .0001, "Keyboard fine adjustment stopped working.");
+            }
+            Console.WriteLine("PASS: size slider captures thumb/track drags, follows 4px reversals, clamps both ends, releases capture, and preserves keyboard input at 100%/150% layout scale.");
+        }
+        finally { window.Close(); }
     }
 
     static void Edge(double left, double direction, double minimum, double maximum)

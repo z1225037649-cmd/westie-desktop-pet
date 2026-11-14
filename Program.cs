@@ -9,7 +9,8 @@ namespace WestiePet
 {
     public sealed class PetSettings
     {
-        public double Left = double.NaN, Top = double.NaN, Size = 1;
+        public const double MinimumSize = .4, MaximumSize = 1.6, DefaultSize = .6;
+        public double Left = double.NaN, Top = double.NaN, Size = DefaultSize;
         public bool Roam = true, Topmost = true;
         public string Name = "小白";
         static string FileName { get { return Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "小白.settings.xml"); } }
@@ -21,7 +22,7 @@ namespace WestiePet
                 if (!File.Exists(FileName)) return s;
                 XElement root = XElement.Load(FileName);
                 s.Left = Number(root, "left", double.NaN); s.Top = Number(root, "top", double.NaN);
-                s.Size = Math.Max(.7, Math.Min(1.6, Number(root, "size", 1)));
+                s.Size = Math.Max(MinimumSize, Math.Min(MaximumSize, Number(root, "size", DefaultSize)));
                 s.Roam = (string)root.Element("roam") != "false";
                 s.Topmost = (string)root.Element("topmost") != "false";
             }
