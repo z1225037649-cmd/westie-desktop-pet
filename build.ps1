@@ -36,4 +36,7 @@ $hash = (Get-FileHash -LiteralPath $archive -Algorithm SHA256).Hash.ToLowerInvar
 Set-Content -LiteralPath (Join-Path $dist 'SHA256SUMS.txt') -Value "$hash  $packageName.zip" -Encoding ASCII
 $releaseNotes = Get-Content -LiteralPath (Join-Path $PSScriptRoot 'docs\release-notes.md') -Raw -Encoding UTF8
 Set-Content -LiteralPath (Join-Path $dist 'release-notes.md') -Value $releaseNotes.Replace('{{VERSION}}', $Version) -Encoding UTF8
+# Replacing existing files does not refresh the folder date in Explorer.
+(Get-Item -LiteralPath $packageDirectory).LastWriteTime = (Get-Item -LiteralPath $archive).LastWriteTime
+Write-Host "解压目录已更新：$packageDirectory"
 Write-Host "分享压缩包已更新：$archive"
