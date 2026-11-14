@@ -14,6 +14,11 @@ foreach ($name in @('PresentationCore.dll','PresentationFramework.dll','WindowsB
     $commonArgs += "/reference:$assemblyPath"
 }
 $sources = @("$projectRoot\Program.cs", "$projectRoot\PetWindow.cs", "$projectRoot\WestieModel.cs", "$projectRoot\SculptedCoat.cs")
+$inputPath = Join-Path $PSScriptRoot 'InputChecks.exe'
+& $compilerPath ($commonArgs + @('/target:exe','/main:InputChecks',"/out:$inputPath") + $sources + @("$PSScriptRoot\InputChecks.cs"))
+if ($LASTEXITCODE -ne 0) { throw 'Pointer input checks did not compile.' }
+& $inputPath
+if ($LASTEXITCODE -ne 0) { throw 'Pointer input checks failed.' }
 $startupPath = Join-Path $PSScriptRoot 'StartupChecks.exe'
 & $compilerPath ($commonArgs + @('/target:exe','/main:StartupChecks',"/out:$startupPath") + $sources + @("$PSScriptRoot\StartupChecks.cs"))
 if ($LASTEXITCODE -ne 0) { throw 'Startup checks did not compile.' }
@@ -27,10 +32,14 @@ if ($LASTEXITCODE -ne 0) { throw 'Motion checks failed.' }
 $validationPath = Join-Path $PSScriptRoot 'WestiePet.Validation.exe'
 & $compilerPath ($commonArgs + @('/target:winexe','/main:WestiePet.Program',"/out:$validationPath", "/win32manifest:$projectRoot\app.manifest") + $sources)
 if ($LASTEXITCODE -ne 0) { throw 'Application validation did not compile.' }
-$validation = Start-Process -FilePath $validationPath -ArgumentList '--self-test' -WindowStyle Hidden -PassThru -Wait
 $validationLog = Join-Path $PSScriptRoot 'qa\results.txt'
+$validationStarted = Get-Date
+$validation = Start-Process -FilePath $validationPath -ArgumentList '--self-test' -WindowStyle Hidden -PassThru -Wait
 if (Test-Path -LiteralPath $validationLog) { Get-Content -LiteralPath $validationLog }
-if ($validation.ExitCode -ne 0) { throw 'Application validation failed.' }
+if ($validation.ExitCode -ne 0) { throw "Application validation failed (exit $($validation.ExitCode))." }
+if (-not (Test-Path -LiteralPath $validationLog) -or (Get-Item -LiteralPath $validationLog).LastWriteTime -lt $validationStarted) {
+    throw 'Application validation did not produce a fresh result log.'
+}
 if ($RenderDetails) {
     $renderPath = Join-Path $PSScriptRoot 'RenderDetails.exe'
     & $compilerPath ($commonArgs + @('/target:exe','/main:RenderDetails',"/out:$renderPath") + $sources + @("$PSScriptRoot\RenderDetails.cs"))

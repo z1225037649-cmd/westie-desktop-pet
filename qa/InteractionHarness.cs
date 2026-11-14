@@ -3,7 +3,7 @@ using System.IO;
 using System.Windows;
 using WestiePet;
 
-// Exercise the production transparent window at the user's 70% size.
+// Exercise the production transparent window at the user's 57% size.
 // A taskbar entry makes this test window discoverable by Windows UI automation.
 // Preferences stay in qa/, separate from the user's settings beside the main exe.
 static class InteractionHarness
@@ -18,7 +18,7 @@ static class InteractionHarness
             File.WriteAllText(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "interaction-error.txt"), e.Exception.ToString());
             e.Handled = true; app.Shutdown(1);
         };
-        PetWindow pet = new PetWindow(new PetSettings { Size = .7, Roam = false, Left = 60, Top = 200 }, false);
+        PetWindow pet = new PetWindow(new PetSettings { Size = .57, Roam = false, Left = 60, Top = 200 }, false, true);
         pet.ShowInTaskbar = true; pet.Title = "小白 · 交互验证";
         pet.LocationChanged += delegate
         {

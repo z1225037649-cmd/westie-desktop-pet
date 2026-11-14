@@ -123,7 +123,7 @@ namespace WestiePet
         public bool TestFailed { get; private set; }
         static readonly Brush Ink = Brush("#2B443D"), Muted = Brush("#78867D"), Sage = Brush("#6B927E"), Paper = Brush("#FCFBF6");
 
-        public PetWindow(PetSettings settings, bool verify, bool startQuietly = false)
+        public PetWindow(PetSettings settings, bool verify, bool startQuietly = false, bool runSelfTest = true)
         {
             this.settings = settings; this.verify = verify;
             Title = "小白 · 西高地桌面宠物";
@@ -132,6 +132,14 @@ namespace WestiePet
             WindowStyle = WindowStyle.None; ResizeMode = ResizeMode.NoResize;
             AllowsTransparency = true; Background = Brushes.Transparent;
             ShowInTaskbar = false; Topmost = settings.Topmost;
+            // Automated render checks must not look like a frozen desktop pet.
+            // Keep the live visual tree for rendering, but outside all monitors.
+            if (verify)
+            {
+                ShowActivated = false;
+                Left = SystemParameters.VirtualScreenLeft - Width - 100;
+                Top = SystemParameters.VirtualScreenTop;
+            }
             FontFamily = new FontFamily("Microsoft YaHei UI");
             UseLayoutRounding = true;
             Content = new Viewbox { Child = design, Stretch = Stretch.Uniform };
@@ -142,6 +150,9 @@ namespace WestiePet
             shadow.Fill = new RadialGradientBrush(Color.FromArgb(62, 36, 47, 40), Colors.Transparent);
             shadow.IsHitTestVisible = false; design.Children.Add(shadow);
             viewport = CreateViewport(model);
+            // The Border owns all pointer gestures. Ray-testing the animated
+            // ~200k-triangle model on every mouse move can starve those gestures.
+            viewport.IsHitTestVisible = false;
             viewport.Width = 306; viewport.Height = 260;
             viewport.HorizontalAlignment = HorizontalAlignment.Center;
             viewport.VerticalAlignment = VerticalAlignment.Top;
@@ -212,14 +223,19 @@ namespace WestiePet
             KeyDown += HandleKey;
             Loaded += delegate
             {
-                PositionInitially();
-                if (verify) Dispatcher.BeginInvoke(DispatcherPriority.ApplicationIdle, new Action(SelfTest));
+                if (!verify) PositionInitially();
+                TraceState("loaded");
+                if (verify)
+                {
+                    if (runSelfTest) Dispatcher.BeginInvoke(DispatcherPriority.ApplicationIdle, new Action(SelfTest));
+                }
                 else { CreateTray(); timer.Start(); if (!startQuietly) ShowHome(); UpdateDialogue(); }
             };
             timer.Interval = TimeSpan.FromMilliseconds(42);
             timer.Tick += Tick;
             Closing += delegate
             {
+                TraceState("closing");
                 closing = true; timer.Stop();
                 quickActions.IsOpen = false;
                 dialogue.IsOpen = false;
@@ -415,25 +431,40 @@ namespace WestiePet
         void BeginDrag(object sender, MouseButtonEventArgs e)
         {
             quickActions.IsOpen = false;
-            pressed = true; dragging = false; dragPoint = CursorPosition(); dragLeft = Left; dragTop = Top;
+            pressed = true; dragging = false; dragPoint = PointerPosition(e); dragLeft = Left; dragTop = Top;
             petHitArea.CaptureMouse(); e.Handled = true;
+            TraceState("pointer-down");
         }
         void MoveDrag(object sender, MouseEventArgs e)
         {
             if (!pressed) return;
-            if (e.LeftButton != MouseButtonState.Pressed) { FinishPointerInteraction(); return; }
-            Point p = CursorPosition(); Vector delta = p - dragPoint;
+            if (e.LeftButton != MouseButtonState.Pressed) { FinishPointerInteraction(PointerPosition(e)); return; }
+            UpdateDragPosition(PointerPosition(e));
+        }
+        Point PointerPosition(MouseEventArgs e)
+        {
+            Point position = e.GetPosition(this);
+            return new Point(Left + position.X, Top + position.Y);
+        }
+        void UpdateDragPosition(Point position)
+        {
+            Vector delta = position - dragPoint;
             if (!dragging && delta.Length > 4) { dragging = true; Say("被你抱起来啦～", 2); }
             if (dragging) { Left = dragLeft + delta.X; Top = dragTop + delta.Y; }
         }
         void EndDrag(object sender, MouseButtonEventArgs e)
         {
             if (!pressed) return;
-            FinishPointerInteraction(); e.Handled = true;
+            FinishPointerInteraction(PointerPosition(e)); e.Handled = true;
         }
-        void FinishPointerInteraction()
+        void FinishPointerInteraction(Point? releasePosition = null)
         {
+            // WPF can coalesce mouse moves while the animated mesh is rendering.
+            // A short drag may arrive as down/up only: use the release position
+            // before deciding whether this gesture was a click or a drag.
+            UpdateDragPosition(releasePosition ?? CursorPosition());
             bool moved = dragging; pressed = false; dragging = false; petHitArea.ReleaseMouseCapture();
+            TraceState(moved ? "drag-finished" : "pointer-up");
             if (moved) { ClampPosition(); SetState("idle", 0); nextAction = clock.Elapsed.TotalSeconds + 20; }
             else Act("pet");
             ShowQuickActions();
@@ -489,7 +520,10 @@ namespace WestiePet
         void Tick(object sender, EventArgs e)
         {
             if (Program.OpenRequested != null && Program.OpenRequested.WaitOne(0)) ShowHome();
-            double t = clock.Elapsed.TotalSeconds, dt = Math.Min(.08, t - lastTick); lastTick = t;
+            double t = clock.Elapsed.TotalSeconds, gap = t - lastTick;
+            if (lastTick > 0 && gap > 2) TraceState("dispatcher-delay-seconds=" + gap.ToString("F2", System.Globalization.CultureInfo.InvariantCulture));
+            double dt = Math.Min(.08, gap); lastTick = t;
+            if (t >= nextHeartbeat) { nextHeartbeat = t + 30; TraceState("heartbeat"); }
             if (pressed && (Forms.Control.MouseButtons & Forms.MouseButtons.Left) == Forms.MouseButtons.None)
                 FinishPointerInteraction();
             if (!pressed && t >= stateUntil) SetState("idle", 0);
@@ -575,6 +609,7 @@ namespace WestiePet
         }
         void OpenMenu()
         {
+            TraceState("context-menu");
             quickActions.IsOpen = false; menuOpen = true;
             ContextMenu menu = new ContextMenu { FontFamily = FontFamily, FontSize = 13, Background = Paper, Foreground = Ink, Padding = new Thickness(5) };
             menu.Closed += delegate { menuOpen = false; };
@@ -622,6 +657,7 @@ namespace WestiePet
 
         void ShowHome()
         {
+            TraceState("open-home");
             quickActions.IsOpen = false;
             if (home != null) { home.Activate(); return; }
             home = new Window { Title = "小白的小窝", Icon = HomeWindowIcon, Width = 414, Height = 632, ResizeMode = ResizeMode.NoResize,
@@ -672,6 +708,17 @@ namespace WestiePet
             home.Activated += delegate { RefreshStartupSetting(); };
             home.Closed += delegate { home = null; homeStatus = null; startup = null; if (!closing) nextAction = clock.Elapsed.TotalSeconds + 20; };
             home.Show(); home.Activate();
+        }
+
+        double nextHeartbeat = 30;
+        void TraceState(string reason)
+        {
+            if (verify) return;
+            RuntimeLog.Write(reason + " mode=" + mode + " position="
+                + Left.ToString("F1", System.Globalization.CultureInfo.InvariantCulture) + ","
+                + Top.ToString("F1", System.Globalization.CultureInfo.InvariantCulture)
+                + " visible=" + IsVisible + " pressed=" + pressed + " dragging=" + dragging
+                + " home=" + (home != null && home.IsVisible));
         }
 
         static bool IsStartupAccessError(Exception error)

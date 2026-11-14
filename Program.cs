@@ -8,6 +8,28 @@ using Microsoft.Win32;
 
 namespace WestiePet
 {
+    // Bounded, local diagnostics distinguish a lost window from a process exit.
+    // Logging failures must never interfere with desktop input or shutdown.
+    internal static class RuntimeLog
+    {
+        static bool enabled;
+        internal static void Start() { enabled = true; Write("start pid=" + System.Diagnostics.Process.GetCurrentProcess().Id); }
+        internal static void Write(string message)
+        {
+            if (!enabled) return;
+            try
+            {
+                string path = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "runtime.log");
+                if (File.Exists(path) && new FileInfo(path).Length > 256 * 1024) File.Delete(path);
+                File.AppendAllText(path, DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.fff", CultureInfo.InvariantCulture)
+                    + " " + message + Environment.NewLine);
+            }
+            catch (IOException) { }
+            catch (UnauthorizedAccessException) { }
+            catch (System.Security.SecurityException) { }
+        }
+    }
+
     internal static class StartupRegistration
     {
         const string RunKey = @"Software\Microsoft\Windows\CurrentVersion\Run";
@@ -104,10 +126,19 @@ namespace WestiePet
             {
                 if (!first && !verify) { open.Set(); return 0; }
                 OpenRequested = open;
+                if (!verify)
+                {
+                    RuntimeLog.Start();
+                    AppDomain.CurrentDomain.UnhandledException += delegate(object sender, UnhandledExceptionEventArgs e)
+                    { RuntimeLog.Write("unhandled terminating=" + e.IsTerminating + " " + e.ExceptionObject); };
+                    AppDomain.CurrentDomain.ProcessExit += delegate { RuntimeLog.Write("process-exit"); };
+                }
                 Application app = new Application();
                 app.ShutdownMode = ShutdownMode.OnMainWindowClose;
+                app.Exit += delegate(object sender, ExitEventArgs e) { RuntimeLog.Write("application-exit code=" + e.ApplicationExitCode); };
                 app.DispatcherUnhandledException += delegate(object sender, System.Windows.Threading.DispatcherUnhandledExceptionEventArgs e)
                 {
+                    RuntimeLog.Write("dispatcher-exception " + e.Exception);
                     try { File.WriteAllText(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "error.log"), e.Exception.ToString()); } catch { }
                     MessageBox.Show("小白遇到了一点问题。错误已记录到程序旁的 error.log。\n" + e.Exception.Message, "西高地桌面宠物");
                     e.Handled = true; app.Shutdown(1);
