@@ -94,8 +94,8 @@ namespace WestiePet
             head.Transform = ht;
             dog.Children.Add(head);
 
-            Ear(head, -.250, .355, -.045, -1);
-            Ear(head, .250, .355, -.045, 1);
+            Ear(head, -.235, .355, -.045, -1);
+            Ear(head, .235, .355, -.045, 1);
 
             for (int i = 0; i < 2; i++)
             {
@@ -497,19 +497,32 @@ namespace WestiePet
             ear.Transform = et;
             parent.Children.Add(ear);
             MeshGeometry3D shell = new MeshGeometry3D();
-            double[] heights = { -.045, .04, .17, .29, .365, .388 };
-            double[] widths = { .151, .143, .105, .060, .020, .0015 };
-            for (int j = 0; j < heights.Length; j++)
-                for (int k = 0; k <= 16; k++)
+            // A compact, rounded triangle with a wider root buried in the coat.
+            double[] heights = { -.17, -.11, -.04, .04, .13, .22, .30, .36 };
+            double[] widths = { .070, .105, .132, .132, .112, .080, .040, .002 };
+            double[] offsets = { -.045, -.025, -.005, .015, .035, .050, .060, .065 };
+            const int rings = 28, sides = 20;
+            for (int j = 0; j <= rings; j++)
+                for (int k = 0; k <= sides; k++)
                 {
-                    double a = k * Math.PI * 2 / 16, t = j / 5.0;
-                    shell.Positions.Add(new Point3D(side * .055 * t + Math.Cos(a) * widths[j], heights[j], Math.Sin(a) * widths[j] * .53 - t * .025));
-                    Vector3D n = new Vector3D(Math.Cos(a), .30, Math.Sin(a) * 1.5); n.Normalize(); shell.Normals.Add(n);
+                    double a = k * Math.PI * 2 / sides, t = j / (double)rings;
+                    int segment = Math.Min(heights.Length - 2, (int)(t * (heights.Length - 1)));
+                    double f = t * (heights.Length - 1) - segment;
+                    f = f * f * (3 - 2 * f);
+                    double h = heights[segment] + (heights[segment + 1] - heights[segment]) * f;
+                    double w = widths[segment] + (widths[segment + 1] - widths[segment]) * f;
+                    double cx = offsets[segment] + (offsets[segment + 1] - offsets[segment]) * f;
+                    Point3D p = new Point3D(side * cx + Math.Cos(a) * w, h,
+                        Math.Sin(a) * w * .42 - .018 * t + .045 * (1 - t) * (1 - t));
+                    Vector3D along = new Vector3D(side * .08, .52, -.09);
+                    Vector3D around = new Vector3D(-Math.Sin(a) * w, 0, Math.Cos(a) * w * .42);
+                    Vector3D n = Vector3D.CrossProduct(along, around); n.Normalize();
+                    shell.Positions.Add(p); shell.Normals.Add(n);
                 }
-            for (int j = 0; j < heights.Length - 1; j++)
-                for (int k = 0; k < 16; k++)
+            for (int j = 0; j < rings; j++)
+                for (int k = 0; k < sides; k++)
                 {
-                    int a = j * 17 + k, b = a + 17;
+                    int a = j * (sides + 1) + k, b = a + sides + 1;
                     shell.TriangleIndices.Add(a); shell.TriangleIndices.Add(a + 1); shell.TriangleIndices.Add(b);
                     shell.TriangleIndices.Add(a + 1); shell.TriangleIndices.Add(b + 1); shell.TriangleIndices.Add(b);
                 }
@@ -517,12 +530,20 @@ namespace WestiePet
             MeshGeometry3D lining = new MeshGeometry3D();
             for (int j = 0; j <= 7; j++)
             {
-                double t = j / 7.0, w = .067 * Math.Pow(1 - t, .75);
+                double t = j / 7.0, profile = .12 + t * .70;
+                int segment = Math.Min(widths.Length - 2, (int)(profile * (widths.Length - 1)));
+                double f = profile * (widths.Length - 1) - segment;
+                f = f * f * (3 - 2 * f);
+                double radius = widths[segment] + (widths[segment + 1] - widths[segment]) * f;
+                double center = side * (offsets[segment] + (offsets[segment + 1] - offsets[segment]) * f);
+                double height = heights[segment] + (heights[segment + 1] - heights[segment]) * f;
+                double w = radius * .57 * (1 - .18 * t);
                 for (int k = 0; k <= 8; k++)
                 {
                     double u = k / 8.0 * 2 - 1;
-                    lining.Positions.Add(new Point3D(side * (.012 + .039 * t) + u * w,
-                        .045 + t * .26, .071 - .054 * t * t + (1 - u * u) * .008));
+                    double surface = Math.Sqrt(Math.Max(0, 1 - u * u * w * w / (radius * radius)));
+                    lining.Positions.Add(new Point3D(center + u * w, height,
+                        radius * .42 * surface + .030 + .0015));
                     lining.Normals.Add(new Vector3D(u * .25, .12, 1));
                     lining.TextureCoordinates.Add(new System.Windows.Point(k / 8.0, t));
                 }
@@ -537,12 +558,17 @@ namespace WestiePet
             earSkin.Freeze(); Material skin = new DiffuseMaterial(earSkin); skin.Freeze(); AddMesh(ear, lining, skin);
             MeshGeometry3D fringe = new MeshGeometry3D();
             for (int edge = -1; edge <= 1; edge += 2)
-                for (int j = 0; j < 22; j++)
+                for (int j = 0; j < 14; j++)
                 {
-                    double t = j / 22.0;
-                    Point3D root = new Point3D(edge * .145 * (1 - t) + side * .055 * t, .365 * t, .009);
-                    Vector3D n = new Vector3D(edge * .7, .6, .15); n.Normalize();
-                    Lock(fringe, root, n, new Vector3D(edge * .3, .7, .03), .04 + random.NextDouble() * .035, .009, j);
+                    double t = j / 14.0, profile = .16 + t * .76;
+                    int segment = Math.Min(widths.Length - 2, (int)(profile * (widths.Length - 1)));
+                    double f = profile * (widths.Length - 1) - segment;
+                    double width = widths[segment] + (widths[segment + 1] - widths[segment]) * f;
+                    double offset = offsets[segment] + (offsets[segment + 1] - offsets[segment]) * f;
+                    double height = heights[segment] + (heights[segment + 1] - heights[segment]) * f;
+                    Point3D root = new Point3D(side * offset + edge * width, height, .030);
+                    Vector3D n = new Vector3D(edge * .65, .7, .15); n.Normalize();
+                    Lock(fringe, root, n, new Vector3D(edge * .25, .75, .03), .024 + random.NextDouble() * .018, .005, j);
                 }
             AddMesh(ear, fringe, bright);
         }
