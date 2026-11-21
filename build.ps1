@@ -33,10 +33,31 @@ Set-Content -LiteralPath $packagedReadme -Value $readme.Replace('{{VERSION}}', $
 # Explicit inputs keep personal settings, logs and QA files out of the archive.
 Compress-Archive -LiteralPath @($packagedExecutable, $packagedReadme) -DestinationPath $archive -Force
 $hash = (Get-FileHash -LiteralPath $archive -Algorithm SHA256).Hash.ToLowerInvariant()
-Set-Content -LiteralPath (Join-Path $dist 'SHA256SUMS.txt') -Value "$hash  $packageName.zip" -Encoding ASCII
+$checksums = Join-Path $dist 'SHA256SUMS.txt'
+Set-Content -LiteralPath $checksums -Value "$hash  $packageName.zip" -Encoding ASCII
 $releaseNotes = Get-Content -LiteralPath (Join-Path $PSScriptRoot 'docs\release-notes.md') -Raw -Encoding UTF8
 Set-Content -LiteralPath (Join-Path $dist 'release-notes.md') -Value $releaseNotes.Replace('{{VERSION}}', $Version) -Encoding UTF8
 # Replacing existing files does not refresh the folder date in Explorer.
 (Get-Item -LiteralPath $packageDirectory).LastWriteTime = (Get-Item -LiteralPath $archive).LastWriteTime
+
+# Verify the portable archive is limited to its two public files and matches the extracted copy.
+Add-Type -AssemblyName System.IO.Compression.FileSystem
+$zip = [System.IO.Compression.ZipFile]::OpenRead($archive)
+try {
+    $expectedEntries = @((Split-Path -Leaf $packagedExecutable), 'README.txt') | Sort-Object
+    $actualEntries = @($zip.Entries | ForEach-Object { $_.FullName } | Sort-Object)
+    if (Compare-Object -ReferenceObject $expectedEntries -DifferenceObject $actualEntries) { throw 'Portable ZIP contains unexpected or missing files.' }
+    foreach ($entry in $zip.Entries) {
+        $stream = $entry.Open()
+        $sha = [System.Security.Cryptography.SHA256]::Create()
+        try { $entryHash = [BitConverter]::ToString($sha.ComputeHash($stream)).Replace('-', '').ToLowerInvariant() }
+        finally { $stream.Dispose(); $sha.Dispose() }
+        $source = if ($entry.FullName -eq 'README.txt') { $packagedReadme } else { $packagedExecutable }
+        $sourceHash = (Get-FileHash -LiteralPath $source -Algorithm SHA256).Hash.ToLowerInvariant()
+        if ($entryHash -ne $sourceHash) { throw "Portable ZIP entry differs from extracted file: $($entry.FullName)" }
+    }
+} finally { $zip.Dispose() }
+$expectedChecksum = "$hash  $packageName.zip"
+if ((Get-Content -LiteralPath $checksums -Raw).Trim() -ne $expectedChecksum) { throw 'SHA256SUMS.txt does not match the portable ZIP.' }
 Write-Host "解压目录已更新：$packageDirectory"
 Write-Host "分享压缩包已更新：$archive"

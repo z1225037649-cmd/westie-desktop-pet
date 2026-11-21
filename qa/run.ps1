@@ -19,6 +19,11 @@ $inputPath = Join-Path $PSScriptRoot 'InputChecks.exe'
 if ($LASTEXITCODE -ne 0) { throw 'Pointer input checks did not compile.' }
 & $inputPath
 if ($LASTEXITCODE -ne 0) { throw 'Pointer input checks failed.' }
+$settingsPath = Join-Path $PSScriptRoot 'SettingsChecks.exe'
+& $compilerPath ($commonArgs + @('/target:exe','/main:SettingsChecks',"/out:$settingsPath") + $sources + @("$PSScriptRoot\SettingsChecks.cs"))
+if ($LASTEXITCODE -ne 0) { throw 'Settings checks did not compile.' }
+& $settingsPath
+if ($LASTEXITCODE -ne 0) { throw 'Settings checks failed.' }
 $startupPath = Join-Path $PSScriptRoot 'StartupChecks.exe'
 & $compilerPath ($commonArgs + @('/target:exe','/main:StartupChecks',"/out:$startupPath") + $sources + @("$PSScriptRoot\StartupChecks.cs"))
 if ($LASTEXITCODE -ne 0) { throw 'Startup checks did not compile.' }

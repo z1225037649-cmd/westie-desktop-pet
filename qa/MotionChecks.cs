@@ -36,6 +36,12 @@ static class MotionChecks
             }
             Console.WriteLine("PASS: dialogue clears the dog at 40%-160%, with long text and monitor edges.");
 
+            Require(PetWindow.BoundsFillMonitor(-1920, 0, 0, 1080, -1920, 0, 0, 1080), "Exact full-screen bounds should match.");
+            Require(PetWindow.BoundsFillMonitor(-1919, 1, -1, 1079, -1920, 0, 0, 1080), "A two-pixel border tolerance should match.");
+            Require(!PetWindow.BoundsFillMonitor(0, 0, 1920, 1040, 0, 0, 1920, 1080), "A maximized window must not count as full screen.");
+            Require(!PetWindow.BoundsFillMonitor(0, 0, 0, 1080, 0, 0, 1920, 1080), "An empty window must not count as full screen.");
+            Console.WriteLine("PASS: full-screen detection distinguishes borderless apps from maximized and empty windows.");
+
             Edge(0, -1, 5, 995); Edge(1000, 1, 5, 995);
             Edge(-1920, -1, -1915, -325); Edge(-320, 1, -1915, -325);
             double direction = -1;

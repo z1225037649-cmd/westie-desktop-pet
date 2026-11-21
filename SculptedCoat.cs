@@ -13,6 +13,7 @@ namespace WestiePet
         internal int TriangleCount;
         readonly List<Surface> surfaces = new List<Surface>();
         readonly Random random = new Random(231);
+        readonly double[] legSin = new double[4], legCos = new double[4];
         readonly SolidColorBrush restingMouth = new SolidColorBrush(Color.FromRgb(40, 32, 33));
         static readonly Point3D[] legPivots = { new Point3D(-.245, .64, .24), new Point3D(.245, .64, .24),
             new Point3D(-.212, .75, -.89), new Point3D(.212, .75, -.89) };
@@ -440,8 +441,7 @@ namespace WestiePet
         {
             double closure = FaceClosure(sleepPose);
             restingMouth.Color = Color.FromRgb((byte)(40 + 197 * closure), (byte)(32 + 203 * closure), (byte)(33 + 196 * closure));
-            double[] sine = new double[4], cosine = new double[4];
-            for (int i = 0; i < 4; i++) { sine[i] = Math.Sin(legAngles[i] * Math.PI / 180); cosine[i] = Math.Cos(legAngles[i] * Math.PI / 180); }
+            for (int i = 0; i < 4; i++) { legSin[i] = Math.Sin(legAngles[i] * Math.PI / 180); legCos[i] = Math.Cos(legAngles[i] * Math.PI / 180); }
             foreach (Surface surface in surfaces)
             {
                 for (int i = 0; i < surface.Bind.Length; i++)
@@ -474,7 +474,7 @@ namespace WestiePet
                         if (sleepPose > .0001 && vertex.Foot > .0001)
                         {
                             // Fold the leg while leaving the broad paw resting level on the floor.
-                            double fs = -sine[leg], fc = cosine[leg];
+                            double fs = -legSin[leg], fc = legCos[leg];
                             double fy = bind.Y - (leg < 2 ? .115 : .108), fz = bind.Z - (leg < 2 ? .304 : -.836);
                             double flatten = sleepPose * vertex.Foot;
                             legPoint.Y += flatten * (fy * (fc - 1) - fz * fs);
@@ -483,12 +483,12 @@ namespace WestiePet
                             legNormal.Z += flatten * (normal.Y * fs + normal.Z * (fc - 1));
                         }
                         Point3D pivot = legPivots[leg]; double dy = legPoint.Y - pivot.Y, dz = legPoint.Z - pivot.Z;
-                        p.Y += weight * (pivot.Y + dy * cosine[leg] - dz * sine[leg] - bind.Y);
-                        p.Z += weight * (pivot.Z + dy * sine[leg] + dz * cosine[leg] - bind.Z);
+                        p.Y += weight * (pivot.Y + dy * legCos[leg] - dz * legSin[leg] - bind.Y);
+                        p.Z += weight * (pivot.Z + dy * legSin[leg] + dz * legCos[leg] - bind.Z);
                         p.Y += weight * sleepPose * (leg < 2 ? -.040 : -.090);
                         p.Z += weight * sleepPose * (leg < 2 ? .030 : -.035);
-                        n.Y += weight * (legNormal.Y * cosine[leg] - legNormal.Z * sine[leg] - normal.Y);
-                        n.Z += weight * (legNormal.Y * sine[leg] + legNormal.Z * cosine[leg] - normal.Z);
+                        n.Y += weight * (legNormal.Y * legCos[leg] - legNormal.Z * legSin[leg] - normal.Y);
+                        n.Z += weight * (legNormal.Y * legSin[leg] + legNormal.Z * legCos[leg] - normal.Z);
                     }
                     double body = Math.Max(0, 1 - w.H - w.A - w.B - w.C - w.E - w.T);
                     p.X += bind.X * breath * .003 * body; p.Y += (bind.Y - .72) * breath * .006 * body;

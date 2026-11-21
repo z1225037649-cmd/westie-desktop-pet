@@ -72,7 +72,9 @@ namespace WestiePet
         public const double MinimumSize = .4, MaximumSize = 1.6, DefaultSize = .6;
         public double Left = double.NaN, Top = double.NaN, Size = DefaultSize;
         public bool Roam = true, Topmost = true;
+        public bool AutoHideFullscreen = true;
         public string Name = "小白";
+        public int Affection, Treats;
         static string FileName { get { return Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "小白.settings.xml"); } }
         public static PetSettings Load()
         {
@@ -82,17 +84,39 @@ namespace WestiePet
                 if (!File.Exists(FileName)) return s;
                 XElement root = XElement.Load(FileName);
                 s.Left = Number(root, "left", double.NaN); s.Top = Number(root, "top", double.NaN);
-                s.Size = Math.Max(MinimumSize, Math.Min(MaximumSize, Number(root, "size", DefaultSize)));
+                s.Size = ClampSize(Number(root, "size", DefaultSize));
                 s.Roam = (string)root.Element("roam") != "false";
                 s.Topmost = (string)root.Element("topmost") != "false";
+                s.AutoHideFullscreen = (string)root.Element("autoHideFullscreen") != "false";
+                s.Name = ReadName((string)root.Element("name"));
+                s.Affection = ReadCount((string)root.Element("affection"));
+                s.Treats = ReadCount((string)root.Element("treats"));
             }
             catch (Exception) { /* A damaged preferences file must never prevent startup. */ }
             return s;
         }
         static double Number(XElement root, string name, double fallback)
         {
-            double v;
-            return double.TryParse((string)root.Element(name), NumberStyles.Float, CultureInfo.InvariantCulture, out v) && !double.IsInfinity(v) ? v : fallback;
+            return ReadNumber((string)root.Element(name), fallback);
+        }
+        internal static double ReadNumber(string value, double fallback)
+        {
+            double number;
+            return double.TryParse(value, NumberStyles.Float, CultureInfo.InvariantCulture, out number)
+                && !double.IsInfinity(number) && !double.IsNaN(number) ? number : fallback;
+        }
+        internal static double ClampSize(double value)
+        { return double.IsNaN(value) || double.IsInfinity(value) ? DefaultSize : Math.Max(MinimumSize, Math.Min(MaximumSize, value)); }
+        internal static int ReadCount(string value)
+        {
+            int count;
+            return int.TryParse(value, NumberStyles.Integer, CultureInfo.InvariantCulture, out count) ? Math.Max(0, count) : 0;
+        }
+        internal static string ReadName(string value)
+        {
+            string name = (value ?? "").Trim();
+            if (name.Length == 0) return "小白";
+            return name.Length > 12 ? name.Substring(0, 12) : name;
         }
         public void Save()
         {
@@ -103,7 +127,11 @@ namespace WestiePet
                     new XElement("top", Top.ToString(CultureInfo.InvariantCulture)),
                     new XElement("size", Size.ToString(CultureInfo.InvariantCulture)),
                     new XElement("roam", Roam ? "true" : "false"),
-                    new XElement("topmost", Topmost ? "true" : "false"));
+                    new XElement("topmost", Topmost ? "true" : "false"),
+                    new XElement("autoHideFullscreen", AutoHideFullscreen ? "true" : "false"),
+                    new XElement("name", ReadName(Name)),
+                    new XElement("affection", Math.Max(0, Affection).ToString(CultureInfo.InvariantCulture)),
+                    new XElement("treats", Math.Max(0, Treats).ToString(CultureInfo.InvariantCulture)));
                 string temp = FileName + ".tmp";
                 root.Save(temp);
                 if (File.Exists(FileName)) File.Replace(temp, FileName, null); else File.Move(temp, FileName);

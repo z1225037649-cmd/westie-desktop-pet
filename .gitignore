@@ -20,6 +20,7 @@ qa/*
 !qa/MotionChecks.cs
 !qa/InputChecks.cs
 !qa/StartupChecks.cs
+!qa/SettingsChecks.cs
 !qa/InteractionHarness.cs
 !qa/compose_previews.py
 !qa/run.ps1

@@ -35,7 +35,7 @@ static class InputChecks
                 try
                 {
                     Viewport3D viewport = Field<Viewport3D>(pet, "viewport");
-                    Border input = Field<Border>(pet, "petHitArea");
+                    SilhouetteHitArea input = Field<SilhouetteHitArea>(pet, "pointerHitArea");
                     Console.WriteLine("Viewport3D.IsHitTestVisible=" + viewport.IsHitTestVisible);
                     if (!baseline && viewport.IsHitTestVisible)
                         throw new Exception("The desktop dog must route pointer input through the 2D surface, not the animated 3D mesh.");
@@ -43,14 +43,19 @@ static class InputChecks
                     {
                         pet.Width = 320 * scale; pet.Height = 350 * scale; pet.UpdateLayout();
                         Stopwatch watch = Stopwatch.StartNew();
+                        Point[] silhouettePoints = { new Point(60,170), new Point(85,160), new Point(110,150), new Point(135,150),
+                            new Point(160,150), new Point(185,145), new Point(210,145), new Point(240,140), new Point(220,180), new Point(80,200) };
                         for (int sample = 0; sample < 30; sample++)
                         {
-                            Point local = new Point(70 + (sample % 6) * 30, 90 + (sample % 5) * 22);
+                            Point local = silhouettePoints[sample % silhouettePoints.Length];
                             Point point = input.TranslatePoint(local, pet);
                             IInputElement hit = pet.InputHitTest(point);
                             if (!baseline && !ReferenceEquals(hit, input))
                                 throw new Exception("Pointer bypassed the 2D input surface at " + scale + ": " + hit);
                         }
+                        IInputElement emptySpace = pet.InputHitTest(input.TranslatePoint(new Point(5, 10), pet));
+                        if (!baseline && ReferenceEquals(emptySpace, input))
+                            throw new Exception("The empty margin around the dog must not intercept desktop input.");
                         Console.WriteLine("PASS: 30 pointer hit tests at " + scale + " in " + watch.Elapsed.TotalMilliseconds.ToString("F2") + " ms.");
                     }
                     if (!baseline)
@@ -76,11 +81,13 @@ static class InputChecks
                         input.RaiseEvent(new MouseButtonEventArgs(Mouse.PrimaryDevice, Environment.TickCount, MouseButton.Right)
                             { RoutedEvent = UIElement.MouseRightButtonUpEvent });
                         if (!Field<bool>(pet, "menuOpen")) throw new Exception("Right click failed to open the context menu.");
+                        ContextMenu openMenu = Field<ContextMenu>(pet, "petContextMenu");
+                        if (openMenu != null) openMenu.IsOpen = false;
                         Console.WriteLine("PASS: right click reaches the production context menu handler.");
                     }
                 }
                 catch (Exception error) { Console.WriteLine("FAIL: " + error); result = 1; }
-                finally { pet.Close(); app.Shutdown(); }
+                finally { pet.Close(); app.Shutdown(); Environment.Exit(result); }
             }));
         };
         app.Run(pet);
