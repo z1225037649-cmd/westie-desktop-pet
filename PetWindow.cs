@@ -20,6 +20,9 @@ namespace WestiePet
     internal sealed class SilhouetteHitArea : FrameworkElement
     {
         Geometry hitGeometry;
+        Func<Point, bool> alphaHit;
+
+        internal void SetAlphaHit(Func<Point, bool> test) { alphaHit = test; InvalidateVisual(); }
 
         internal void SetShape(Point[] points)
         {
@@ -37,7 +40,7 @@ namespace WestiePet
 
         protected override HitTestResult HitTestCore(PointHitTestParameters parameters)
         {
-            return hitGeometry != null && hitGeometry.FillContains(parameters.HitPoint)
+            return (alphaHit != null ? alphaHit(parameters.HitPoint) : hitGeometry != null && hitGeometry.FillContains(parameters.HitPoint))
                 ? new PointHitTestResult(this, parameters.HitPoint) : null;
         }
     }
@@ -115,7 +118,8 @@ namespace WestiePet
     {
         readonly PetSettings settings;
         readonly bool verify;
-        readonly WestieModel model = new WestieModel();
+        WestieModel model;
+        readonly Dictionary<string, WestieModel> models = new Dictionary<string, WestieModel>();
         readonly DispatcherTimer timer = new DispatcherTimer();
         readonly Stopwatch clock = Stopwatch.StartNew();
         readonly Random random = new Random();
@@ -139,7 +143,13 @@ namespace WestiePet
         ContextMenu petContextMenu;
         Viewport3D homePreview;
         TextBlock homeStatus;
+        TextBlock homeBreedDescription;
+        ComboBox breedChoice;
+        Point[] westieHitShape;
+        bool hitFacesLeft;
         CheckBox startup;
+        CheckBox roamOption;
+        TextBlock homeModelHint;
         string mode = "idle";
         double stateStart, stateUntil, bubbleUntil = 9, nextAction = 22, lastTick;
         double heading = 52, targetHeading = 52, walkDirection = -1;
@@ -155,8 +165,10 @@ namespace WestiePet
         public PetWindow(PetSettings settings, bool verify, bool startQuietly = false, bool runSelfTest = true)
         {
             this.settings = settings; this.verify = verify;
+            settings.Breed = PetSettings.ReadBreed(settings.Breed);
+            model = new WestieModel(settings.Breed); models.Add(settings.Breed, model);
             affection = settings.Affection; treats = settings.Treats;
-            Title = "小白 · 西高地桌面宠物";
+            Title = "小白 · " + BreedName + "桌面宠物";
             Icon = HomeWindowIcon;
             Width = 320 * settings.Size; Height = 350 * settings.Size;
             WindowStyle = WindowStyle.None; ResizeMode = ResizeMode.NoResize;
@@ -197,7 +209,7 @@ namespace WestiePet
             pointerHitArea.Width = 306; pointerHitArea.Height = 260;
             pointerHitArea.HorizontalAlignment = HorizontalAlignment.Center; pointerHitArea.VerticalAlignment = VerticalAlignment.Top;
             pointerHitArea.Margin = new Thickness(0, 40, 0, 0); pointerHitArea.Cursor = Cursors.Hand;
-            pointerHitArea.SetShape(new[] {
+            westieHitShape = new[] {
                 new Point(28,180), new Point(34,151), new Point(46,132), new Point(63,122), new Point(88,123),
                 new Point(108,130), new Point(137,122), new Point(162,111), new Point(183,100), new Point(194,78),
                 new Point(202,48), new Point(213,34), new Point(225,54), new Point(231,82), new Point(247,70),
@@ -205,7 +217,8 @@ namespace WestiePet
                 new Point(250,195), new Point(260,220), new Point(251,239), new Point(226,241), new Point(208,230),
                 new Point(194,208), new Point(177,206), new Point(166,230), new Point(151,242), new Point(126,239),
                 new Point(110,228), new Point(94,213), new Point(76,222), new Point(55,218), new Point(42,205)
-            });
+            };
+            UpdateBreedHitArea();
             design.Children.Add(pointerHitArea);
             pointerHitArea.MouseLeftButtonDown += BeginDrag;
             pointerHitArea.MouseMove += MoveDrag;
@@ -528,6 +541,63 @@ namespace WestiePet
             settings.Affection = affection; settings.Treats = treats;
             settings.Save();
         }
+        string BreedName { get { return settings.Breed == "corgi" ? "柯基" : "西高地"; } }
+        string ModelDescription { get { return model.IsPreRendered ? "高清毛发 · 2.5D 坐姿互动" : "一只西高地，陪你慢慢来。"; } }
+        const string ArtworkHint = "高清柯基使用参考立绘的局部骨骼动画，保留原图毛发与光影。当前为坐姿，支持眨眼、摸摸、喂食、玩球和打盹；暂无完整转身、四足步行及趴睡动作。";
+
+        internal void SwitchBreed(string breed)
+        {
+            breed = PetSettings.ReadBreed(breed);
+            if (model.Breed != breed)
+            {
+                WestieModel next;
+                if (!models.TryGetValue(breed, out next))
+                { next = new WestieModel(breed); models.Add(breed, next); }
+                double now = clock.Elapsed.TotalSeconds;
+                next.Heading.Angle = heading; next.WalkingPaused = model.WalkingPaused;
+                next.BeginAction(mode);
+                // Settle the new skin into the current pose before it becomes visible.
+                // UI state and the interaction clock continue without a restart.
+                double age = Math.Max(0, now - stateStart);
+                for (int i = 0; i < 36; i++) next.Animate(now - (35 - i) / 30.0, mode, age);
+                model = next;
+                if (model.IsPreRendered && mode == "walk") { SetState("idle", 0); heading = targetHeading = 52; model.Heading.Angle = 52; }
+                ((ModelVisual3D)viewport.Children[0]).Content = model.Scene;
+                ((OrthographicCamera)viewport.Camera).Width = 2.95;
+                if (homePreview != null) ((ModelVisual3D)homePreview.Children[0]).Content = model.Scene;
+                if (homePreview != null) ((OrthographicCamera)homePreview.Camera).Width = 3.20;
+            }
+            settings.Breed = breed;
+            UpdateBreedHitArea();
+            Title = "小白 · " + BreedName + "桌面宠物";
+            if (tray != null) tray.Text = Title;
+            if (breedChoice != null) breedChoice.SelectedIndex = breed == "corgi" ? 1 : 0;
+            if (homeBreedDescription != null) homeBreedDescription.Text = ModelDescription;
+            if (homeModelHint != null) homeModelHint.Visibility = model.IsPreRendered ? Visibility.Visible : Visibility.Collapsed;
+            if (roamOption != null) { roamOption.IsEnabled = !model.IsPreRendered; roamOption.IsChecked = settings.Roam && !model.IsPreRendered; }
+            if (homeStatus != null) homeStatus.Text = StatusText();
+            if (!verify) SaveSettings();
+            PositionDialogue();
+        }
+
+        void UpdateBreedHitArea()
+        {
+            hitFacesLeft = heading < 0;
+            if (!model.IsPreRendered) { pointerHitArea.SetAlphaHit(null); pointerHitArea.SetShape(westieHitShape); return; }
+            pointerHitArea.SetAlphaHit(delegate(Point point) {
+                // Invert the orthographic camera onto the artwork's z=0 plane.
+                // Sampling the cached bitmap alpha keeps desktop clicks cheap.
+                OrthographicCamera camera = (OrthographicCamera)viewport.Camera;
+                double pixels = 306 / camera.Width;
+                Vector3D forward = camera.LookDirection; forward.Normalize();
+                Vector3D right = Vector3D.CrossProduct(forward, camera.UpDirection); right.Normalize();
+                Vector3D up = Vector3D.CrossProduct(right, forward); up.Normalize();
+                double x = camera.Position.X + (point.X - 153) / pixels;
+                double y = (130 - point.Y) / pixels + Vector3D.DotProduct((Vector3D)camera.Position, up);
+                y /= up.Y;
+                return model.ArtworkHitTest(x, y);
+            });
+        }
         void Say(string text, double seconds)
         {
             bubbleText.Text = text; bubble.Visibility = Visibility.Visible; bubbleUntil = clock.Elapsed.TotalSeconds + seconds;
@@ -536,6 +606,7 @@ namespace WestiePet
         void SetState(string state, double seconds)
         {
             mode = state; stateStart = clock.Elapsed.TotalSeconds;
+            model.BeginAction(state);
             stateUntil = seconds <= 0 ? double.PositiveInfinity : stateStart + seconds;
             targetHeading = state == "walk" ? (walkDirection < 0 ? -68 : 68) : 52;
             if (homeStatus != null) homeStatus.Text = StatusText();
@@ -553,7 +624,9 @@ namespace WestiePet
             else if (action == "play") { SetState("play", 6); Say("接住！这次换你来捡球～", 5); }
             else if (action == "sleep") { SetState("sleep", 0); Say("我眯一会儿，你忙你的。 z Z", 5); }
             else if (action == "wake") { SetState("idle", 0); Say("醒啦！今天有什么好玩的？", 4); }
-            else if (action == "walk") { walkDirection = random.Next(2) == 0 ? -1 : 1; SetState("walk", 6); Say("出发，巡视一下我的领地！", 3); }
+            else if (action == "walk") {
+                if (model.IsPreRendered) { Say("高清柯基目前是坐姿动画；切回西高地可自由散步。", 4); return; }
+                walkDirection = random.Next(2) == 0 ? -1 : 1; SetState("walk", 6); Say("出发，巡视一下我的领地！", 3); }
             if (homeStatus != null) homeStatus.Text = StatusText();
         }
         internal static double AdvanceWalk(double left, ref double direction, double distance, double minimum, double maximum)
@@ -592,7 +665,7 @@ namespace WestiePet
                 else if (t >= toolbarHideAt) quickActions.IsOpen = false;
             }
             bool blocked = pressed || IsMouseOver || quickActions.IsOpen || (home != null && home.IsVisible);
-            if (mode == "walk" && !blocked)
+            if (mode == "walk" && !blocked && !model.IsPreRendered)
             {
                 Rect area = CurrentArea();
                 double minimum = area.Left + 5, maximum = area.Right - Width - 5;
@@ -606,13 +679,14 @@ namespace WestiePet
                     targetHeading = walkDirection < 0 ? -68 : 68;
                 }
             }
-            if (settings.Roam && mode == "idle" && !blocked && t > nextAction)
+            if (settings.Roam && mode == "idle" && !blocked && !model.IsPreRendered && t > nextAction)
             {
                 nextAction = t + 24 + random.Next(18);
                 walkDirection = random.Next(2) == 0 ? -1 : 1; SetState("walk", 4 + random.Next(5));
             }
             double turn = (targetHeading - heading) * (1 - Math.Exp(-dt * 4));
             heading += Math.Max(-70 * dt, Math.Min(70 * dt, turn)); model.Heading.Angle = heading;
+            if (settings.Breed == "corgi" && hitFacesLeft != (heading < 0)) UpdateBreedHitArea();
             double attentionX, attentionY;
             if (home != null && home.IsVisible && homePreview != null)
             {
@@ -657,7 +731,9 @@ namespace WestiePet
             else if (e.Key == Key.F) Act("feed");
             else if (e.Key == Key.B) Act("play");
             else if (e.Key == Key.S) Act(mode == "sleep" ? "wake" : "sleep");
-            else if (e.Key == Key.R) { settings.Roam = !settings.Roam; SaveSettings(); Say(settings.Roam ? "好耶，可以自由散步啦。" : "我会乖乖待在这里。", 3); }
+            else if (e.Key == Key.R) {
+                if (model.IsPreRendered) { Say("高清柯基目前是坐姿动画；切回西高地可自由散步。", 4); }
+                else { settings.Roam = !settings.Roam; SaveSettings(); Say(settings.Roam ? "好耶，可以自由散步啦。" : "我会乖乖待在这里。", 3); } }
             else return;
             e.Handled = true;
         }
@@ -717,10 +793,11 @@ namespace WestiePet
             manuallyHidden = true;
             ApplyPetVisibility();
         }
-        void AddMenu(ContextMenu menu, string title, Action action)
+        MenuItem AddMenu(ContextMenu menu, string title, Action action)
         {
             MenuItem item = new MenuItem { Header = title, Padding = new Thickness(12, 7, 12, 7) };
             item.Click += delegate { action(); }; menu.Items.Add(item);
+            return item;
         }
         void OpenMenu()
         {
@@ -735,9 +812,18 @@ namespace WestiePet
             AddMenu(menu, "喂块饼干     F", delegate { Act("feed"); });
             AddMenu(menu, "一起玩球     B", delegate { Act("play"); });
             AddMenu(menu, mode == "sleep" ? "叫醒小白     S" : "睡个午觉     S", delegate { Act(mode == "sleep" ? "wake" : "sleep"); });
-            AddMenu(menu, "散步一圈", delegate { Act("walk"); });
+            AddMenu(menu, "散步一圈", delegate { Act("walk"); }).IsEnabled = !model.IsPreRendered;
             menu.Items.Add(new Separator());
-            AddMenu(menu, (settings.Roam ? "✓ " : "   ") + "自由散步", delegate { settings.Roam = !settings.Roam; if (!settings.Roam && mode == "walk") SetState("idle", 0); SaveSettings(); });
+            MenuItem breedMenu = new MenuItem { Header = "宠物模型", Padding = new Thickness(12, 7, 12, 7) };
+            foreach (string breed in new[] { "westie", "corgi" })
+            {
+                string selectedBreed = breed;
+                MenuItem item = new MenuItem { Header = breed == "corgi" ? "柯基" : "西高地",
+                    IsCheckable = true, IsChecked = settings.Breed == breed, Padding = new Thickness(12, 7, 12, 7) };
+                item.Click += delegate { SwitchBreed(selectedBreed); }; breedMenu.Items.Add(item);
+            }
+            menu.Items.Add(breedMenu);
+            AddMenu(menu, (settings.Roam && !model.IsPreRendered ? "✓ " : "   ") + "自由散步", delegate { settings.Roam = !settings.Roam; if (!settings.Roam && mode == "walk") SetState("idle", 0); SaveSettings(); }).IsEnabled = !model.IsPreRendered;
             AddMenu(menu, (settings.Topmost ? "✓ " : "   ") + "始终在最上面", delegate { Topmost = settings.Topmost = !settings.Topmost; SaveSettings(); });
             AddMenu(menu, "大一点    滚轮向上", delegate { ChangeSize(settings.Size + .1); });
             AddMenu(menu, "小一点    滚轮向下", delegate { ChangeSize(settings.Size - .1); });
@@ -762,7 +848,7 @@ namespace WestiePet
                 trayIcon = (Drawing.Icon)source.Clone();
                 tray.Icon = trayIcon;
             }
-            tray.Text = "小白 · 西高地桌面宠物";
+            tray.Text = Title;
             Forms.ContextMenuStrip menu = new Forms.ContextMenuStrip();
             menu.Items.Add("显示小白", null, delegate { Dispatcher.BeginInvoke(new Action(ShowPet)); });
             menu.Items.Add("暂时隐藏小白", null, delegate { Dispatcher.BeginInvoke(new Action(HidePet)); });
@@ -781,14 +867,17 @@ namespace WestiePet
             ShowPet();
             quickActions.IsOpen = false;
             if (home != null) { home.Activate(); return; }
-            home = new Window { Title = "小白的小窝", Icon = HomeWindowIcon, Width = 414, Height = 670, ResizeMode = ResizeMode.NoResize,
+            home = new Window { Title = "小白的小窝", Icon = HomeWindowIcon, Width = 414,
+                Height = Math.Min(714, Math.Max(480, SystemParameters.WorkArea.Height - 50)), ResizeMode = ResizeMode.NoResize,
                 WindowStartupLocation = WindowStartupLocation.CenterScreen, Background = Brush("#F8F8F1"),
                 FontFamily = FontFamily, Foreground = Ink, Topmost = settings.Topmost };
             StackPanel page = new StackPanel { Margin = new Thickness(28, 21, 28, 20) };
-            home.Content = page;
+            home.Content = new ScrollViewer { Content = page, VerticalScrollBarVisibility = ScrollBarVisibility.Auto,
+                HorizontalScrollBarVisibility = ScrollBarVisibility.Disabled };
             page.Children.Add(new TextBlock { Text = "A LITTLE COMPANION", FontSize = 10, Foreground = Sage, FontWeight = FontWeights.SemiBold });
             page.Children.Add(new TextBlock { Text = "小白的小窝", FontSize = 27, FontWeight = FontWeights.SemiBold, Margin = new Thickness(0, 5, 0, 3) });
-            page.Children.Add(new TextBlock { Text = "一只西高地，陪你慢慢来。", FontSize = 12, Foreground = Muted });
+            homeBreedDescription = new TextBlock { Text = ModelDescription, FontSize = 12, Foreground = Muted };
+            page.Children.Add(homeBreedDescription);
             Grid stage = new Grid { Height = 212, Margin = new Thickness(0, 8, 0, 0) };
             Ellipse floor = new Ellipse { Width = 130, Height = 19, VerticalAlignment = VerticalAlignment.Bottom, Margin = new Thickness(0, 0, 0, 12),
                 Fill = new RadialGradientBrush(Color.FromArgb(48, 66, 88, 69), Colors.Transparent) };
@@ -807,6 +896,16 @@ namespace WestiePet
             name.LostKeyboardFocus += delegate { saveName(); };
             name.KeyDown += delegate(object sender, KeyEventArgs e) { if (e.Key == Key.Enter) { Keyboard.ClearFocus(); e.Handled = true; } };
             nameRow.Children.Add(name); page.Children.Add(nameRow);
+            StackPanel breedRow = new StackPanel { Orientation = Orientation.Horizontal, Margin = new Thickness(0, 0, 0, 9) };
+            breedRow.Children.Add(new TextBlock { Text = "宠物模型", FontSize = 12, Width = 76, VerticalAlignment = VerticalAlignment.Center });
+            breedChoice = new ComboBox { Width = 230, FontSize = 12, Padding = new Thickness(6, 4, 6, 4),
+                ItemsSource = new[] { "西高地", "柯基" }, SelectedIndex = settings.Breed == "corgi" ? 1 : 0 };
+            breedChoice.SelectionChanged += delegate { SwitchBreed(breedChoice.SelectedIndex == 1 ? "corgi" : "westie"); };
+            breedRow.Children.Add(breedChoice); page.Children.Add(breedRow);
+            homeModelHint = new TextBlock { Text = ArtworkHint, FontSize = 10, Foreground = Muted,
+                TextWrapping = TextWrapping.Wrap, Margin = new Thickness(0, 0, 0, 9),
+                Visibility = model.IsPreRendered ? Visibility.Visible : Visibility.Collapsed };
+            page.Children.Add(homeModelHint);
             UniformGridButtons(page);
             Border rule = new Border { Height = 1, Background = Brush("#E2E7DC"), Margin = new Thickness(0, 18, 0, 14) }; page.Children.Add(rule);
             StackPanel sizeRow = new StackPanel { Orientation = Orientation.Horizontal };
@@ -817,7 +916,9 @@ namespace WestiePet
             size.ValueChanged += delegate { if (home != null && home.IsLoaded) ChangeSize(size.Value, !size.IsMouseCaptured); };
             size.LostMouseCapture += delegate { SaveSettings(); };
             sizeRow.Children.Add(size); page.Children.Add(sizeRow);
-            CheckBox roam = new CheckBox { Content = "让小白自由散步", IsChecked = settings.Roam, FontSize = 12, Margin = new Thickness(0, 14, 0, 0), Foreground = Ink };
+            CheckBox roam = new CheckBox { Content = "让小白自由散步（西高地）", IsChecked = settings.Roam && !model.IsPreRendered,
+                IsEnabled = !model.IsPreRendered, FontSize = 12, Margin = new Thickness(0, 14, 0, 0), Foreground = Ink };
+            roamOption = roam;
             roam.Click += delegate { settings.Roam = roam.IsChecked == true; if (!settings.Roam && mode == "walk") SetState("idle", 0); SaveSettings(); }; page.Children.Add(roam);
             CheckBox avoidFullscreen = new CheckBox { Content = "全屏应用时暂时隐藏小白", IsChecked = settings.AutoHideFullscreen, FontSize = 12, Margin = new Thickness(0, 12, 0, 0), Foreground = Ink };
             avoidFullscreen.Click += delegate { settings.AutoHideFullscreen = avoidFullscreen.IsChecked == true; SaveSettings(); if (!settings.AutoHideFullscreen && fullscreenHidden) { fullscreenHidden = false; ApplyPetVisibility(); } };
@@ -838,8 +939,15 @@ namespace WestiePet
             page.Children.Add(new TextBlock { Text = "拖动小狗移动位置 · 右键打开菜单 · 滚轮调整大小\n关闭小窝后，小白依然会在桌面陪你。", FontSize = 10, Foreground = Muted, Margin = new Thickness(0, 15, 0, 0), LineHeight = 18 });
             home.Activated += delegate { RefreshStartupSetting(); };
             home.Closing += delegate { saveName(); };
-            home.Closed += delegate { home = null; homeStatus = null; startup = null; if (!closing) nextAction = clock.Elapsed.TotalSeconds + 20; };
-            home.Show(); home.Activate();
+            home.Closed += delegate { home = null; homeStatus = null; homePreview = null; breedChoice = null;
+                homeBreedDescription = null; homeModelHint = null; roamOption = null; startup = null;
+                if (!closing) nextAction = clock.Elapsed.TotalSeconds + 20; };
+            if (verify) {
+                home.WindowStartupLocation = WindowStartupLocation.Manual; home.ShowActivated = false; home.ShowInTaskbar = false;
+                home.Left = SystemParameters.VirtualScreenLeft - home.Width - 100;
+                home.Top = SystemParameters.VirtualScreenTop;
+            }
+            home.Show(); if (!verify) home.Activate();
         }
 
         double nextHeartbeat = 30;

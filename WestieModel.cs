@@ -6,7 +6,7 @@ using System.Windows.Media.Imaging;
 
 namespace WestiePet
 {
-    // An original, articulated terrier. Combed tapered locks share a few meshes.
+    // Articulated Westie and Corgi profiles share the same interaction rig.
     public sealed class WestieModel
     {
         public readonly Model3DGroup Scene = new Model3DGroup();
@@ -32,6 +32,14 @@ namespace WestiePet
         readonly AxisAngleRotation3D[] legs = new AxisAngleRotation3D[4];
         readonly double[] legAngles = new double[4];
         readonly ScaleTransform3D[] eyes = new ScaleTransform3D[2];
+        readonly bool naturalLook;
+        readonly bool corgi;
+        readonly CorgiSprite artwork;
+        readonly Model3DGroup artworkTreat = new Model3DGroup();
+        readonly ScaleTransform3D artworkTreatSize = new ScaleTransform3D(0, 0, 0);
+        readonly TranslateTransform3D artworkTreatPosition = new TranslateTransform3D();
+        public string Breed { get; private set; }
+        public bool IsPreRendered { get { return artwork != null; } }
         readonly ScaleTransform3D[] closedEyes = new ScaleTransform3D[2];
         readonly ScaleTransform3D closedMouth = new ScaleTransform3D(.001, .001, .001);
         readonly TranslateTransform3D[] eyeRetraction = new TranslateTransform3D[2];
@@ -44,6 +52,16 @@ namespace WestiePet
         double lookX, lookY, headLookX, headLookY;
         double attentionX, attentionY, attentionStrength, attention, curious;
         double previousTime = double.NaN;
+        double nextGlance = 1.9, glanceX, glanceY = .003, glanceStarted = -10;
+        double nextBlink = 3.4, blinkStarted = -10, blinkDuration = .23;
+        double nextSniff = 6.1, sniffStarted = -10, idleWagStarted = -10;
+        double earListenStarted = -10, earListenSide = 1;
+        double playPawStart, previousStateTime;
+        string previousState;
+        string pendingAction;
+        bool playRecovering;
+        double playActionStart;
+        readonly Random behaviorRandom = new Random(113);
         readonly Random random = new Random(27);
         readonly Material white = Matte(237, 235, 229);
         readonly Material cream = Matte(233, 231, 225);
@@ -57,21 +75,56 @@ namespace WestiePet
         static readonly MeshGeometry3D treatSphere = Sphere(12, 8);
         public int TriangleCount { get; private set; }
         public bool WalkingPaused { get; set; }
-        internal Rect3D DogBounds { get { return dog.Bounds; } }
+        internal double PlayActionTime { get; private set; }
+        internal bool PlayReady { get; private set; }
+        internal Rect3D DogBounds { get { return artwork != null ? artwork.Bounds : dog.Bounds; } }
+        internal bool ArtworkHitTest(double x, double y) { return artwork != null && artwork.HitTest(x, y); }
 
-        public WestieModel()
+        public WestieModel() : this(false, true, "westie") { }
+
+        public WestieModel(string breed) : this(false, true, breed) { }
+
+        internal WestieModel(bool naturalLook, bool withCoat) : this(naturalLook, withCoat, "westie") { }
+
+        internal WestieModel(bool naturalLook, bool withCoat, string breed)
         {
-            Scene.Children.Add(new AmbientLight(Color.FromRgb(145, 150, 158)));
-            Scene.Children.Add(new DirectionalLight(Color.FromRgb(128, 123, 116), new Vector3D(-2, -3, -4)));
-            Scene.Children.Add(new DirectionalLight(Color.FromRgb(78, 91, 108), new Vector3D(3, -1, 1)));
-            Scene.Children.Add(new DirectionalLight(Color.FromRgb(105, 111, 113), new Vector3D(-1, -1, 4)));
+            this.naturalLook = naturalLook;
+            Breed = PetSettings.ReadBreed(breed); corgi = Breed == "corgi";
+            if (corgi)
+            {
+                // The quality-first option uses the user's high-resolution
+                // artwork, with local 2.5D rigging; it is not a turntable model.
+                artwork = new CorgiSprite(); Scene.Children.Add(artwork.Model);
+                TriangleCount = artwork.TriangleCount;
+                Scene.Children.Add(new AmbientLight(Color.FromRgb(172, 175, 180)));
+                Scene.Children.Add(new DirectionalLight(Color.FromRgb(120, 113, 100), new Vector3D(-2, -3, -4)));
+                playToy = new TennisToy(); Scene.Children.Add(playToy.Model); TriangleCount += playToy.TriangleCount;
+                Transform3DGroup food = new Transform3DGroup(); food.Children.Add(artworkTreatSize);
+                food.Children.Add(artworkTreatPosition); artworkTreat.Transform = food;
+                Material baked = Matte(198, 130, 56);
+                Ball(artworkTreat, 0, 0, 0, .07, .034, .025, baked, true);
+                for (int s = -1; s <= 1; s += 2) for (int t = -1; t <= 1; t += 2)
+                    Ball(artworkTreat, s * .061, t * .022, 0, .032, .027, .025, baked, true);
+                Scene.Children.Add(artworkTreat);
+                artwork.Update(0, "idle", 0, Heading.Angle, false);
+                return;
+            }
+            // Keep the visual baseline chosen by the user; animation and
+            // input fixes remain independent of these appearance settings.
+            Scene.Children.Add(new AmbientLight(corgi ? Color.FromRgb(103, 111, 122) : Color.FromRgb(145, 150, 158)));
+            Scene.Children.Add(new DirectionalLight(corgi ? Color.FromRgb(176, 160, 139) : Color.FromRgb(128, 123, 116), new Vector3D(-2, -3, -4)));
+            Scene.Children.Add(new DirectionalLight(corgi ? Color.FromRgb(50, 66, 88) : Color.FromRgb(78, 91, 108), new Vector3D(3, -1, 1)));
+            Scene.Children.Add(new DirectionalLight(corgi ? Color.FromRgb(85, 97, 114) : Color.FromRgb(105, 111, 113), new Vector3D(-1, -1, 4)));
             Scene.Children.Add(dog);
             Transform3DGroup transform = new Transform3DGroup();
+            // Breed proportions apply equally to the articulated skin, face and toys.
+            // The original terrier never receives this transform.
+            if (corgi) transform.Children.Add(new ScaleTransform3D(1.08, .90, 1.04));
             transform.Children.Add(new RotateTransform3D(Heading));
             transform.Children.Add(lift);
             dog.Transform = transform;
 
-            sculpt = new SculptedCoat(white, mouth, new Material[] { white, bright, cool });
+            sculpt = new SculptedCoat(white, mouth, new Material[] { white, bright, cool }, withCoat, corgi);
             dog.Children.Add(sculpt.Model); TriangleCount += sculpt.TriangleCount;
             for (int i = 0; i < 4; i++)
                 legs[i] = new AxisAngleRotation3D(new Vector3D(1, 0, 0), 0);
@@ -89,7 +142,9 @@ namespace WestiePet
             headSkinTransform.Children.Add(new TranslateTransform3D(0, 1.08, .25));
             headSkinTransform.Children.Add(headRest);
             Transform3DGroup ht = new Transform3DGroup();
-            ht.Children.Add(new TranslateTransform3D(0, 1.345, .45));
+            if (corgi) ht.Children.Add(new ScaleTransform3D(SculptedCoat.CorgiHeadWidth,
+                SculptedCoat.CorgiHeadHeight, SculptedCoat.CorgiHeadDepth));
+            ht.Children.Add(new TranslateTransform3D(0, corgi ? SculptedCoat.CorgiHeadY : 1.345, .45));
             ht.Children.Add(headSkinTransform);
             head.Transform = ht;
             dog.Children.Add(head);
@@ -103,42 +158,46 @@ namespace WestiePet
                 Model3DGroup eye = new Model3DGroup();
                 Transform3DGroup et = new Transform3DGroup();
                 eyes[i] = new ScaleTransform3D(1, 1, 1);
-                et.Children.Add(eyes[i]);
+                // Eyelid openness is separate from the eyeball transform, so
+                // closing the lids never flattens the iris or its highlights.
                 eyeExpression[i] = new AxisAngleRotation3D(new Vector3D(0, 0, 1), 0);
                 et.Children.Add(new RotateTransform3D(eyeExpression[i]));
                 eyeRetraction[i] = new TranslateTransform3D(); et.Children.Add(eyeRetraction[i]);
                 et.Children.Add(new RotateTransform3D(new AxisAngleRotation3D(new Vector3D(0, 1, 0), i == 0 ? -8 : 8)));
-                et.Children.Add(new TranslateTransform3D(x, .170, .345));
+                et.Children.Add(new TranslateTransform3D(x, .170, corgi ? .320 : .345));
                 eye.Transform = et;
                 head.Children.Add(eye);
-                // Keep a soft white rim around the iris, with a slightly heavier upper lid.
+                // Restore the old eye-white/iris balance from the user's reference.
                 double slant = i == 0 ? .006 : -.006;
-                EyeSurface(eye, .093, .097, .083, .021, .029, slant, false, sclera);
+                EyeSurface(eye, corgi ? .075 : .093, corgi ? .082 : .097, corgi ? .069 : .083,
+                    .021, .029, slant, false, corgi ? Shiny(68, 45, 27) : sclera);
                 Point3D[] lid = new Point3D[10];
                 for (int k = 0; k < lid.Length; k++)
                 {
                     double a = k * Math.PI / (lid.Length - 1);
-                    lid[k] = new Point3D(Math.Cos(a) * .093,
-                        Math.Sin(a) * .097 + slant * Math.Cos(a), .025);
+                    lid[k] = new Point3D(Math.Cos(a) * (corgi ? .076 : .093),
+                        Math.Sin(a) * (corgi ? .083 : .097) + slant * Math.Cos(a), .025);
                 }
-                Stroke(eye, lid, .0034, Matte(83, 73, 61));
+                Stroke(eye, lid, corgi ? .0025 : .0034, Matte(83, 73, 61));
                 Point3D[] lowerLid = new Point3D[10];
                 for (int k = 0; k < lowerLid.Length; k++)
                 {
                     double a = Math.PI + k * Math.PI / (lowerLid.Length - 1);
-                    lowerLid[k] = new Point3D(Math.Cos(a) * .093,
-                        Math.Sin(a) * .083 + slant * Math.Cos(a), .025);
+                    lowerLid[k] = new Point3D(Math.Cos(a) * (corgi ? .076 : .093),
+                        Math.Sin(a) * (corgi ? .070 : .083) + slant * Math.Cos(a), .025);
                 }
-                Stroke(eye, lowerLid, .0019, Matte(155, 147, 132));
+                Stroke(eye, lowerLid, .0019, corgi ? Matte(149, 99, 51) : Matte(155, 147, 132));
                 Model3DGroup pupil = new Model3DGroup();
                 gaze[i] = new TranslateTransform3D();
                 pupils[i] = new ScaleTransform3D(1, 1, 1);
                 Transform3DGroup pupilTransform = new Transform3DGroup();
                 pupilTransform.Children.Add(pupils[i]); pupilTransform.Children.Add(gaze[i]);
                 pupil.Transform = pupilTransform; eye.Children.Add(pupil);
-                EyeSurface(pupil, .057, .068, .059, .052, .006, 0, false, iris);
-                EyeSurface(pupil, .047, .056, .049, .060, .004, 0, false, dark);
-                Ball(pupil, -.020, .022, .067, .012, .014, .004, Matte(255, 255, 253));
+                double irisWidth = corgi ? .066 : naturalLook ? .055 : .057;
+                EyeSurface(pupil, irisWidth, corgi ? .073 : .068, corgi ? .062 : .059, .052, .006, 0, false, iris);
+                EyeSurface(pupil, corgi ? .049 : naturalLook ? .045 : .047, corgi ? .058 : .056,
+                    corgi ? .050 : .049, .060, .004, 0, false, dark);
+                Ball(pupil, -.020, .022, .067, corgi ? .010 : .012, corgi ? .012 : .014, .004, Matte(255, 255, 253));
                 Ball(pupil, .020, -.028, .066, .005, .006, .0025, bright);
 
                 Model3DGroup closed = new Model3DGroup();
@@ -149,7 +208,7 @@ namespace WestiePet
                 for (int k = 0; k < shutLid.Length; k++)
                 {
                     double lx = -.066 + k * .132 / (shutLid.Length - 1), r = lx / .066;
-                    Point3D p = SculptedCoat.ClosedFacePoint(new Point3D(x + lx, 1.508 - .012 * (1 - r * r), .82), .002);
+                    Point3D p = sculpt.ClosedFacePoint(new Point3D(x + lx, 1.508 - .012 * (1 - r * r), .82), .002);
                     shutLid[k] = p - new Vector3D(x, 1.515, .795);
                 }
                 Stroke(closed, shutLid, .0027, Matte(99, 89, 76)); head.Children.Add(closed);
@@ -163,7 +222,7 @@ namespace WestiePet
             for (int k = 0; k < lipLine.Length; k++)
             {
                 double x = -.075 + k * .150 / (lipLine.Length - 1);
-                Point3D p = SculptedCoat.ClosedFacePoint(new Point3D(x, 1.115 + .35 * x * x, .98), .0015);
+                Point3D p = sculpt.ClosedFacePoint(new Point3D(x, 1.115 + .35 * x * x, .98), .0015);
                 lipLine[k] = p - new Vector3D(0, 1.115, .950);
             }
             Stroke(restingLips, lipLine, .0019, Matte(112, 102, 91)); head.Children.Add(restingLips);
@@ -235,16 +294,66 @@ namespace WestiePet
             attentionStrength = Math.Max(0, Math.Min(1, strength));
         }
 
+        // UI actions explicitly restart a performance even if two presses fall
+        // between animation ticks. Animate also accepts standalone QA callers.
+        internal void BeginAction(string state)
+        {
+            pendingAction = state;
+            if (state == "play") { PlayActionTime = 0; PlayReady = false; }
+        }
+
         public void Animate(double time, string state, double stateTime)
         {
+            if (artwork != null)
+            {
+                artwork.Update(time, state, stateTime, Heading.Angle, WalkingPaused);
+                Point3D mouthPoint = artwork.Mouth;
+                bool feedingArtwork = state == "feed" && stateTime >= .4 && stateTime < 4.1;
+                double foodAmount = !feedingArtwork ? 0 : stateTime < 1.5 ? 1 : stateTime < 2.3 ? .72 : stateTime < 3.1 ? .43 : .18;
+                artworkTreatSize.ScaleX = artworkTreatSize.ScaleY = artworkTreatSize.ScaleZ = foodAmount * .72;
+                double approach = Math.Max(0, 1 - (stateTime - .4) / .65);
+                artworkTreatPosition.OffsetX = mouthPoint.X + (Heading.Angle < 0 ? -.18 : .18) * approach;
+                artworkTreatPosition.OffsetY = mouthPoint.Y + .035 - approach * .14;
+                artworkTreatPosition.OffsetZ = mouthPoint.Z + .18;
+                PlayReady = state == "play"; PlayActionTime = Math.Max(0, stateTime);
+                Point3D paw = artwork.FrontPaw;
+                Vector3D ball = PlayBallMotion(stateTime);
+                ball.X = paw.X + (Heading.Angle < 0 ? -1 : 1) * (.16 + Math.Max(0, stateTime - .72) * .10);
+                ball.Y = .14 + Math.Max(0, Math.Sin((stateTime - .72) * 4)) * .045 * Math.Exp(-Math.Max(0, stateTime - .72));
+                ball.Z = .18;
+                playToy.Update(state == "play", ball);
+                return;
+            }
             bool walking = state == "walk", sleeping = state == "sleep", playing = state == "play";
             bool petting = state == "pet", feeding = state == "feed";
+            bool restarting = pendingAction == state || previousState != state || stateTime < previousStateTime;
+            if (playing && restarting)
+            {
+                playRecovering = sleepPose > .02;
+                playPawStart = playRecovering ? 0 : legs[1].Angle;
+                playActionStart = 0;
+            }
+            if (pendingAction == state) pendingAction = null;
+            previousState = state; previousStateTime = stateTime;
             bool moving = walking && !WalkingPaused;
             bool happy = state == "pet" || state == "feed" || state == "play";
             double dt = double.IsNaN(previousTime) || time <= previousTime ? .042 : Math.Min(.10, time - previousTime);
+            if (double.IsNaN(previousTime) || time < previousTime)
+            {
+                nextGlance = time + 1.9; nextBlink = time + 3.4; nextSniff = time + 6.1;
+                glanceStarted = blinkStarted = sniffStarted = idleWagStarted = earListenStarted = time - 10;
+            }
             previousTime = time;
             double ease = 1 - Math.Exp(-dt * 9);
             sleepPose += ((sleeping ? 1 : 0) - sleepPose) * (1 - Math.Exp(-dt * 4.6));
+            if (playing && playRecovering && stateTime >= 1.2 && sleepPose < .006
+                && Math.Abs(legs[2].Angle) < .65 && Math.Abs(legs[3].Angle) < .65 && Math.Abs(lift.OffsetY) < .005)
+            {
+                playRecovering = false; playActionStart = stateTime; playPawStart = legs[1].Angle;
+            }
+            PlayReady = playing && !playRecovering;
+            PlayActionTime = PlayReady ? Math.Max(0, stateTime - playActionStart) : 0;
+            double playTime = PlayActionTime;
             expression += ((happy ? 1 : 0) - expression) * ease;
             attention += (((sleeping || walking || playing || feeding || petting) ? 0 : attentionStrength) - attention) * (1 - Math.Exp(-dt * 5));
             double petPose = petting ? SmoothStep(stateTime / .30) * SmoothStep((3.6 - stateTime) / .55) : 0;
@@ -252,16 +361,35 @@ namespace WestiePet
             double nuzzle = Math.Sin(stateTime * 4.5);
             double chew = feeding && stateTime > .85 && stateTime < 3.95 ? .5 + .5 * Math.Sin((stateTime - .85) * Math.PI * 2 / .75) : 0;
             AnimateTreat(feeding, stateTime);
-            Vector3D playBall = PlayBallMotion(stateTime);
-            playToy.Update(playing, playBall);
+            Vector3D playBall = PlayBallMotion(playTime);
+            // Folded feet sweep through the eventual ball location while
+            // standing up. Introduce the toy only after the body has settled.
+            playToy.Update(PlayReady, playBall);
             double curiosityTarget = sleeping ? 0 : (state == "play" ? .85 : .24 + attention * .55);
             curious += (curiosityTarget - curious) * ease;
-            // Short glances have a pause between them; both eyes share the same target.
-            double glance = Math.Floor(time / 2.6);
-            double aimX = sleeping ? 0 : happy ? -.006 + Math.Sin(time * .8) * .004
-                : walking ? -.010 : Math.Sin(glance * 2.17 + .6) * .022;
-            double aimY = sleeping ? 0 : happy ? .010 : .005 + Math.Sin(glance * 1.63 + 1.1) * .008;
-            aimX = aimX * (1 - attention) + attentionX * .023 * attention;
+            // Brief observations are separated by genuine holds. The seeded
+            // scheduler varies the timing without injecting per-frame noise.
+            if (!sleeping && time >= nextGlance)
+            {
+                glanceX = (behaviorRandom.NextDouble() - .5) * .032;
+                glanceY = (behaviorRandom.NextDouble() - .35) * .009;
+                glanceStarted = time; nextGlance = time + 2.8 + behaviorRandom.NextDouble() * 3.4;
+                earListenStarted = time + .12; earListenSide = glanceX < 0 ? -1 : 1;
+                idleWagStarted = time + .55;
+            }
+            if (!sleeping && time >= nextBlink)
+            {
+                blinkStarted = time; blinkDuration = .20 + behaviorRandom.NextDouble() * .065;
+                nextBlink = time + 2.8 + behaviorRandom.NextDouble() * 4.0;
+            }
+            if (!sleeping && time >= nextSniff)
+            {
+                sniffStarted = time; nextSniff = time + 7.0 + behaviorRandom.NextDouble() * 6.0;
+            }
+            double glanceHold = 1 - SmoothStep((time - glanceStarted - 1.1) / .6);
+            double aimX = sleeping ? 0 : happy ? -.003 : walking ? -.005 : glanceX * glanceHold;
+            double aimY = sleeping ? 0 : happy ? .005 : glanceY * glanceHold;
+            aimX = aimX * (1 - attention) + attentionX * (naturalLook ? .018 : .023) * attention;
             aimY = aimY * (1 - attention) + (.004 + attentionY * .012) * attention;
             if (playing) { aimX = playBall.X * .021; aimY = -.011 + playBall.Y * .003; }
             double eyeEase = 1 - Math.Exp(-dt * 13);
@@ -271,70 +399,109 @@ namespace WestiePet
             double headEase = 1 - Math.Exp(-dt * 2);
             headLookX += ((playing ? playBall.X : HeadTarget(attentionX) * attention) - headLookX) * headEase;
             headLookY += ((playing ? -.5 : HeadTarget(attentionY) * attention) - headLookY) * headEase;
-            double sniffPhase = time % (happy ? 6.8 : 9.2);
-            double sniffTarget = !sleeping && sniffPhase > 6.0 && sniffPhase < 6.65
-                ? Math.Sin((sniffPhase - 6.0) / .65 * Math.PI) * (.5 + .5 * Math.Sin(time * 27)) : 0;
+            double sniffAge = time - sniffStarted;
+            double sniffTarget = !sleeping && !playing && sniffAge > 0 && sniffAge < .65
+                ? Math.Sin(sniffAge / .65 * Math.PI) * (.5 + .5 * Math.Sin(sniffAge * 27)) : 0;
             sniff += (sniffTarget - sniff) * (1 - Math.Exp(-dt * 20));
-            double bounce = moving ? Math.Abs(Math.Sin(time * 8)) * .025 : Math.Sin(time * 2.2) * .002;
-            lift.OffsetY += ((-.36 * sleepPose + (1 - sleepPose) * bounce) - lift.OffsetY) * ease;
-            headRest.OffsetX += ((petPose * .045 * nuzzle) - headRest.OffsetX) * ease;
-            headRest.OffsetY += ((-.43 * sleepPose + .035 * petPose - .075 * feedPose) - headRest.OffsetY) * ease;
-            headRest.OffsetZ += ((.060 * sleepPose + .045 * petPose + .065 * feedPose) - headRest.OffsetZ) * ease;
+            double playPrepare = PlayReady ? SmoothStep(playTime / .28) * (1 - SmoothStep((playTime - .78) / .5)) : 0;
+            double bounce = moving ? (1 - Math.Cos(time * 16)) * .006 : Math.Sin(time * 2.2) * .001;
+            bounce -= playPrepare * .003;
+            lift.OffsetY += (((corgi ? -.29 : -.36) * sleepPose + (1 - sleepPose) * bounce) - lift.OffsetY) * ease;
+            // A small lean prepares the gesture while the rear feet stay down.
+            headRest.OffsetX += ((petPose * .045 * nuzzle - playPrepare * .012) - headRest.OffsetX) * ease;
+            headRest.OffsetY += ((-.43 * sleepPose + .035 * petPose - .075 * feedPose - playPrepare * .012) - headRest.OffsetY) * ease;
+            headRest.OffsetZ += ((.060 * sleepPose + .045 * petPose + .065 * feedPose + playPrepare * .018) - headRest.OffsetZ) * ease;
             double breath = Math.Sin(time * (sleeping ? 1.7 : 2.2));
             double tiltTarget = sleeping ? -4 : petting ? petPose * (-7 + nuzzle * 11) : -headLookX * .75;
             double nodTarget = feeding ? feedPose * (23 + chew * 5)
                 : petting ? petPose * (-10 + Math.Cos(stateTime * 4.5) * 4)
-                : sleeping ? 8 : playing ? 7 - playBall.Y * .8 : -1.5 + breath * .20 - headLookY * .7;
+                : sleeping ? 8 : playing ? 5 + playPrepare * 3 - playBall.Y * .8 : -1.5 + breath * .20 - headLookY * .7;
             double aimYaw = walking ? (Heading.Angle < 0 ? 12 : -12) : -19 + (sleeping ? -3 : headLookX * (playing ? 7 : 2.5));
             if (petting) aimYaw += petPose * nuzzle * 9;
             headTilt.Angle = MoveHeadAngle(headTilt.Angle, tiltTarget, dt, petting ? 60 : 9);
             headNod.Angle = MoveHeadAngle(headNod.Angle, nodTarget, dt, feeding || petting ? 52 : 14);
             headYaw.Angle = MoveHeadAngle(headYaw.Angle, aimYaw, dt, 12);
-            double wagSpeed = playing ? 8 : happy ? 15 : walking ? 9 : 4;
+            double wagSpeed = playing ? 8 : happy ? 13 : walking ? 8 : 6;
             double wagTime = petting || feeding ? stateTime : time;
             double wag = Math.Sin(wagTime * wagSpeed) + Math.Sin(wagTime * wagSpeed * 2 + .4) * .14;
-            tailWag.Angle += ((sleeping ? 54 : wag * (petting ? 38 : playing ? 14 : happy ? 25 : walking ? 15 : 8)) - tailWag.Angle) * ease;
+            double wagAge = time - idleWagStarted;
+            double wagBurst = wagAge > 0 && wagAge < 1.5 ? Math.Sin(wagAge / 1.5 * Math.PI) : 0;
+            double wagAmount = petting ? 32 : playing ? 11 : happy ? 21 : walking ? 7 : (wagBurst * 8 + attention * 3);
+            tailWag.Angle += ((sleeping ? 54 : wag * wagAmount) - tailWag.Angle) * ease;
             tailRest.Angle = -65 * sleepPose;
             for (int i = 0; i < legs.Length; i++)
             {
-                double tapPhase = Math.Max(0, Math.Min(1, (stateTime - .15) / .55));
-                double pawTap = playing && i == 1 ? -9 * Math.Sin(tapPhase * Math.PI) : 0;
-                legs[i].Angle += (((1 - sleepPose) * (moving ? Math.Sin(time * 8 + (i == 0 || i == 3 ? 0 : Math.PI)) * 23 : pawTap)
+                double pawTap = PlayReady && i == 1 ? PlayPawGesture(playTime) : 0;
+                double stride = Math.Sin(time * 8 + (i == 0 || i == 3 ? 0 : Math.PI)) * (i < 2 ? 18 : 16);
+                legs[i].Angle += (((1 - sleepPose) * (moving ? stride : pawTap)
                     + sleepPose * -70) - legs[i].Angle) * ease;
+                if (PlayReady && i == 1 && sleepPose < .005)
+                {
+                    // The same clock controls actual paw contact and release;
+                    // filtering this curve separately would make the ball lead.
+                    legs[i].Angle = playTime < .22
+                        ? playPawStart * (1 - SmoothStep(playTime / .22)) : pawTap;
+                }
             }
+            double blink = Blink((time - blinkStarted) / blinkDuration);
+            double eyeClosure = Math.Max(blink, petPose * .96);
             for (int i = 0; i < eyes.Length; i++)
             {
-                double blink = Blink(time - i * .018);
-                double eyeHeight = sleeping ? .07 : (.96 + curious * .06 - expression * .09) * (1 - blink * .94);
-                eyeHeight *= 1 - petPose * .78;
-                eyes[i].ScaleY = eyeHeight;
-                double shut = SculptedCoat.FaceClosure(sleepPose);
-                closedEyes[i].ScaleX = closedEyes[i].ScaleY = closedEyes[i].ScaleZ = .001 + shut * .999;
-                eyeRetraction[i].OffsetZ = -.115 * shut;
+                double shut = Math.Max(SculptedCoat.FaceClosure(sleepPose), eyeClosure);
+                eyes[i].ScaleY = .02 + .96 * (1 - shut);
+                double closedLine = SmoothStep((shut - .70) / .24);
+                closedEyes[i].ScaleX = closedEyes[i].ScaleY = closedEyes[i].ScaleZ = .001 + closedLine * .999;
+                eyeRetraction[i].OffsetZ = -.115 * SmoothStep(shut);
                 eyeExpression[i].Angle += (((i == 0 ? -1 : 1) * (1 + expression * 2.2)) - eyeExpression[i].Angle) * ease;
                 gaze[i].OffsetX = lookX + (i == 0 ? .002 : -.002);
                 gaze[i].OffsetY = lookY;
-                double pupilScale = sleeping ? 1 : 1.01 + expression * .05 + curious * .025 + Math.Sin(time * 1.1) * .010;
+                double pupilScale = sleeping ? 1 : 1 + expression * .018 + curious * .010;
                 pupils[i].ScaleX = pupilScale; pupils[i].ScaleY = pupilScale;
-                double earPhase = (time + i * 2.7) % 9.3;
-                double twitch = earPhase < .42 ? Math.Sin(earPhase / .42 * Math.PI * 2) * 5 : 0;
-                earTurns[i].Angle += ((sleeping ? (i == 0 ? -6 : 6) : (i == 0 ? 1 : -1) * (2 + petPose * 16) + twitch) - earTurns[i].Angle) * ease;
+                double earAge = time - earListenStarted - i * .06;
+                double listen = earAge > 0 && earAge < .8 ? Math.Sin(earAge / .8 * Math.PI) : 0;
+                double twitch = listen * (i == (earListenSide < 0 ? 0 : 1) ? 4 : 1.2);
+                earTurns[i].Angle += ((sleeping ? (i == 0 ? -6 : 6) : (i == 0 ? 1 : -1) * (1 + petPose * 16 + twitch)) - earTurns[i].Angle) * ease;
             }
             double mouthTarget = sleeping ? 0 : feeding ? feedPose * (.15 + chew * 2.7) : playing ? .08 : happy ? .38 + Math.Sin(time * 5.3) * .08 : .10 + Math.Sin(time * 1.7) * .05;
             jawOpen += (mouthTarget - jawOpen) * ease;
-            mouthRest += ((sleeping ? .48 : playing ? .65 : happy ? .32 : .48 + sniff * .22) - mouthRest) * ease;
+            mouthRest += ((sleeping ? .48 : feeding ? .32 : playing ? .65 : happy ? (corgi ? .65 : .32)
+                : corgi ? .86 + sniff * .10 : .48 + sniff * .22) - mouthRest) * ease;
             closedMouth.ScaleX = closedMouth.ScaleY = closedMouth.ScaleZ = .001 + SculptedCoat.FaceClosure(sleepPose) * .999;
             noseBreath.ScaleX = 1 + sniff * .040; noseBreath.ScaleY = 1 - sniff * .020;
             noseMotion.OffsetY = sniff * .0035; noseMotion.OffsetZ = sniff * .003;
             for (int i = 0; i < 4; i++) legAngles[i] = legs[i].Angle;
-            sculpt.Update(headSkinTransform.Value, tailSkinTransform.Value, legAngles, breath, jawOpen, expression, mouthRest, sniff, sleepPose);
+            sculpt.Update(headSkinTransform.Value, tailSkinTransform.Value, legAngles, breath, jawOpen, expression, mouthRest, sniff, sleepPose, eyeClosure);
+        }
+
+        internal const double PlayContactTime = .72;
+        // Calibrated against the deformed, furred right-paw surface at contact.
+        // The rest pose has clear space; the contact margin is subpixel-sized.
+        internal const double PlayBallStartZ = .725;
+
+        internal static double PlayPawGesture(double stateTime)
+        {
+            if (stateTime <= .22 || stateTime >= 1.28) return 0;
+            if (stateTime <= PlayContactTime)
+            {
+                double t = (stateTime - .22) / (PlayContactTime - .22);
+                // Arrive at contact while still moving, then follow through.
+                return -9 * SmoothStep(t) - 6 * (t * t * t - t * t);
+            }
+            if (stateTime < .84)
+            {
+                double t = (stateTime - PlayContactTime) / (.84 - PlayContactTime);
+                return -9 * (2 * t * t * t - 3 * t * t + 1)
+                    - 1.44 * (t * t * t - 2 * t * t + t) - 9.8 * (-2 * t * t * t + 3 * t * t);
+            }
+            return -9.8 * (1 - SmoothStep((stateTime - .84) / (1.28 - .84)));
         }
 
         public static Vector3D PlayBallMotion(double stateTime)
         {
-            double roll = Math.Max(0, Math.Min(1, (stateTime - .45) / 3.0));
+            double roll = Math.Max(0, Math.Min(1, (stateTime - PlayContactTime) / 3.0));
             double distance = 1 - (1 - roll) * (1 - roll);
-            double hop = stateTime > .45 && stateTime < .95 ? Math.Sin((stateTime - .45) * Math.PI / .50) : 0;
+            double hop = stateTime > PlayContactTime && stateTime < PlayContactTime + .40
+                ? Math.Sin((stateTime - PlayContactTime) * Math.PI / .40) : 0;
             return new Vector3D(distance * 2 - 1, hop, 0);
         }
 
@@ -351,12 +518,13 @@ namespace WestiePet
             return current + Math.Max(-limit, Math.Min(limit, step));
         }
 
-        static double Blink(double time)
+        static double Blink(double progress)
         {
-            double t = time % 5.3;
-            if (t > 3.82 && t < 4.12) return Math.Sin((t - 3.82) / .30 * Math.PI);
-            if (t > 4.32 && t < 4.49) return Math.Sin((t - 4.32) / .17 * Math.PI) * .78;
-            return 0;
+            if (progress <= 0 || progress >= 1) return 0;
+            // Fast closing, a brief soft contact, and a slower reopening.
+            if (progress < .32) return SmoothStep(progress / .32);
+            if (progress < .43) return 1;
+            return 1 - SmoothStep((progress - .43) / .57);
         }
 
         void NeckBridge(Model3DGroup parent)
@@ -490,7 +658,7 @@ namespace WestiePet
         {
             Model3DGroup ear = new Model3DGroup();
             Transform3DGroup et = new Transform3DGroup();
-            et.Children.Add(new ScaleTransform3D(1, .90, 1));
+            et.Children.Add(new ScaleTransform3D(corgi ? 1.10 : 1, corgi ? 1.32 : .90, corgi ? 1.08 : 1));
             earTurns[side < 0 ? 0 : 1] = new AxisAngleRotation3D(new Vector3D(0, 0, 1), 0);
             et.Children.Add(new RotateTransform3D(earTurns[side < 0 ? 0 : 1]));
             et.Children.Add(new TranslateTransform3D(x, y, z));
@@ -501,6 +669,12 @@ namespace WestiePet
             double[] heights = { -.17, -.11, -.04, .04, .13, .22, .30, .36 };
             double[] widths = { .070, .105, .132, .132, .112, .080, .040, .002 };
             double[] offsets = { -.045, -.025, -.005, .015, .035, .050, .060, .065 };
+            if (corgi)
+            {
+                heights = new[] { -.17, -.11, -.04, .04, .13, .21, .27, .30, .31 };
+                widths = new[] { .080, .120, .145, .155, .142, .110, .065, .028, .001 };
+                offsets = new[] { -.040, -.020, .000, .020, .040, .060, .075, .080, .080 };
+            }
             const int rings = 28, sides = 20;
             for (int j = 0; j <= rings; j++)
                 for (int k = 0; k <= sides; k++)
@@ -526,7 +700,8 @@ namespace WestiePet
                     shell.TriangleIndices.Add(a); shell.TriangleIndices.Add(a + 1); shell.TriangleIndices.Add(b);
                     shell.TriangleIndices.Add(a + 1); shell.TriangleIndices.Add(b + 1); shell.TriangleIndices.Add(b);
                 }
-            AddMesh(ear, shell, bright);
+            Material earCoat = corgi ? Matte(215, 145, 70) : bright;
+            AddMesh(ear, shell, earCoat);
             MeshGeometry3D lining = new MeshGeometry3D();
             for (int j = 0; j <= 7; j++)
             {
@@ -537,7 +712,7 @@ namespace WestiePet
                 double radius = widths[segment] + (widths[segment + 1] - widths[segment]) * f;
                 double center = side * (offsets[segment] + (offsets[segment + 1] - offsets[segment]) * f);
                 double height = heights[segment] + (heights[segment + 1] - heights[segment]) * f;
-                double w = radius * .57 * (1 - .18 * t);
+                double w = radius * (corgi ? .48 : .57) * (1 - .18 * t);
                 for (int k = 0; k <= 8; k++)
                 {
                     double u = k / 8.0 * 2 - 1;
@@ -554,7 +729,8 @@ namespace WestiePet
                 lining.TriangleIndices.Add(a); lining.TriangleIndices.Add(a + 1); lining.TriangleIndices.Add(b);
                 lining.TriangleIndices.Add(a + 1); lining.TriangleIndices.Add(b + 1); lining.TriangleIndices.Add(b);
             }
-            LinearGradientBrush earSkin = new LinearGradientBrush(Color.FromRgb(198, 165, 158), Color.FromRgb(151, 119, 124), 90);
+            LinearGradientBrush earSkin = new LinearGradientBrush(corgi ? Color.FromRgb(230, 188, 155) : Color.FromRgb(198, 165, 158),
+                corgi ? Color.FromRgb(185, 119, 100) : Color.FromRgb(151, 119, 124), 90);
             earSkin.Freeze(); Material skin = new DiffuseMaterial(earSkin); skin.Freeze(); AddMesh(ear, lining, skin);
             MeshGeometry3D fringe = new MeshGeometry3D();
             for (int edge = -1; edge <= 1; edge += 2)
@@ -568,9 +744,10 @@ namespace WestiePet
                     double height = heights[segment] + (heights[segment + 1] - heights[segment]) * f;
                     Point3D root = new Point3D(side * offset + edge * width, height, .030);
                     Vector3D n = new Vector3D(edge * .65, .7, .15); n.Normalize();
-                    Lock(fringe, root, n, new Vector3D(edge * .25, .75, .03), .024 + random.NextDouble() * .018, .005, j);
+                    Lock(fringe, root, n, new Vector3D(edge * .25, .75, .03),
+                        corgi ? .012 + random.NextDouble() * .008 : .024 + random.NextDouble() * .018, corgi ? .003 : .005, j);
                 }
-            AddMesh(ear, fringe, bright);
+            AddMesh(ear, fringe, corgi ? Matte(235, 185, 117) : bright);
         }
 
         void Fur(Model3DGroup parent, Point3D center, Vector3D radius, int count, double length, string region)
@@ -850,7 +1027,7 @@ namespace WestiePet
         {
             visibility.ScaleX = visibility.ScaleY = visibility.ScaleZ = active ? 1 : 0;
             double distance = (motion.X + 1) * .30;
-            position.OffsetX = .245; position.OffsetY = .024 + Radius + motion.Y * .012; position.OffsetZ = .60 + distance;
+            position.OffsetX = .245; position.OffsetY = .024 + Radius + motion.Y * .012; position.OffsetZ = WestieModel.PlayBallStartZ + distance;
             spin.Angle = distance / Radius * 180 / Math.PI;
             shadowPosition.OffsetX = position.OffsetX; shadowPosition.OffsetZ = position.OffsetZ;
             shadowScale.ScaleX = shadowScale.ScaleZ = 1 + motion.Y * .12;

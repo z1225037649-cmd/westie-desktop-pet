@@ -74,6 +74,7 @@ namespace WestiePet
         public bool Roam = true, Topmost = true;
         public bool AutoHideFullscreen = true;
         public string Name = "小白";
+        public string Breed = "westie";
         public int Affection, Treats;
         static string FileName { get { return Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "小白.settings.xml"); } }
         public static PetSettings Load()
@@ -89,6 +90,7 @@ namespace WestiePet
                 s.Topmost = (string)root.Element("topmost") != "false";
                 s.AutoHideFullscreen = (string)root.Element("autoHideFullscreen") != "false";
                 s.Name = ReadName((string)root.Element("name"));
+                s.Breed = ReadBreed((string)root.Element("breed"));
                 s.Affection = ReadCount((string)root.Element("affection"));
                 s.Treats = ReadCount((string)root.Element("treats"));
             }
@@ -118,6 +120,8 @@ namespace WestiePet
             if (name.Length == 0) return "小白";
             return name.Length > 12 ? name.Substring(0, 12) : name;
         }
+        internal static string ReadBreed(string value)
+        { return string.Equals((value ?? "").Trim(), "corgi", StringComparison.OrdinalIgnoreCase) ? "corgi" : "westie"; }
         public void Save()
         {
             try
@@ -130,6 +134,7 @@ namespace WestiePet
                     new XElement("topmost", Topmost ? "true" : "false"),
                     new XElement("autoHideFullscreen", AutoHideFullscreen ? "true" : "false"),
                     new XElement("name", ReadName(Name)),
+                    new XElement("breed", ReadBreed(Breed)),
                     new XElement("affection", Math.Max(0, Affection).ToString(CultureInfo.InvariantCulture)),
                     new XElement("treats", Math.Max(0, Treats).ToString(CultureInfo.InvariantCulture)));
                 string temp = FileName + ".tmp";

@@ -17,6 +17,12 @@ assetfurnace-install-review.ps1
 # Keep reproducible QA sources; exclude screenshots, logs and build products
 qa/*
 !qa/RenderDetails.cs
+!qa/VisualStudy.cs
+!qa/EyeChecks.cs
+!qa/BreedChecks.cs
+!qa/ArtworkUiChecks.cs
+!qa/HdRender.cs
+!qa/VerifyPortable.ps1
 !qa/MotionChecks.cs
 !qa/InputChecks.cs
 !qa/StartupChecks.cs

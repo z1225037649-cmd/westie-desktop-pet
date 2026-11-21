@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Reflection;
 using System.Windows;
 using System.Windows.Media.Media3D;
@@ -102,6 +103,8 @@ static class MotionChecks
             Require(floorHigh - floorLow < .006, "Playing bounced the whole body off the floor.");
             Console.WriteLine("PASS: playing keeps rear legs planted; body height range " + (floorHigh - floorLow).ToString("F4") + ".");
             CheckInteractions(model);
+            CheckPlayContact(model);
+            CheckPlaySurfaceContact(model);
             return 0;
         }
         catch (Exception error) { Console.WriteLine("FAIL: " + error); return 1; }
@@ -156,6 +159,198 @@ static class MotionChecks
         for (int i = 0; i < 100; i++) Step(model, "idle");
         Require(Math.Abs(Field<TranslateTransform3D>(model, "headRest").OffsetY) < .001, "Interaction head pose did not return to idle.");
         Console.WriteLine("PASS: repeated feeding restarts; interruptions clear food and restore the resting pose.");
+    }
+
+    static T ToyField<T>(TennisToy toy, string name)
+    { return (T)typeof(TennisToy).GetField(name, BindingFlags.NonPublic | BindingFlags.Instance).GetValue(toy); }
+
+    static void CheckPlayContact(WestieModel model)
+    {
+        TennisToy toy = Field<TennisToy>(model, "playToy");
+        TranslateTransform3D position = ToyField<TranslateTransform3D>(toy, "position");
+        AxisAngleRotation3D spin = ToyField<AxisAngleRotation3D>(toy, "spin");
+        ScaleTransform3D visibility = (ScaleTransform3D)toy.Model.Transform;
+        AxisAngleRotation3D[] legs = Field<AxisAngleRotation3D[]>(model, "legs");
+        for (int i = 0; i < 60; i++) Step(model, "idle");
+        model.BeginAction("play");
+        time += .02; model.Animate(time, "play", 0);
+        Point3D start = new Point3D(position.OffsetX, position.OffsetY, position.OffsetZ);
+        double previousZ = start.Z, firstTravel = 0, lateTravel = 0;
+        int contactFrame = (int)Math.Round(WestieModel.PlayContactTime / .02);
+        for (int i = 1; i <= 240; i++)
+        {
+            double stateTime = i * .02;
+            time += .02; model.Animate(time, "play", stateTime);
+            Require(visibility.ScaleX == 1, "Play ball unexpectedly became hidden.");
+            double travel = position.OffsetZ - previousZ;
+            if (i <= contactFrame)
+            {
+                Require(Math.Abs(position.OffsetX - start.X) < .000001
+                    && Math.Abs(position.OffsetY - start.Y) < .000001
+                    && Math.Abs(position.OffsetZ - start.Z) < .000001
+                    && Math.Abs(spin.Angle) < .000001, "The visible ball moved or spun before paw contact.");
+            }
+            else
+            {
+                Require(travel >= -.000001, "The visible ball rolled backwards during a single push.");
+                if (stateTime < WestieModel.PlayContactTime + .25) firstTravel = Math.Max(firstTravel, travel);
+                if (stateTime > WestieModel.PlayContactTime + 2.7 && stateTime < WestieModel.PlayContactTime + 3)
+                    lateTravel = Math.Max(lateTravel, travel);
+            }
+            if (i == contactFrame)
+                Require(legs[1].Angle < -8.9, "The actual front paw did not reach its push pose when the ball was released.");
+            if (stateTime >= 1.3)
+                Require(Math.Abs(legs[1].Angle) < .001, "The push paw did not return to the floor.");
+            previousZ = position.OffsetZ;
+        }
+        Require(position.OffsetZ - start.Z > .5 && firstTravel > lateTravel * 3,
+            "The visible ball must travel away from the paw and slow before stopping.");
+        Point3D stopped = new Point3D(position.OffsetX, position.OffsetY, position.OffsetZ);
+        double stoppedSpin = spin.Angle;
+        foreach (double stateTime in new[] { 5.0, 7.0, 12.0 })
+        {
+            time += .02; model.Animate(time, "play", stateTime);
+            Require((new Point3D(position.OffsetX, position.OffsetY, position.OffsetZ) - stopped).Length < .000001
+                && Math.Abs(spin.Angle - stoppedSpin) < .000001, "The settled visible ball drifted or restarted.");
+        }
+        foreach (string state in new[] { "idle", "pet", "feed", "sleep" })
+        {
+            model.BeginAction(state);
+            time += .02; model.Animate(time, state, 0);
+            Require(visibility.ScaleX == 0, "Interrupted play left the ball visible in " + state);
+            model.BeginAction("play");
+            time += .02; model.Animate(time, "play", 0);
+            Require((new Point3D(position.OffsetX, position.OffsetY, position.OffsetZ) - start).Length < .000001
+                && Math.Abs(spin.Angle) < .000001, "Repeated play kept an old ball position or rotation.");
+            Require(visibility.ScaleX == (state == "sleep" ? 0 : 1), "Sleep recovery must prepare before showing the ball.");
+        }
+        for (int i = 0; i < 90; i++) Step(model, "idle");
+        model.BeginAction("play");
+        time += .02; model.Animate(time, "play", 2);
+        Require(position.OffsetZ > start.Z + .1, "Mid-gesture replay setup did not move the ball.");
+        model.BeginAction("play");
+        time += .02; model.Animate(time, "play", 0);
+        Require(Math.Abs(position.OffsetZ - start.Z) < .000001 && Math.Abs(spin.Angle) < .000001,
+            "Restarting play during the same state did not reset ball travel and spin.");
+        Console.WriteLine("PASS: visible ball waits for the push pose, rolls and slows to rest; replay and interruptions reset it.");
+    }
+
+    sealed class ContactSurface
+    {
+        internal MeshGeometry3D Mesh;
+        internal Point3D[] Points;
+        internal int[] Indices;
+    }
+
+    static void CheckPlaySurfaceContact(WestieModel model)
+    {
+        SculptedCoat sculpt = Field<SculptedCoat>(model, "sculpt");
+        TennisToy toy = Field<TennisToy>(model, "playToy");
+        TranslateTransform3D position = ToyField<TranslateTransform3D>(toy, "position");
+        Model3DGroup ball = (Model3DGroup)toy.Model.Children[1];
+        double radius = 0;
+        foreach (GeometryModel3D part in ball.Children)
+        foreach (Point3D p in ((MeshGeometry3D)part.Geometry).Positions)
+            radius = Math.Max(radius, ((Vector3D)p).Length);
+        Require(radius > 0, "The actual ball surface has no radius.");
+        List<ContactSurface> surfaces = new List<ContactSurface>();
+        foreach (GeometryModel3D part in sculpt.Model.Children)
+        {
+            MeshGeometry3D mesh = (MeshGeometry3D)part.Geometry;
+            ContactSurface surface = new ContactSurface { Mesh = mesh,
+                Points = new Point3D[mesh.Positions.Count], Indices = new int[mesh.TriangleIndices.Count] };
+            mesh.TriangleIndices.CopyTo(surface.Indices, 0); surfaces.Add(surface);
+        }
+        foreach (bool fromSleep in new[] { false, true })
+        foreach (double interval in new[] { .020, .056 })
+        foreach (double phase in interval < .03 ? new[] { 0.0 } : new[] { 0.0, .027 })
+        {
+            for (int i = 0; i < 90; i++) Step(model, fromSleep ? "sleep" : "idle");
+            model.BeginAction("play");
+            List<double> samples = new List<double> { 0 };
+            double duration = fromSleep ? 3.4 : 2.0;
+            for (double sample = interval + phase; sample <= duration; sample += interval) samples.Add(sample);
+            samples.Add(duration);
+            double previous = 0, minClearance = double.PositiveInfinity, previousClearance = double.PositiveInfinity;
+            double releasedAt = double.NaN;
+            Point3D start = new Point3D();
+            bool appeared = false;
+            ScaleTransform3D visibility = (ScaleTransform3D)toy.Model.Transform;
+            foreach (double sample in samples)
+            {
+                time += Math.Max(.002, sample - previous); previous = sample;
+                model.Animate(time, "play", sample);
+                Point3D center = new Point3D(position.OffsetX, position.OffsetY, position.OffsetZ);
+                if (sample == 0) start = center;
+                if (visibility.ScaleX < .01) continue;
+                double distance = NearestDogSurface(surfaces, center), clearance = distance - radius;
+                minClearance = Math.Min(minClearance, clearance);
+                string detail = (fromSleep ? "sleep-to-play" : "idle-to-play") + ", interval " + interval.ToString("F3") + ", offset " + phase.ToString("F3")
+                    + ", state time " + sample.ToString("F3") + ", clearance " + clearance.ToString("F4");
+                Require(clearance >= -.012, "Paw or coat deeply penetrated the actual ball: " + detail);
+                if (!appeared)
+                {
+                    Require(clearance >= .018, "Ball appears overlapped with or touching the paw: " + detail);
+                    appeared = true;
+                }
+                if (center.Z - start.Z > .00005 && double.IsNaN(releasedAt))
+                {
+                    releasedAt = sample;
+                    Require(Math.Min(clearance, previousClearance) <= .025,
+                        "Ball was released without actual paw surface contact between samples: " + detail);
+                    Require(Field<double>(model, "sleepPose") < .02, "The ball was released before the dog recovered from sleep: " + detail);
+                }
+                if (!double.IsNaN(releasedAt) && sample >= releasedAt + .8)
+                    Require(clearance > .02, "Ball did not separate from the actual paw after release: " + detail);
+                previousClearance = clearance;
+            }
+            Require(appeared && !double.IsNaN(releasedAt), "The dog never completed preparation and pushed the ball.");
+            Console.WriteLine("PASS: actual paw/coat surface clears and contacts the ball (" + (fromSleep ? "sleep" : "idle")
+                + ", interval " + interval.ToString("F3") + ", offset " + phase.ToString("F3") + ", minimum clearance " + minClearance.ToString("F4") + ").");
+        }
+    }
+
+    static double NearestDogSurface(List<ContactSurface> surfaces, Point3D center)
+    {
+        double best = double.PositiveInfinity;
+        foreach (ContactSurface surface in surfaces)
+        {
+            surface.Mesh.Positions.CopyTo(surface.Points, 0);
+            Point3D[] points = surface.Points; int[] indices = surface.Indices;
+            for (int i = 0; i < indices.Length; i += 3)
+            {
+                Point3D a = points[indices[i]], b = points[indices[i + 1]], c = points[indices[i + 2]];
+                double dx = Math.Max(0, Math.Max(Math.Min(a.X, Math.Min(b.X, c.X)) - center.X, center.X - Math.Max(a.X, Math.Max(b.X, c.X))));
+                double dy = Math.Max(0, Math.Max(Math.Min(a.Y, Math.Min(b.Y, c.Y)) - center.Y, center.Y - Math.Max(a.Y, Math.Max(b.Y, c.Y))));
+                double dz = Math.Max(0, Math.Max(Math.Min(a.Z, Math.Min(b.Z, c.Z)) - center.Z, center.Z - Math.Max(a.Z, Math.Max(b.Z, c.Z))));
+                if (dx * dx + dy * dy + dz * dz >= best) continue;
+                best = Math.Min(best, TriangleDistanceSquared(center, a, b, c));
+            }
+        }
+        return Math.Sqrt(best);
+    }
+
+    static double TriangleDistanceSquared(Point3D p, Point3D a, Point3D b, Point3D c)
+    {
+        Vector3D ab = b - a, ac = c - a, ap = p - a;
+        double d1 = Vector3D.DotProduct(ab, ap), d2 = Vector3D.DotProduct(ac, ap);
+        if (d1 <= 0 && d2 <= 0) return ap.LengthSquared;
+        Vector3D bp = p - b;
+        double d3 = Vector3D.DotProduct(ab, bp), d4 = Vector3D.DotProduct(ac, bp);
+        if (d3 >= 0 && d4 <= d3) return bp.LengthSquared;
+        double vc = d1 * d4 - d3 * d2;
+        if (vc <= 0 && d1 >= 0 && d3 <= 0) return (p - (a + ab * (d1 / (d1 - d3)))).LengthSquared;
+        Vector3D cp = p - c;
+        double d5 = Vector3D.DotProduct(ab, cp), d6 = Vector3D.DotProduct(ac, cp);
+        if (d6 >= 0 && d5 <= d6) return cp.LengthSquared;
+        double vb = d5 * d2 - d1 * d6;
+        if (vb <= 0 && d2 >= 0 && d6 <= 0) return (p - (a + ac * (d2 / (d2 - d6)))).LengthSquared;
+        double va = d3 * d6 - d5 * d4;
+        if (va <= 0 && d4 - d3 >= 0 && d5 - d6 >= 0)
+            return (p - (b + (c - b) * ((d4 - d3) / ((d4 - d3) + (d5 - d6))))).LengthSquared;
+        double sum = va + vb + vc;
+        if (Math.Abs(sum) < 1e-25) return Math.Min(ap.LengthSquared, Math.Min(bp.LengthSquared, cp.LengthSquared));
+        return (p - (a + ab * (vb / sum) + ac * (vc / sum))).LengthSquared;
     }
 
     static void Edge(double left, double direction, double minimum, double maximum)

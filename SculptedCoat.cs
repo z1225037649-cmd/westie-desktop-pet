@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Windows.Media;
 using System.Windows.Media.Media3D;
@@ -13,6 +13,9 @@ namespace WestiePet
         internal int TriangleCount;
         readonly List<Surface> surfaces = new List<Surface>();
         readonly Random random = new Random(231);
+        readonly bool corgi;
+        internal const double CorgiHeadWidth = 1.20, CorgiHeadHeight = .97, CorgiHeadDepth = .94, CorgiHeadY = 1.12;
+        double MouthCurve { get { return corgi ? 2.2 : 1.20; } }
         readonly double[] legSin = new double[4], legCos = new double[4];
         readonly SolidColorBrush restingMouth = new SolidColorBrush(Color.FromRgb(40, 32, 33));
         static readonly Point3D[] legPivots = { new Point3D(-.245, .64, .24), new Point3D(.245, .64, .24),
@@ -33,20 +36,21 @@ namespace WestiePet
             internal Point3D RestP;
             internal Vector3D RestN;
             internal Sample W;
-            internal float Jaw, Lip, Corner, Snout, Foot, Neck;
-            internal Vertex(Point3D p, Vector3D n, Sample w)
+            internal float Jaw, Lip, Corner, Snout, Foot, Neck, EyeSocket;
+            internal Vertex(Point3D p, Vector3D n, Sample w, SculptedCoat owner)
             {
                 P = p; N = n; W = w;
                 RestP = p; RestN = n;
                 bool eyeSocket = p.Z > .72 && Math.Abs(Math.Abs(p.X) - .125) < .112 && Math.Abs(p.Y - 1.515) < .118;
-                bool lipSocket = p.Z > .82 && Math.Abs(p.X) < .18 && Math.Abs(p.Y - 1.115 - 1.20 * p.X * p.X) < .09;
-                if (w.H > .9 && (eyeSocket || lipSocket) && Field(p, false).D < -.00005)
+                EyeSocket = eyeSocket ? 1 : 0;
+                bool lipSocket = p.Z > .82 && Math.Abs(p.X) < .18 && Math.Abs(p.Y - 1.115 - owner.MouthCurve * p.X * p.X) < .09;
+                if (w.H > .9 && (eyeSocket || lipSocket) && owner.Field(p, false).D < -.00005)
                 {
-                    RestP = ClosedFacePoint(p, 0); RestN = Normal(RestP, false);
+                    RestP = owner.ClosedFacePoint(p, 0); RestN = owner.Normal(RestP, false);
                 }
                 Jaw = (float)(w.H * Smooth(.73, .88, p.Z) * (1 - Smooth(1.10, 1.24, p.Y)));
                 Lip = (float)(w.H * Smooth(.81, .91, p.Z) * (1 - Smooth(.14, .23, Math.Abs(p.X)))
-                    * (1 - Smooth(.055, .12, Math.Abs(p.Y - 1.115 - 1.20 * p.X * p.X))));
+                    * (1 - Smooth(.055, .12, Math.Abs(p.Y - 1.115 - owner.MouthCurve * p.X * p.X))));
                 Corner = (float)(Lip * Smooth(.030, .105, Math.Abs(p.X)) * (1 - Smooth(.125, .19, Math.Abs(p.X))));
                 Snout = (float)(w.H * Smooth(.76, .93, p.Z) * Smooth(1.14, 1.24, p.Y) * (1 - Smooth(1.32, 1.44, p.Y)));
                 Foot = (float)(1 - Smooth(.15, .31, p.Y));
@@ -62,7 +66,13 @@ namespace WestiePet
         }
 
         internal SculptedCoat(Material skin, Material mouthMaterial, Material[] coat)
+            : this(skin, mouthMaterial, coat, true)
         {
+        }
+
+        internal SculptedCoat(Material skin, Material mouthMaterial, Material[] coat, bool withCoat, bool corgi = false)
+        {
+            this.corgi = corgi;
             List<Vertex> vertices = new List<Vertex>(); List<int> indices = new List<int>();
             Extract(vertices, indices);
             RefineFace(vertices, indices, false);
@@ -79,7 +89,8 @@ namespace WestiePet
                 List<int> target = middle.Mouth ? inner : outer;
                 target.Add(indices[i]); target.Add(indices[i + 1]); target.Add(indices[i + 2]);
             }
-            AddSurface(vertices, outer, skin);
+            Material corgiCoat = corgi ? CorgiMaterial() : null;
+            AddSurface(vertices, outer, corgi ? corgiCoat : skin);
             List<Vertex> lining = new List<Vertex>(); List<int> liningIndices = new List<int>(); Dictionary<int, int> remap = new Dictionary<int, int>();
             foreach (int old in inner)
             {
@@ -87,7 +98,8 @@ namespace WestiePet
                 liningIndices.Add(mapped);
             }
             AddSurface(lining, liningIndices, new DiffuseMaterial(restingMouth));
-            GrowCoat(vertices, indices, coat);
+            if (withCoat) GrowCoat(vertices, indices, corgi ? new[] { corgiCoat, corgiCoat, corgiCoat } : coat);
+            if (corgi) Update(Matrix3D.Identity, Matrix3D.Identity, new double[4], 0, 0, 0, 0, 0, 0);
         }
 
         static double Clamp(double x) { return Math.Max(0, Math.Min(1, x)); }
@@ -108,15 +120,17 @@ namespace WestiePet
             s.B = (float)(a.B * h + b.B * g); s.C = (float)(a.C * h + b.C * g); s.E = (float)(a.E * h + b.E * g); s.T = (float)(a.T * h + b.T * g);
             return s;
         }
-        static Sample Field(Point3D p)
+        Sample Field(Point3D p)
         { return Field(p, true); }
-        static Sample Field(Point3D p, bool carveFace)
+        Sample Field(Point3D p, bool carveFace)
         {
-            Sample body = Ellipsoid(p, 0, .775, -.34, .345, .345, .825, -1);
-            body = Union(body, Ellipsoid(p, 0, 1.095, .245, .255, .305, .270, -1), .145);
+            Sample body = corgi ? Ellipsoid(p, 0, .700, -.36, .385, .355, .765, -1)
+                : Ellipsoid(p, 0, .775, -.34, .345, .345, .825, -1);
+            body = Union(body, Ellipsoid(p, 0, corgi ? .860 : 1.095, .245, corgi ? .300 : .255, .305, .270, -1), .145);
             // The rump is part of the torso, so the thighs grow out of a full hip
             // rather than attaching beneath the tapered end of the barrel.
-            body = Union(body, Ellipsoid(p, 0, .795, -.865, .323, .299, .332, -1), .14);
+            body = Union(body, Ellipsoid(p, 0, corgi ? .690 : .795, corgi ? -.825 : -.865,
+                corgi ? .372 : .323, corgi ? .340 : .299, corgi ? .340 : .332, -1), .14);
             double tailT = Clamp((p.Y - 1.00) / .52);
             for (int i = 0; i < 3; i++)
             {
@@ -126,7 +140,9 @@ namespace WestiePet
             }
             double tailY = 1.00 + tailT * .52, tailZ = -1.065 - .20 * tailT + .07 * tailT * tailT;
             double tailDistance = Math.Sqrt(p.X * p.X + (p.Y - tailY) * (p.Y - tailY) + (p.Z - tailZ) * (p.Z - tailZ)) - (.072 - tailT * .051);
-            body = Union(body, new Sample(tailDistance, 5), .08);
+            if (corgi)
+                body = Union(body, Ellipsoid(p, 0, .87, -1.115, .105, .12, .14, 5), .09);
+            else body = Union(body, new Sample(tailDistance, 5), .08);
             for (int i = 0; i < 4; i++)
             {
                 double x = i % 2 == 0 ? -.245 : .245;
@@ -147,21 +163,39 @@ namespace WestiePet
                 }
                 body = Union(body, leg, i < 2 ? .112 : .168);
             }
-            Sample head = Ellipsoid(p, 0, 1.425, .460, .318, .400, .345, 0);
-            head = Union(head, Ellipsoid(p, 0, 1.620, .640, .266, .180, .230, 0), .11);
-            head = Union(head, Ellipsoid(p, 0, 1.235, .735, .253, .210, .245, 0), .15);
-            head = Union(head, Ellipsoid(p, -.150, 1.218, .685, .142, .190, .195, 0), .12);
-            head = Union(head, Ellipsoid(p, .150, 1.218, .685, .142, .190, .195, 0), .12);
-            head = Union(head, Ellipsoid(p, 0, 1.090, .730, .207, .078, .210, 0), .085);
+            Sample head;
+            if (corgi)
+            {
+                // A broad fox-shaped skull narrowing through the cheeks into
+                // a real muzzle; the terrier's round beard is not reused.
+                head = Ellipsoid(p, 0, 1.450, .485, .300, .325, .315, 0);
+                head = Union(head, Ellipsoid(p, 0, 1.615, .610, .270, .150, .215, 0), .095);
+                head = Union(head, Ellipsoid(p, -.155, 1.330, .650, .143, .173, .190, 0), .10);
+                head = Union(head, Ellipsoid(p, .155, 1.330, .650, .143, .173, .190, 0), .10);
+                head = Union(head, Ellipsoid(p, 0, 1.265, .815, .160, .128, .220, 0), .085);
+                head = Union(head, Ellipsoid(p, -.060, 1.208, .825, .108, .103, .170, 0), .055);
+                head = Union(head, Ellipsoid(p, .060, 1.208, .825, .108, .103, .170, 0), .055);
+                head = Union(head, Ellipsoid(p, 0, 1.095, .780, .170, .070, .195, 0), .065);
+            }
+            else
+            {
+                head = Ellipsoid(p, 0, 1.425, .460, .318, .400, .345, 0);
+                head = Union(head, Ellipsoid(p, 0, 1.620, .640, .266, .180, .230, 0), .11);
+                head = Union(head, Ellipsoid(p, 0, 1.235, .735, .253, .210, .245, 0), .15);
+                head = Union(head, Ellipsoid(p, -.150, 1.218, .685, .142, .190, .195, 0), .12);
+                head = Union(head, Ellipsoid(p, .150, 1.218, .685, .142, .190, .195, 0), .12);
+                head = Union(head, Ellipsoid(p, 0, 1.090, .730, .207, .078, .210, 0), .085);
+            }
             Sample result = Union(body, head, .14);
             // Mouth and eye recesses are cut into the same surface, rather than
             // outlined on top of an unrelated white muzzle or spherical eye ring.
-            Point3D mouthPoint = new Point3D(p.X, p.Y - 1.20 * p.X * p.X, p.Z);
-            double mouth = Ellipsoid(mouthPoint, 0, 1.115, .930, .120, .034, .095, 0).D;
+            Point3D mouthPoint = new Point3D(p.X, p.Y - MouthCurve * p.X * p.X, p.Z);
+            double mouth = Ellipsoid(mouthPoint, 0, 1.115, .930, corgi ? .116 : .120, corgi ? .036 : .034, .095, 0).D;
             if (carveFace && -mouth > result.D) { result.D = -mouth; result.Mouth = true; }
             for (int side = -1; carveFace && side <= 1; side += 2)
             {
-                double socket = Ellipsoid(p, side * .125, 1.515, .820, .099, .104, .055, 0).D;
+                double socket = Ellipsoid(p, side * .125, 1.515, corgi ? .792 : .820,
+                    corgi ? .080 : .099, corgi ? .087 : .104, corgi ? .046 : .055, 0).D;
                 if (-socket > result.D) { result.D = -socket; result.Mouth = false; }
             }
             // Keep the upper haunch planted in the rump while the lower leg swings.
@@ -169,9 +203,9 @@ namespace WestiePet
             result.C *= rear; result.E *= rear;
             return result;
         }
-        static Vector3D Normal(Point3D p)
+        Vector3D Normal(Point3D p)
         { return Normal(p, true); }
-        static Vector3D Normal(Point3D p, bool carveFace)
+        Vector3D Normal(Point3D p, bool carveFace)
         {
             const double e = .0013;
             Vector3D n = new Vector3D(Field(new Point3D(p.X + e, p.Y, p.Z), carveFace).D - Field(new Point3D(p.X - e, p.Y, p.Z), carveFace).D,
@@ -182,7 +216,7 @@ namespace WestiePet
 
         // Close the existing facial surface along its front direction. Keeping
         // x/y fixed preserves the lip contour and avoids a second eyelid shell.
-        internal static Point3D ClosedFacePoint(Point3D p, double offset)
+        internal Point3D ClosedFacePoint(Point3D p, double offset)
         {
             for (int i = 0; i < 9; i++)
             {
@@ -200,15 +234,16 @@ namespace WestiePet
             return t * t * (3 - 2 * t);
         }
 
-        static void Extract(List<Vertex> vertices, List<int> triangles)
+        void Extract(List<Vertex> vertices, List<int> triangles)
         {
             const double step = .045;
-            const int nx = 29, ny = 43, nz = 57;
+            const int nx = 29, ny = 43;
+            int nz = corgi ? 61 : 57;
             Point3D[] points = new Point3D[nx * ny * nz]; Sample[] fields = new Sample[points.Length];
             for (int z = 0; z < nz; z++) for (int y = 0; y < ny; y++) for (int x = 0; x < nx; x++)
             {
                 int i = (z * ny + y) * nx + x;
-                points[i] = new Point3D(-.63 + x * step, -.045 + y * step, -1.32 + z * step);
+                points[i] = new Point3D(-.63 + x * step, -.045 + y * step, (corgi ? -1.50 : -1.32) + z * step);
                 fields[i] = Field(points[i]);
             }
             int[,] tetra = { { 0, 5, 1, 6 }, { 0, 1, 2, 6 }, { 0, 2, 3, 6 }, { 0, 3, 7, 6 }, { 0, 7, 4, 6 }, { 0, 4, 5, 6 } };
@@ -241,13 +276,13 @@ namespace WestiePet
                 }
             }
         }
-        static int Intersect(int a, int b, Point3D[] points, Sample[] fields, Dictionary<long, int> cache, List<Vertex> vertices)
+        int Intersect(int a, int b, Point3D[] points, Sample[] fields, Dictionary<long, int> cache, List<Vertex> vertices)
         {
             long key = ((long)Math.Min(a, b) << 32) | (uint)Math.Max(a, b); int index;
             if (cache.TryGetValue(key, out index)) return index;
             double t = fields[a].D / (fields[a].D - fields[b].D);
             Point3D p = points[a] + (points[b] - points[a]) * t;
-            index = vertices.Count; vertices.Add(new Vertex(p, Normal(p), Field(p))); cache.Add(key, index); return index;
+            index = vertices.Count; vertices.Add(new Vertex(p, Normal(p), Field(p), this)); cache.Add(key, index); return index;
         }
         static void AddTriangle(List<Vertex> vertices, List<int> triangles, int a, int b, int c)
         {
@@ -307,7 +342,7 @@ namespace WestiePet
                 throw new InvalidOperationException("Connected surface count: " + components.Count + detail);
             }
         }
-        static void RefineFace(List<Vertex> vertices, List<int> triangles, bool mouthOnly, bool tailOnly = false)
+        void RefineFace(List<Vertex> vertices, List<int> triangles, bool mouthOnly, bool tailOnly = false)
         {
             HashSet<long> marked = new HashSet<long>();
             for (int i = 0; i < triangles.Count; i += 3)
@@ -346,13 +381,13 @@ namespace WestiePet
             }
             triangles.Clear(); triangles.AddRange(refined);
         }
-        static int Midpoint(int a, int b, HashSet<long> marked, Dictionary<long, int> cache, List<Vertex> vertices)
+        int Midpoint(int a, int b, HashSet<long> marked, Dictionary<long, int> cache, List<Vertex> vertices)
         {
             long key = EdgeKey(a, b); if (!marked.Contains(key)) return -1;
             int index; if (cache.TryGetValue(key, out index)) return index;
             Point3D p = vertices[a].P + (vertices[b].P - vertices[a].P) * .5;
             for (int i = 0; i < 3; i++) { double distance = Field(p).D; p -= Normal(p) * Math.Max(-.025, Math.Min(.025, distance)); }
-            index = vertices.Count; vertices.Add(new Vertex(p, Normal(p), Field(p))); cache.Add(key, index); return index;
+            index = vertices.Count; vertices.Add(new Vertex(p, Normal(p), Field(p), this)); cache.Add(key, index); return index;
         }
 
         void GrowCoat(List<Vertex> skin, List<int> triangles, Material[] materials)
@@ -372,8 +407,8 @@ namespace WestiePet
                 double u = Math.Sqrt(random.NextDouble()), v = random.NextDouble();
                 Point3D root = a.P + (b.P - a.P) * (u * (1 - v)) + (c.P - a.P) * (u * v);
                 if (root.Y < .045) continue;
-                if (root.Z > .73 && Math.Abs(Math.Abs(root.X) - .125) < .098 && Math.Abs(root.Y - 1.515) < .108) continue;
-                if (root.Z > .87 && Math.Abs(root.X) < .143 && Math.Abs(root.Y - 1.115 - 1.20 * root.X * root.X) < .052) continue;
+                if (root.Z > .73 && Math.Abs(Math.Abs(root.X) - .125) < (corgi ? .082 : .098) && Math.Abs(root.Y - 1.515) < (corgi ? .090 : .108)) continue;
+                if (root.Z > .87 && Math.Abs(root.X) < .143 && Math.Abs(root.Y - 1.115 - MouthCurve * root.X * root.X) < .052) continue;
                 if (root.Z > .95 && (root.X * root.X / (.115 * .115) + (root.Y - 1.29) * (root.Y - 1.29) / (.085 * .085)) < 1.15) continue;
                 Vector3D n = Normal(root); Sample w = Field(root); if (w.Mouth) continue;
                 root -= n * w.D;
@@ -385,6 +420,7 @@ namespace WestiePet
                 length += cheek * .008;
                 length = length * (1 - leg * .30) * (1 - foot * .45) * (1 - face * .40 * (1 - cheek * .85) * (1 - forehead)) * (1 - w.T * .30);
                 length *= .65 + random.NextDouble() * .60;
+                if (corgi) length *= .40 + .10 * (1 - head);
                 Vector3D comb = new Vector3D(root.X * head * .55, -1, -.15 * (1 - head) + head * .12);
                 if (root.Y > 1.52) comb = new Vector3D(root.X * .8, -.5, .6);
                 comb = comb * (1 - w.T) + new Vector3D(0, 1, -.15) * w.T;
@@ -393,7 +429,7 @@ namespace WestiePet
                 for (int clip = 0; clip < 4; clip++)
                 {
                     Point3D tip = root + n * (length * .45) + comb * (length * .86);
-                    Point3D warped = new Point3D(tip.X, tip.Y - 1.2 * tip.X * tip.X, tip.Z);
+                    Point3D warped = new Point3D(tip.X, tip.Y - MouthCurve * tip.X * tip.X, tip.Z);
                     if (Ellipsoid(warped, 0, 1.115, .930, .136, .048, .113, 0).D >= 0) break;
                     length *= .50;
                 }
@@ -402,7 +438,7 @@ namespace WestiePet
             }
             for (int j = 0; j < materials.Length; j++) AddSurface(locks[j], faces[j], materials[j]);
         }
-        static void Hair(List<Vertex> vertices, List<int> indices, Point3D root, Vector3D normal, Vector3D comb, double length, Sample weights, int seed)
+        void Hair(List<Vertex> vertices, List<int> indices, Point3D root, Vector3D normal, Vector3D comb, double length, Sample weights, int seed)
         {
             Vector3D direction = normal * .30 + comb * .95; direction.Normalize();
             Vector3D u = Vector3D.CrossProduct(direction, new Vector3D(.12, 1, .07));
@@ -418,7 +454,7 @@ namespace WestiePet
                     double angle = k * Math.PI * 2 / 3 + seed * .17;
                     Vector3D radial = u * Math.Cos(angle) + v * Math.Sin(angle) * .64;
                     Vector3D n = normal + radial * .14; n.Normalize();
-                    vertices.Add(new Vertex(center + radial * radius, n, weights));
+                    vertices.Add(new Vertex(center + radial * radius, n, weights, this));
                 }
             }
             for (int j = 0; j < 2; j++) for (int k = 0; k < 3; k++)
@@ -433,11 +469,40 @@ namespace WestiePet
             Surface surface = new Surface(); surface.Bind = vertices.ToArray(); surface.Points = new Point3D[vertices.Count]; surface.Normals = new Vector3D[vertices.Count];
             for (int i = 0; i < vertices.Count; i++) { surface.Points[i] = vertices[i].P; surface.Normals[i] = vertices[i].N; }
             MeshGeometry3D mesh = new MeshGeometry3D { Positions = new Point3DCollection(surface.Points), Normals = new Vector3DCollection(surface.Normals), TriangleIndices = new Int32Collection(indices) };
+            // Coat markings live in bind space, so they follow every bone and blink.
+            if (corgi) for (int i = 0; i < vertices.Count; i++)
+                mesh.TextureCoordinates.Add(new System.Windows.Point(CorgiWhite(vertices[i].P), .5));
             surface.Mesh = mesh; surfaces.Add(surface); TriangleCount += indices.Count / 3;
             GeometryModel3D model = new GeometryModel3D(mesh, material); model.BackMaterial = material; Model.Children.Add(model);
         }
 
-        internal void Update(Matrix3D headMatrix, Matrix3D tailMatrix, double[] legAngles, double breath, double jawOpen, double smile, double mouthRest, double sniff, double sleepPose)
+        static Material CorgiMaterial()
+        {
+            LinearGradientBrush color = new LinearGradientBrush();
+            color.StartPoint = new System.Windows.Point(0, .5); color.EndPoint = new System.Windows.Point(1, .5);
+            color.GradientStops.Add(new GradientStop(Color.FromRgb(215, 141, 65), 0));
+            color.GradientStops.Add(new GradientStop(Color.FromRgb(230, 168, 94), .20));
+            color.GradientStops.Add(new GradientStop(Color.FromRgb(244, 236, 217), .92));
+            color.GradientStops.Add(new GradientStop(Color.FromRgb(248, 243, 231), 1));
+            color.Freeze(); Material material = new DiffuseMaterial(color); material.Freeze(); return material;
+        }
+
+        static double CorgiWhite(Point3D p)
+        {
+            // Narrow forehead blaze, cream muzzle, chest bib, belly and white socks.
+            double head = Smooth(1.03, 1.19, p.Y) * Smooth(.31, .53, p.Z);
+            double muzzle = (1 - Smooth(1.35, 1.48, p.Y)) * Smooth(.64, .79, p.Z);
+            double blazeWidth = .025 + .026 * (1 - Smooth(1.42, 1.73, p.Y));
+            double blaze = (1 - Smooth(blazeWidth, blazeWidth + .025, Math.Abs(p.X))) * Smooth(.68, .78, p.Z);
+            double bib = Smooth(-.02, .24, p.Z) * (1 - Smooth(1.15, 1.32, p.Y));
+            double collar = Smooth(-.10, .05, p.Z) * (1 - Smooth(.17, .30, p.Z));
+            double belly = 1 - Smooth(.43, .58, p.Y);
+            double socks = 1 - Smooth(.24, .33, p.Y);
+            double body = Math.Max(Math.Max(bib, collar * .95), Math.Max(belly * .9, socks));
+            return Clamp(Math.Max(muzzle, blaze) * head + body * (1 - head));
+        }
+
+        internal void Update(Matrix3D headMatrix, Matrix3D tailMatrix, double[] legAngles, double breath, double jawOpen, double smile, double mouthRest, double sniff, double sleepPose, double eyeClosure = 0)
         {
             double closure = FaceClosure(sleepPose);
             restingMouth.Color = Color.FromRgb((byte)(40 + 197 * closure), (byte)(32 + 203 * closure), (byte)(33 + 196 * closure));
@@ -447,14 +512,28 @@ namespace WestiePet
                 for (int i = 0; i < surface.Bind.Length; i++)
                 {
                     Vertex vertex = surface.Bind[i]; Point3D bind = vertex.P; Vector3D normal = vertex.N;
-                    bind += (vertex.RestP - bind) * closure;
-                    normal += (vertex.RestN - normal) * closure;
-                    bind.Y += (1.115 + 1.20 * bind.X * bind.X - bind.Y) * vertex.Lip * mouthRest * (1 - closure);
+                    // Blinks and contented squints close only the eye sockets.
+                    // Reuse the continuous face surface and its true normals,
+                    // so a closed eye never becomes a separate shaded disk.
+                    double localClosure = vertex.EyeSocket > .5f ? Math.Max(closure, eyeClosure) : closure;
+                    bind += (vertex.RestP - bind) * localClosure;
+                    normal += (vertex.RestN - normal) * localClosure;
+                    bind.Y += (1.115 + MouthCurve * bind.X * bind.X - bind.Y) * vertex.Lip * mouthRest * (1 - closure);
                     bind.Y -= vertex.Jaw * jawOpen * .024 * (1 - closure);
                     bind.Y += vertex.Corner * (.003 + smile * .016) * (1 - closure);
                     bind.Y += vertex.Snout * sniff * .0035;
                     bind.Z += vertex.Snout * sniff * .003;
-                    Point3D p = bind; Vector3D n = normal; Sample w = vertex.W;
+                    Sample w = vertex.W;
+                    if (corgi && w.H > .0001)
+                    {
+                        Point3D shaped = new Point3D(bind.X * CorgiHeadWidth,
+                            CorgiHeadY + (bind.Y - 1.345) * CorgiHeadHeight, .45 + (bind.Z - .45) * CorgiHeadDepth);
+                        bind += (shaped - bind) * w.H;
+                        Vector3D shapedNormal = new Vector3D(normal.X / CorgiHeadWidth,
+                            normal.Y / CorgiHeadHeight, normal.Z / CorgiHeadDepth); shapedNormal.Normalize();
+                        normal += (shapedNormal - normal) * w.H;
+                    }
+                    Point3D p = bind; Vector3D n = normal;
                     p.Y -= vertex.Neck * sleepPose * .16;
                     if (w.H > .0001)
                     {
