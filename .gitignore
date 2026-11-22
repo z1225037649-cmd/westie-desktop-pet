@@ -33,3 +33,4 @@ qa/*
 !qa/InteractionHarness.cs
 !qa/compose_previews.py
 !qa/run.ps1
+!qa/render-generated-sleep.ps1

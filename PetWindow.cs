@@ -559,7 +559,7 @@ namespace WestiePet
         {
             settings.Left = Left; settings.Top = Top;
             settings.Affection = affection; settings.Treats = treats;
-            settings.Save();
+            if (!verify) settings.Save();
         }
         string BreedName { get { return settings.Breed == "corgi" ? "柯基" : "西高地"; } }
         string ModelDescription { get { return model.IsPreRendered ? "柯基 · 连续互动动画" : "立体西高地 · 细毛与完整互动"; } }

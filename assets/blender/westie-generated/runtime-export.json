@@ -44,8 +44,8 @@
     ],
     [
       0,
-      1.06,
-      0.54
+      1.28,
+      0.64
     ],
     [
       0.255,
@@ -76,6 +76,11 @@
       0,
       1.2,
       0.82
+    ],
+    [
+      0,
+      0.83,
+      0.4
     ]
   ],
   "source_vertices": 313164,
@@ -85,6 +90,6 @@
     4096
   ],
   "max_cluster_displacement": 0.02295799919256171,
-  "technique": "face/material/UV-aware vertex clustering and root-weighted fine tapered geometry; eight analytic bones",
+  "technique": "face/material/UV-aware vertex clustering and root-weighted fine tapered geometry; nine analytic bones with a separate cervical joint",
   "runtime_axes": "Y up, Z forward; source display scale times .85"
 }

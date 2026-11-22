@@ -68,10 +68,11 @@ def weights(pos):
                     smooth(.85,1.0,y)*smooth(.64,.80,z))
     tail=smooth(.99,1.17,y)*(1-smooth(-.91,-.78,z))
     jaw=head*(1-smooth(1.17,1.28,y))*smooth(.82,.95,z)
+    neck=(1-head)*smooth(.76,1.02,y)*smooth(.12,.35,z)*(1-smooth(.75,.85,z))
     leg=1-smooth(.48,.79,y);front=smooth(-.03,.10,z);back=1-smooth(-.56,-.42,z)
     right=smooth(-.09,.09,x)
-    w=np.column_stack((np.maximum(0,1-head-tail)*(1-leg*np.maximum(front,back)),head-jaw,
-        leg*front*right,leg*front*(1-right),leg*back*right,leg*back*(1-right),tail,jaw))
+    w=np.column_stack((np.maximum(0,1-head-tail-neck)*(1-leg*np.maximum(front,back)),head-jaw,
+        leg*front*right,leg*front*(1-right),leg*back*right,leg*back*(1-right),tail,jaw,neck))
     bones=np.argsort(-w,axis=1)[:,:4];w=np.take_along_axis(w,bones,axis=1)
     w/=w.sum(1)[:,None];return bones,w
 
@@ -96,13 +97,13 @@ width=rng.uniform(.0008,.0017,len(fp))
 fur=np.stack((fp-tangent*width[:,None]+fn*.0008,fp+tangent*width[:,None]+fn*.0008,fp+dire*length[:,None]),axis=1).reshape(-1,3)
 fur_n=np.repeat(fn,3,axis=0);fur_uv=np.repeat(fu,3,axis=0);fur_tri=np.arange(len(fur)).reshape(-1,3)
 fb,fw=weights(fp);fb=np.repeat(fb,3,axis=0);fw=np.repeat(fw,3,axis=0)
-pivots=[(0,.68,-.25),(0,1.06,.54),(.255,.61,.27),(-.255,.61,.27),(.27,.61,-.77),(-.27,.61,-.77),(0,1.01,-.91),(0,1.20,.82)]
+pivots=[(0,.68,-.25),(0,1.28,.64),(.255,.61,.27),(-.255,.61,.27),(.27,.61,-.77),(-.27,.61,-.77),(0,1.01,-.91),(0,1.20,.82),(0,.83,.40)]
 candidates=cp[(cp[:,0]>.17)&(cp[:,0]<.35)&(cp[:,1]>.075)&(cp[:,1]<.17)&(cp[:,2]>.38)]
 paw=candidates[candidates[:,2].argmax()]
 anchors=[(0,1.075,1.003),paw.tolist(),(.135,1.424,.748),(-.135,1.424,.748),(0,1.26,1.04),(0,1.82,.62)]
 dtype=np.dtype([('p','<f4',3),('n','<f4',3),('uv','<f4',2),('b0','u1'),('w0','<f4'),('b1','u1'),('w1','<f4'),('b2','u1'),('w2','<f4'),('b3','u1'),('w3','<f4')])
 with (ROOT/'assets/westie-generated.mesh').open('wb') as f:
-    f.write(struct.pack('<iii',0x31505747,1,8));f.write(np.array(pivots,dtype='<f4').tobytes())
+    f.write(struct.pack('<iii',0x31505747,1,len(pivots)));f.write(np.array(pivots,dtype='<f4').tobytes())
     f.write(struct.pack('<i',6));f.write(np.array(anchors,dtype='<f4').tobytes());f.write(struct.pack('<i',2))
     for mat,pos,norm,tex,faces,bones,ww in [(0,cp,cn,cu,ct,*weights(cp)),(1,fur,fur_n,fur_uv,fur_tri,fb,fw)]:
         assert len(faces)+len(ct)<200000
@@ -113,7 +114,7 @@ report={'source_sha256':hashlib.sha256(data).hexdigest(),'skin_vertices':len(cp)
         'fur_vertices':len(fur),'fur_triangles':len(fur_tri),'anchors':anchors,'pivots':pivots,
         'source_vertices':len(p),'source_triangles':len(tri),'texture_size':[iw,ih],
         'max_cluster_displacement':float(np.linalg.norm(p-geo_pos[geo_group],axis=1).max()),
-        'technique':'face/material/UV-aware vertex clustering and root-weighted fine tapered geometry; eight analytic bones',
+        'technique':'face/material/UV-aware vertex clustering and root-weighted fine tapered geometry; nine analytic bones with a separate cervical joint',
         'runtime_axes':'Y up, Z forward; source display scale times .85'}
 (SOURCE.parent/'runtime-export.json').write_text(json.dumps(report,indent=2),encoding='utf8')
 print('RUNTIME_EXPORT_COMPLETE',json.dumps(report))

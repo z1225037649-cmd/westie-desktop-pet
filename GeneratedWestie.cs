@@ -45,8 +45,9 @@ namespace WestiePet
         readonly int[] hitVertices;
         readonly SleepSegment[,] sleepSegments = new SleepSegment[4, 2];
         Rect3D bindBounds;
-        readonly Matrix3D[] bones = new Matrix3D[8];
-        readonly Point3D[] pivots = new Point3D[8];
+        readonly Matrix3D[] bones = new Matrix3D[9];
+        readonly Matrix3D[] cervicalPoses = new Matrix3D[257];
+        readonly Point3D[] pivots = new Point3D[9];
         readonly Point3D[] anchors = new Point3D[6];
         readonly ScaleTransform3D glintVisibility = new ScaleTransform3D(1, 1, 1);
         readonly AxisAngleRotation3D facing = new AxisAngleRotation3D(new Vector3D(0, 1, 0), 52);
@@ -69,6 +70,8 @@ namespace WestiePet
             internal double W0, W1, W2, W3;
             internal Point3D SleepPosition;
             internal Vector3D SleepNormal;
+            internal double CervicalWeight;
+            internal ushort CervicalPoseIndex;
         }
 
         sealed class Surface
@@ -106,7 +109,7 @@ namespace WestiePet
                 {
                     if (reader.ReadInt32() != 0x31505747 || reader.ReadInt32() != 1)
                         throw new InvalidDataException("Unsupported generated Westie mesh format.");
-                    if (reader.ReadInt32() != 8) throw new InvalidDataException("Generated Westie bone count is invalid.");
+                    if (reader.ReadInt32() != bones.Length) throw new InvalidDataException("Generated Westie bone count is invalid.");
                     for (int i = 0; i < pivots.Length; i++) pivots[i] = ReadPoint(reader);
                     if (reader.ReadInt32() != 6) throw new InvalidDataException("Generated Westie anchor count is invalid.");
                     for (int i = 0; i < anchors.Length; i++) anchors[i] = ReadPoint(reader);
@@ -120,6 +123,7 @@ namespace WestiePet
             CreateSleepingLegs();
             AddEyeGlints();
             CacheSleepingLegs();
+            CacheCervicalJoint();
             Update(0, "idle", 0, 52, false);
         }
 
@@ -229,7 +233,7 @@ namespace WestiePet
         static byte ReadBone(BinaryReader reader)
         {
             byte result = reader.ReadByte();
-            if (result >= 8) throw new InvalidDataException("Generated Westie bone index is invalid.");
+            if (result >= 9) throw new InvalidDataException("Generated Westie bone index is invalid.");
             return result;
         }
 
@@ -303,8 +307,10 @@ namespace WestiePet
             lookX = Approach(lookX, DeadZone(targetX) * attention, dt, 2.4);
             lookY = Approach(lookY, DeadZone(targetY) * attention, dt, 2.4);
             double playPrepare = PlayReady ? Smooth(PlayActionTime / .25) * (1 - Smooth((PlayActionTime - .80) / .55)) : 0;
-            headYaw = MoveAngle(headYaw, -8 + lookX * 9 + pet * Math.Sin(stateTime * 4.4) * 7, dt, petting ? 60 : 12);
-            headTilt = MoveAngle(headTilt, pet * (-4 + Math.Sin(stateTime * 4.4) * 10) - lookX * 3 - sleepPose * 3, dt, petting ? 65 : 9);
+            headYaw = sleeping ? Approach(headYaw, 0, dt, 24)
+                : MoveAngle(headYaw, (-8 + lookX * 9 + pet * Math.Sin(stateTime * 4.4) * 7) * (1 - sleepPose), dt, petting ? 60 : 12);
+            headTilt = sleeping ? Approach(headTilt, 0, dt, 24)
+                : MoveAngle(headTilt, (pet * (-4 + Math.Sin(stateTime * 4.4) * 10) - lookX * 3) * (1 - sleepPose), dt, petting ? 65 : 9);
             headNod = MoveAngle(headNod, -1 - lookY * 5 + feed * (18 + chew * 5) + sleepPose * 9 + playPrepare * 5, dt,
                 feeding || sleeping || sleepPose > .001 ? 55 : 14);
             if (!sleeping && time >= nextBlink)
@@ -323,8 +329,21 @@ namespace WestiePet
             bones[0] = Matrix3D.Identity;
             bones[0].ScaleAt(new Vector3D(1 + breath * .5, 1 + breath, 1), new Point3D(0, .65, -.1));
             bones[0].Append(Pose(new Point3D(0, .65, -.55), new Vector3D(6 * sleepPose, 0, 0), new Vector3D(0, -.015 * sleepPose, 0)));
-            bones[1] = Pose(pivots[1], new Vector3D(headNod, headYaw, headTilt),
-                new Vector3D(pet * Math.Sin(stateTime * 4.4) * .018, -.54 * sleepPose - feed * .040, .00 * sleepPose + feed * .025));
+            double neckNod = 65 * sleepPose;
+            bones[8] = Pose(pivots[8], new Vector3D(neckNod, 0, 0), new Vector3D(0, -.08 * sleepPose, 0));
+            Vector3D headRotation = new Vector3D(headNod - neckNod, headYaw, headTilt);
+            double neckRadians = neckNod * Math.PI / 180, headClearance = .04 * sleepPose;
+            Vector3D headOffset = new Vector3D(pet * Math.Sin(stateTime * 4.4) * .018,
+                -feed * .040 + Math.Sin(neckRadians) * headClearance,
+                feed * .025 + Math.Cos(neckRadians) * headClearance);
+            bones[1] = Pose(pivots[1], headRotation, headOffset);
+            bones[1].Append(bones[8]);
+            for (int i = 0; i < cervicalPoses.Length; i++)
+            {
+                double amount = i / 256.0;
+                cervicalPoses[i] = Pose(pivots[1], headRotation * amount, headOffset * amount);
+                cervicalPoses[i].Append(bones[8]);
+            }
             for (int i = 0; i < 4; i++)
             {
                 double angle = walking ? Math.Sin(walkPhase + (i == 0 || i == 3 ? 0 : Math.PI)) * (i < 2 ? 21 : 18) : 0;
@@ -332,7 +351,9 @@ namespace WestiePet
                 angle *= 1 - sleepPose;
                 bones[i + 2] = Pose(pivots[i + 2], new Vector3D(angle, 0, 0), new Vector3D());
             }
-            bones[6] = Pose(pivots[6], new Vector3D(-65 * sleepPose, 0, tailAngle), new Vector3D(0, 0, .08 * sleepPose));
+            // Keep the short tail in its standing pose while the dog lies down.
+            // The wag fades out; no sleep bend or root offset is applied.
+            bones[6] = Pose(pivots[6], new Vector3D(0, 0, tailAngle), new Vector3D());
             bones[7] = Pose(pivots[7], new Vector3D(-jawAngle, 0, 0), new Vector3D());
             bones[7].Append(bones[1]);
             facing.Angle = Finite(headingAngle) ? headingAngle : 52;
@@ -371,10 +392,12 @@ namespace WestiePet
                     CloseEyes(ref bind);
                     double x = 0, y = 0, z = 0, nx = 0, ny = 0, nz = 0;
                     double legBlend = vertex.Position.Y < .80 && sleepPose >= .000001 ? sleepPose : 0;
-                    Accumulate(bind, vertex.Normal, bones[vertex.B0], MovingWeight(vertex.B0, vertex.W0, legBlend), ref x, ref y, ref z, ref nx, ref ny, ref nz);
-                    Accumulate(bind, vertex.Normal, bones[vertex.B1], MovingWeight(vertex.B1, vertex.W1, legBlend), ref x, ref y, ref z, ref nx, ref ny, ref nz);
-                    Accumulate(bind, vertex.Normal, bones[vertex.B2], MovingWeight(vertex.B2, vertex.W2, legBlend), ref x, ref y, ref z, ref nx, ref ny, ref nz);
-                    Accumulate(bind, vertex.Normal, bones[vertex.B3], MovingWeight(vertex.B3, vertex.W3, legBlend), ref x, ref y, ref z, ref nx, ref ny, ref nz);
+                    Accumulate(bind, vertex.Normal, bones[vertex.B0], MovingWeight(vertex.B0, vertex.W0, legBlend, vertex.CervicalWeight), ref x, ref y, ref z, ref nx, ref ny, ref nz);
+                    Accumulate(bind, vertex.Normal, bones[vertex.B1], MovingWeight(vertex.B1, vertex.W1, legBlend, vertex.CervicalWeight), ref x, ref y, ref z, ref nx, ref ny, ref nz);
+                    Accumulate(bind, vertex.Normal, bones[vertex.B2], MovingWeight(vertex.B2, vertex.W2, legBlend, vertex.CervicalWeight), ref x, ref y, ref z, ref nx, ref ny, ref nz);
+                    Accumulate(bind, vertex.Normal, bones[vertex.B3], MovingWeight(vertex.B3, vertex.W3, legBlend, vertex.CervicalWeight), ref x, ref y, ref z, ref nx, ref ny, ref nz);
+                    if (vertex.CervicalWeight > 0)
+                        Accumulate(bind, vertex.Normal, cervicalPoses[vertex.CervicalPoseIndex], vertex.CervicalWeight, ref x, ref y, ref z, ref nx, ref ny, ref nz);
                     // The root lowering is shared by skin, fur and landmarks.
                     x += vertex.SleepPosition.X * legBlend; y += vertex.SleepPosition.Y * legBlend; z += vertex.SleepPosition.Z * legBlend;
                     nx += vertex.SleepNormal.X * legBlend; ny += vertex.SleepNormal.Y * legBlend; nz += vertex.SleepNormal.Z * legBlend;
@@ -408,9 +431,9 @@ namespace WestiePet
                 // Targets include the eventual root lowering. Upper and lower
                 // limbs bend independently; feet retain their ground-facing pose.
                 Point3D ta = Pose(new Point3D(0, .65, -.55), new Vector3D(6, 0, 0), new Vector3D(0, -.015, 0)).Transform(a);
-                Point3D tb = new Point3D(x + side * (front ? .055 : .08), front ? .51 : .50, front ? .43 : -.63);
+                Point3D tb = new Point3D(x + side * (front ? .055 : .08), front ? .51 : .50, front ? .57 : -.63);
                 Point3D tc = new Point3D(x + (front ? 0 : side * .03),
-                    .36 + .03 + (c.Y - .03) * .65, c.Z + (front ? .28 : -.03));
+                    .36 + .03 + (c.Y - .03) * .65, c.Z + (front ? .52 : -.03));
                 sleepSegments[leg, 0] = MakeSleepSegment(a, b, ta, tb);
                 sleepSegments[leg, 1] = MakeSleepSegment(b, c, tb, tc);
             }
@@ -476,10 +499,33 @@ namespace WestiePet
             if (posed.Y < .385) { posed.Y = .385; posedNormal = new Vector3D(0, -1, 0); }
         }
 
-        static double MovingWeight(byte bone, double weight, double legBlend)
+        static double MovingWeight(byte bone, double weight, double legBlend, double cervicalWeight)
         {
+            if (cervicalWeight > 0 && (bone == 1 || bone == 8)) return 0;
             return bone >= 2 && bone <= 5 && weight >= .000001 ? weight * (1 - legBlend) : weight;
         }
+
+        void CacheCervicalJoint()
+        {
+            // Interpolate joint rotation rather than linearly collapsing the
+            // head and neck matrices into each other at a deeply bent joint.
+            foreach (Surface surface in surfaces)
+            for (int i = 0; i < surface.Bind.Length; i++)
+            {
+                Vertex vertex = surface.Bind[i]; double head = 0, neck = 0;
+                AddCervicalWeight(vertex.B0, vertex.W0, ref head, ref neck);
+                AddCervicalWeight(vertex.B1, vertex.W1, ref head, ref neck);
+                AddCervicalWeight(vertex.B2, vertex.W2, ref head, ref neck);
+                AddCervicalWeight(vertex.B3, vertex.W3, ref head, ref neck);
+                if (head < .000001 || neck < .000001) continue;
+                vertex.CervicalWeight = head + neck;
+                vertex.CervicalPoseIndex = (ushort)Math.Round(head / vertex.CervicalWeight * 256);
+                surface.Bind[i] = vertex;
+            }
+        }
+
+        static void AddCervicalWeight(byte bone, double weight, ref double head, ref double neck)
+        { if (bone == 1) head += weight; else if (bone == 8) neck += weight; }
 
         void CacheSleepingLegs()
         {

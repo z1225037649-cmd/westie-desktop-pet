@@ -31,6 +31,11 @@ static class GeneratedChecks
             GeneratedWestie generated = Field<GeneratedWestie>(model, "generated");
             Require(generated != null && Contains(model.Scene, generated.Model), "The production Westie scene does not contain the generated model.");
             Require(!model.IsPreRendered, "The generated dog must be a volumetric 3D model.");
+            if (args.Length > 0 && args[0] == "--sleep-neck-view")
+            {
+                RenderSleepNeckDiagnostic(model, generated);
+                return 0;
+            }
             if (args.Length > 0 && args[0] == "--sleep-view")
             {
                 model.Heading.Angle = 0;
@@ -194,13 +199,16 @@ static class GeneratedChecks
         Point3D[] centers = generated.EyeCenters;
         Point3D mid = new Point3D((centers[0].X + centers[1].X) / 2, (centers[0].Y + centers[1].Y) / 2,
             (centers[0].Z + centers[1].Z) / 2);
-        double headRadians = generated.HeadNod * Math.PI / 180;
-        Vector3D eyeFacing = new Vector3D(0, -Math.Sin(headRadians), Math.Cos(headRadians));
-        // A deeply nodded sleeping head points its eye plane toward the floor.
-        // Follow that plane for the same-pose aperture comparison while keeping
-        // the caller's 8/40-degree model headings and horizontal eye parallax.
+        Matrix3D headWorld = Field<Matrix3D[]>(generated, "bones")[1];
+        headWorld.Append(Field<RotateTransform3D>(generated, "heading").Value);
+        // The original 8/40-degree views with the resting -8-degree head yaw
+        // observed the eye plane at 0/32 degrees. Preserve those relative views
+        // while following the actual cumulative head/neck pitch, yaw and roll.
+        double relativeYaw = (heading - 8) * Math.PI / 180;
+        Vector3D eyeFacing = headWorld.Transform(new Vector3D(-Math.Sin(relativeYaw), 0, Math.Cos(relativeYaw)));
+        Vector3D eyeUp = headWorld.Transform(new Vector3D(0, 1, 0));
         OrthographicCamera camera = new OrthographicCamera(mid + eyeFacing * 6, eyeFacing * -6,
-            new Vector3D(0, Math.Cos(headRadians), Math.Sin(headRadians)), .9);
+            eyeUp, .9);
         Viewport3D view = PetWindow.CreateViewport(model); view.Camera = camera;
         try
         {
@@ -343,9 +351,10 @@ static class GeneratedChecks
         Require(frontFootTriangles.Count > 20 && chinTriangles.Count > 20, "Actual front-paw and lower muzzle/chin triangle samples are missing.");
         List<SleepEdge> ankleEdges = SleepAnkleEdges(rest, triangles);
         Require(ankleEdges.Count > 20, "The standing ankle skin has no measurable triangle edges.");
+        SleepCollisionAudit collisionAudit = CaptureSleepCollisionAudit(generated, rest, triangles);
         File.WriteAllText(Path.Combine(Output, "sleep-transition.csv"),
             "state,age,footVertices,lowestFootY,frontFootHeadGap,headPawIntersections,ankleEdges,maxEdgeRatio,p95EdgeRatio,worstVertexA,worstVertexB\r\n");
-        CheckSleepTransition(model, generated, "sleep", rest, feet, frontFootTriangles, triangles, headTriangles, ankleEdges);
+        CheckSleepTransition(model, generated, "sleep", rest, feet, frontFootTriangles, triangles, headTriangles, ankleEdges, collisionAudit);
         Point3D[] asleep = generated.GetSkinnedPositions(0);
         int onFloor = 0; double floor = double.PositiveInfinity, maximum = double.NegativeInfinity;
         List<string> measurements = new List<string> { "vertex,restX,restY,restZ,sleepX,sleepY,sleepZ" };
@@ -385,7 +394,7 @@ static class GeneratedChecks
             "Actual sleeping head and front-paw surfaces intersect or lose their small safety gap: gap=" + clearance + ", intersections=" + headContact.Intersections + ".");
         Require(chinContact.Gap < .12, "The actual lower muzzle/chin remains too far above the front-paw surface: gap=" + chinContact.Gap + ".");
         Point3D sleepingMouth = generated.Mouth;
-        CheckSleepTransition(model, generated, "idle", rest, feet, frontFootTriangles, triangles, headTriangles, ankleEdges);
+        CheckSleepTransition(model, generated, "idle", rest, feet, frontFootTriangles, triangles, headTriangles, ankleEdges, collisionAudit);
         Point3D[] awake = generated.GetSkinnedPositions(0); double returnError = 0;
         foreach (int i in feet) returnError = Math.Max(returnError, (awake[i] - rest[i]).Length);
         Require(returnError < .015, "The flattened sleep feet did not blend back to their actual standing vertices: " + returnError + ".");
@@ -396,6 +405,7 @@ static class GeneratedChecks
             + ", actualMuzzleChinToFrontPawGap=" + chinContact.Gap + ", wakeReturnError=" + returnError + "\r\n");
         Pass("same actual foot vertices stay on the floor during sleep, underside triangles stay flat, front paws clear head/muzzle geometry, and waking restores standing feet");
         Pass("sleep/wake at 0.25/0.50/0.75/2.40s preserve paw-floor and actual muzzle clearances; standing ankle-skin edge stretch remains below 6x");
+        Pass("actual head/neck nonadjacent triangle pairs introduce no intersections beyond the source bind baseline during sleep and wake");
     }
 
     static void CheckSleepingLegSupport(GeneratedWestie generated, Point3D[] rest, Point3D[] asleep, Point3D[] awake,
@@ -515,7 +525,8 @@ static class GeneratedChecks
         return edges;
     }
     static void CheckSleepTransition(WestieModel model, GeneratedWestie generated, string state, Point3D[] rest,
-        List<int> feet, List<int> frontFootTriangles, int[] triangles, List<int> headTriangles, List<SleepEdge> ankleEdges)
+        List<int> feet, List<int> frontFootTriangles, int[] triangles, List<int> headTriangles, List<SleepEdge> ankleEdges,
+        SleepCollisionAudit collisionAudit)
     {
         model.BeginAction(state); double previousAge = 0;
         foreach (double targetAge in new[] { .25, .50, .75, 2.4 })
@@ -528,6 +539,7 @@ static class GeneratedChecks
             if (remaining > .000001) Step(model, state, targetAge, remaining);
             previousAge = targetAge;
             Point3D[] pose = generated.GetSkinnedPositions(0);
+            AuditSleepingHeadNeck(pose, state == "sleep" ? "sleep" : "wake", targetAge, collisionAudit, true);
             double floor = double.PositiveInfinity;
             foreach (int foot in feet) floor = Math.Min(floor, pose[foot].Y);
             SleepSurfaceContact contact = SleepingSurfaceContact(pose, triangles, frontFootTriangles, headTriangles);
@@ -557,6 +569,7 @@ static class GeneratedChecks
     sealed class SleepTriangle
     {
         internal Point3D A, B, C;
+        internal int IndexA, IndexB, IndexC, Offset;
         internal double MinX, MaxX, MinY, MaxY, MinZ, MaxZ;
     }
     static List<SleepTriangle> SleepTriangleSurface(Point3D[] pose, int[] indices, List<int> offsets)
@@ -566,11 +579,194 @@ static class GeneratedChecks
         {
             Point3D a = pose[indices[t]], b = pose[indices[t + 1]], c = pose[indices[t + 2]];
             result.Add(new SleepTriangle { A = a, B = b, C = c,
+                IndexA = indices[t], IndexB = indices[t + 1], IndexC = indices[t + 2], Offset = t,
                 MinX = Math.Min(a.X, Math.Min(b.X, c.X)), MaxX = Math.Max(a.X, Math.Max(b.X, c.X)),
                 MinY = Math.Min(a.Y, Math.Min(b.Y, c.Y)), MaxY = Math.Max(a.Y, Math.Max(b.Y, c.Y)),
                 MinZ = Math.Min(a.Z, Math.Min(b.Z, c.Z)), MaxZ = Math.Max(a.Z, Math.Max(b.Z, c.Z)) });
         }
         return result;
+    }
+
+    sealed class SleepCollisionAudit
+    {
+        internal int[] Indices;
+        internal List<int> Head = new List<int>(), Neck = new List<int>(), Tail = new List<int>(), Back = new List<int>();
+        internal HashSet<long> BindHeadNeckPairs, BindTailBackPairs;
+    }
+    static void RenderSleepNeckDiagnostic(WestieModel model, GeneratedWestie generated)
+    {
+        model.Heading.Angle = 0; model.WalkingPaused = false;
+        Advance(model, "idle", 2.4, .042);
+        Point3D[] standing = generated.GetSkinnedPositions(0);
+        MeshGeometry3D mesh = (MeshGeometry3D)((GeometryModel3D)generated.Model.Children[0]).Geometry;
+        int[] indices = new int[mesh.TriangleIndices.Count]; mesh.TriangleIndices.CopyTo(indices, 0);
+        SleepCollisionAudit audit = CaptureSleepCollisionAudit(generated, standing, indices);
+        HashSet<int> neckVertices = new HashSet<int>();
+        foreach (int t in audit.Neck)
+        for (int corner = 0; corner < 3; corner++) neckVertices.Add(indices[t + corner]);
+        List<int> neckPoints = new List<int>(neckVertices);
+        foreach (string state in new[] { "sleep", "idle" })
+        {
+            string name = state == "sleep" ? "sleep" : "wake";
+            model.BeginAction(state); double previousAge = 0;
+            foreach (double age in new[] { .25, .50, .75, 2.4 })
+            {
+                while (previousAge + .042 < age)
+                { previousAge += .042; Step(model, state, previousAge, .042); }
+                double remaining = age - previousAge;
+                if (remaining > .000001) Step(model, state, age, remaining);
+                previousAge = age;
+                AuditSleepingHeadNeck(generated.GetSkinnedPositions(0), name, age, audit, false);
+                string sample = "sleep-neck-view-" + name + "-" + age.ToString("0.00", CultureInfo.InvariantCulture);
+                SaveSleepNeckCloseup(model, generated, neckPoints, sample + "-front-close");
+                if (age < 2.39) continue;
+                foreach (KeyValuePair<string, double> angle in new[] {
+                    new KeyValuePair<string, double>("front", 0),
+                    new KeyValuePair<string, double>("threequarter", 52),
+                    new KeyValuePair<string, double>("side", 90) })
+                {
+                    model.Heading.Angle = angle.Value; Step(model, state, age, .002);
+                    Save(Render(PetWindow.CreateViewport(model), 512, 448), sample + "-" + angle.Key + "-full");
+                    if (angle.Value != 0) SaveSleepNeckCloseup(model, generated, neckPoints, sample + "-" + angle.Key + "-close");
+                }
+                model.Heading.Angle = 0; Step(model, state, age, .002);
+            }
+        }
+        string note = "DIAGNOSTIC: actual source Bind head/neck baseline and production sleep/wake at 0.25/0.50/0.75/2.40s.\r\n"
+            + "All eight samples were collected with enforce=false; discovered intersections do not abort this diagnostic.\r\n"
+            + "CSV: sleep-head-neck-crossings.csv, sleep-head-neck-bind-pairs.csv, sleep-head-neck-new-pairs.csv.\r\n"
+            + "Images: all samples have neck closeups; terminal sleep and wake have normal full-body front/52/90-degree views.\r\n"
+            + "This is not a regression PASS or appearance approval. All normal regression assertions remain active outside this mode.\r\n";
+        File.WriteAllText(Path.Combine(Output, "sleep-neck-view-diagnostic.txt"), note);
+        Console.WriteLine(note + File.ReadAllText(Path.Combine(Output, "sleep-head-neck-crossings.csv")) + "DIAGNOSTIC output: " + Output);
+    }
+    static void SaveSleepNeckCloseup(WestieModel model, GeneratedWestie generated, List<int> neckPoints, string name)
+    {
+        Point3D target = Centroid(generated.GetSkinnedPositions(0), neckPoints);
+        Viewport3D view = PetWindow.CreateViewport(model);
+        view.Camera = new OrthographicCamera(target + new Vector3D(0, .15, 6), new Vector3D(0, -.15, -6), new Vector3D(0, 1, 0), 1.5);
+        Save(Render(view, 600, 480), name);
+    }
+    static SleepCollisionAudit CaptureSleepCollisionAudit(GeneratedWestie generated, Point3D[] standing, int[] indices)
+    {
+        System.Collections.IList surfaces = Field<System.Collections.IList>(generated, "surfaces");
+        Array bind = Field<Array>(surfaces[0], "Bind"); Type vertexType = bind.GetType().GetElementType();
+        FieldInfo position = vertexType.GetField("Position", Private);
+        FieldInfo[] bones = new FieldInfo[4], weights = new FieldInfo[4];
+        for (int i = 0; i < 4; i++) { bones[i] = vertexType.GetField("B" + i, Private); weights[i] = vertexType.GetField("W" + i, Private); }
+        Point3D[] original = new Point3D[bind.Length]; bool[] distalTail = new bool[bind.Length], rearBody = new bool[bind.Length];
+        for (int i = 0; i < bind.Length; i++)
+        {
+            object vertex = bind.GetValue(i); Point3D p = (Point3D)position.GetValue(vertex); original[i] = p;
+            int dominant = -1; double strongest = 0;
+            for (int influence = 0; influence < 4; influence++)
+            {
+                double weight = (double)weights[influence].GetValue(vertex);
+                if (weight <= strongest) continue;
+                strongest = weight; dominant = (byte)bones[influence].GetValue(vertex);
+            }
+            distalTail[i] = strongest > .55 && dominant == 6 && p.Z < -.95;
+            rearBody[i] = strongest > .55 && dominant == 0 && p.Y > .65 && p.Y < 1.20 && p.Z < -.30;
+        }
+        SleepCollisionAudit audit = new SleepCollisionAudit { Indices = indices };
+        for (int t = 0; t < indices.Length; t += 3)
+        {
+            int a = indices[t], b = indices[t + 1], c = indices[t + 2];
+            Point3D center = new Point3D((original[a].X + original[b].X + original[c].X) / 3,
+                (original[a].Y + original[b].Y + original[c].Y) / 3, (original[a].Z + original[b].Z + original[c].Z) / 3);
+            if (center.Y > 1.20 && center.Z > .35) audit.Head.Add(t);
+            if (center.Y >= .85 && center.Y <= 1.15 && center.Z >= .20 && center.Z <= .75) audit.Neck.Add(t);
+            if ((distalTail[a] ? 1 : 0) + (distalTail[b] ? 1 : 0) + (distalTail[c] ? 1 : 0) >= 2) audit.Tail.Add(t);
+            if ((rearBody[a] ? 1 : 0) + (rearBody[b] ? 1 : 0) + (rearBody[c] ? 1 : 0) >= 2) audit.Back.Add(t);
+        }
+        Require(audit.Head.Count > 20 && audit.Neck.Count > 20, "The actual source head/neck triangle regions are missing.");
+        audit.BindHeadNeckPairs = SleepNonAdjacentCrossings(original, indices, audit.Head, audit.Neck);
+        File.WriteAllText(Path.Combine(Output, "sleep-head-neck-crossings.csv"),
+            "sample,age,sourceBindPairs,currentPairs,introducedPairs,headTriangles,neckTriangles\r\n"
+            + "source-bind,0," + audit.BindHeadNeckPairs.Count + "," + audit.BindHeadNeckPairs.Count + ",0," + audit.Head.Count + "," + audit.Neck.Count + "\r\n");
+        List<string> baseline = new List<string> { "headTriangle,neckTriangle" };
+        foreach (long pair in audit.BindHeadNeckPairs) baseline.Add((pair >> 32) + "," + (uint)pair);
+        File.WriteAllLines(Path.Combine(Output, "sleep-head-neck-bind-pairs.csv"), baseline.ToArray());
+        File.WriteAllText(Path.Combine(Output, "sleep-head-neck-new-pairs.csv"), "sample,age,headTriangle,neckTriangle\r\n");
+        File.WriteAllText(Path.Combine(Output, "sleep-tail-diagnostic.csv"), "sample,age,tailTriangles,backTriangles,sourceBindPairs,currentPairs,introducedPairs,actualSurfaceGap\r\n");
+        if (audit.Tail.Count > 10 && audit.Back.Count > 10)
+        {
+            audit.BindTailBackPairs = SleepNonAdjacentCrossings(original, indices, audit.Tail, audit.Back);
+            ReportSleepTail(original, "source-bind", 0, audit);
+        }
+        else File.WriteAllText(Path.Combine(Output, "sleep-tail-diagnostic.txt"),
+            "DIAGNOSTIC: reliable strong-weight distal-tail/rear-body regions unavailable; no tail assertion was made.\r\n");
+        // Report the animated standing rig separately from the raw source bind
+        // mesh. Neither report silently replaces the original collision baseline.
+        AuditSleepingHeadNeck(standing, "standing", 0, audit, false);
+        Console.WriteLine("Head/neck source bind intersections=" + audit.BindHeadNeckPairs.Count + ", head/neck triangles=" + audit.Head.Count + "/" + audit.Neck.Count);
+        return audit;
+    }
+    static void AuditSleepingHeadNeck(Point3D[] pose, string sample, double age, SleepCollisionAudit audit, bool enforce)
+    {
+        HashSet<long> pairs = SleepNonAdjacentCrossings(pose, audit.Indices, audit.Head, audit.Neck);
+        HashSet<long> introduced = new HashSet<long>(pairs); introduced.ExceptWith(audit.BindHeadNeckPairs);
+        File.AppendAllText(Path.Combine(Output, "sleep-head-neck-crossings.csv"), sample + "," + age.ToString(CultureInfo.InvariantCulture)
+            + "," + audit.BindHeadNeckPairs.Count + "," + pairs.Count + "," + introduced.Count + "," + audit.Head.Count + "," + audit.Neck.Count + "\r\n");
+        foreach (long pair in introduced)
+            File.AppendAllText(Path.Combine(Output, "sleep-head-neck-new-pairs.csv"), sample + "," + age.ToString(CultureInfo.InvariantCulture)
+                + "," + (pair >> 32) + "," + (uint)pair + "\r\n");
+        if (age >= 2.39 || sample == "standing") ReportSleepTail(pose, sample, age, audit);
+        if (enforce) Require(introduced.Count == 0, "Actual nonadjacent head/neck triangles introduce intersections during "
+            + sample + " at " + age + "s: source bind=" + audit.BindHeadNeckPairs.Count + ", current=" + pairs.Count + ", new pairs=" + introduced.Count + ".");
+    }
+    static void ReportSleepTail(Point3D[] pose, string sample, double age, SleepCollisionAudit audit)
+    {
+        if (audit.BindTailBackPairs == null) return;
+        HashSet<long> pairs = SleepNonAdjacentCrossings(pose, audit.Indices, audit.Tail, audit.Back);
+        HashSet<long> introduced = new HashSet<long>(pairs); introduced.ExceptWith(audit.BindTailBackPairs);
+        SleepSurfaceContact contact = SleepingSurfaceContact(pose, audit.Indices, audit.Tail, audit.Back);
+        File.AppendAllText(Path.Combine(Output, "sleep-tail-diagnostic.csv"), sample + "," + age.ToString(CultureInfo.InvariantCulture)
+            + "," + audit.Tail.Count + "," + audit.Back.Count + "," + audit.BindTailBackPairs.Count + "," + pairs.Count
+            + "," + introduced.Count + "," + contact.Gap.ToString(CultureInfo.InvariantCulture) + "\r\n");
+        // This diagnoses actual geometry. Tail curvature/softness still needs
+        // visual review; do not turn a coarse cosmetic expectation into a test.
+    }
+    static long SleepCollisionCell(int x, int y, int z)
+    { return ((long)(x + 1024) << 42) | ((long)(y + 1024) << 21) | (uint)(z + 1024); }
+    static HashSet<long> SleepNonAdjacentCrossings(Point3D[] pose, int[] indices, List<int> first, List<int> second)
+    {
+        const double cellSize = .08, epsilon = 1e-8;
+        List<SleepTriangle> head = SleepTriangleSurface(pose, indices, first), neck = SleepTriangleSurface(pose, indices, second);
+        Dictionary<long, List<SleepTriangle>> cells = new Dictionary<long, List<SleepTriangle>>();
+        foreach (SleepTriangle b in neck)
+        for (int x = (int)Math.Floor((b.MinX - epsilon) / cellSize); x <= (int)Math.Floor((b.MaxX + epsilon) / cellSize); x++)
+        for (int y = (int)Math.Floor((b.MinY - epsilon) / cellSize); y <= (int)Math.Floor((b.MaxY + epsilon) / cellSize); y++)
+        for (int z = (int)Math.Floor((b.MinZ - epsilon) / cellSize); z <= (int)Math.Floor((b.MaxZ + epsilon) / cellSize); z++)
+        {
+            long cell = SleepCollisionCell(x, y, z); List<SleepTriangle> bucket;
+            if (!cells.TryGetValue(cell, out bucket)) { bucket = new List<SleepTriangle>(); cells.Add(cell, bucket); }
+            bucket.Add(b);
+        }
+        HashSet<long> seen = new HashSet<long>(), crossings = new HashSet<long>();
+        foreach (SleepTriangle a in head)
+        for (int x = (int)Math.Floor((a.MinX - epsilon) / cellSize); x <= (int)Math.Floor((a.MaxX + epsilon) / cellSize); x++)
+        for (int y = (int)Math.Floor((a.MinY - epsilon) / cellSize); y <= (int)Math.Floor((a.MaxY + epsilon) / cellSize); y++)
+        for (int z = (int)Math.Floor((a.MinZ - epsilon) / cellSize); z <= (int)Math.Floor((a.MaxZ + epsilon) / cellSize); z++)
+        {
+            List<SleepTriangle> candidates;
+            if (!cells.TryGetValue(SleepCollisionCell(x, y, z), out candidates)) continue;
+            foreach (SleepTriangle b in candidates)
+            {
+                long pair = ((long)(a.Offset / 3) << 32) | (uint)(b.Offset / 3);
+                if (!seen.Add(pair) || SleepTrianglesShareVertex(a, b)) continue;
+                if (a.MinX > b.MaxX + epsilon || b.MinX > a.MaxX + epsilon || a.MinY > b.MaxY + epsilon
+                    || b.MinY > a.MaxY + epsilon || a.MinZ > b.MaxZ + epsilon || b.MinZ > a.MaxZ + epsilon) continue;
+                if (SleepTrianglesCross(a, b)) crossings.Add(pair);
+            }
+        }
+        return crossings;
+    }
+    static bool SleepTrianglesShareVertex(SleepTriangle a, SleepTriangle b)
+    {
+        return a.IndexA == b.IndexA || a.IndexA == b.IndexB || a.IndexA == b.IndexC
+            || a.IndexB == b.IndexA || a.IndexB == b.IndexB || a.IndexB == b.IndexC
+            || a.IndexC == b.IndexA || a.IndexC == b.IndexB || a.IndexC == b.IndexC;
     }
     static SleepSurfaceContact SleepingSurfaceContact(Point3D[] pose, int[] indices, List<int> first, List<int> second)
     {
