@@ -14,6 +14,7 @@ namespace WestiePet
         readonly Model3DGroup dog = new Model3DGroup();
         readonly TranslateTransform3D lift = new TranslateTransform3D();
         readonly SculptedCoat sculpt;
+        readonly GeneratedWestie generated;
         readonly TennisToy playToy;
         readonly Model3DGroup biscuit = new Model3DGroup();
         readonly ScaleTransform3D biscuitSize = new ScaleTransform3D(0, 0, 0);
@@ -35,11 +36,11 @@ namespace WestiePet
         readonly bool naturalLook;
         readonly bool corgi;
         readonly CorgiSprite artwork;
-        readonly Model3DGroup artworkTreat = new Model3DGroup();
-        readonly ScaleTransform3D artworkTreatSize = new ScaleTransform3D(0, 0, 0);
-        readonly TranslateTransform3D artworkTreatPosition = new TranslateTransform3D();
         public string Breed { get; private set; }
         public bool IsPreRendered { get { return artwork != null; } }
+        internal GeneratedWestie GeneratedPet { get { return generated; } }
+        internal CorgiSprite CorgiPet { get { return artwork; } }
+        internal double TimedActionDuration { get { return artwork == null ? 0 : artwork.ActiveDuration; } }
         readonly ScaleTransform3D[] closedEyes = new ScaleTransform3D[2];
         readonly ScaleTransform3D closedMouth = new ScaleTransform3D(.001, .001, .001);
         readonly TranslateTransform3D[] eyeRetraction = new TranslateTransform3D[2];
@@ -77,36 +78,50 @@ namespace WestiePet
         public bool WalkingPaused { get; set; }
         internal double PlayActionTime { get; private set; }
         internal bool PlayReady { get; private set; }
-        internal Rect3D DogBounds { get { return artwork != null ? artwork.Bounds : dog.Bounds; } }
+        internal Rect3D DogBounds { get { return artwork != null ? artwork.Bounds : generated != null ? generated.Bounds : dog.Bounds; } }
         internal bool ArtworkHitTest(double x, double y) { return artwork != null && artwork.HitTest(x, y); }
 
-        public WestieModel() : this(false, true, "westie") { }
+        // The compile flag is used only by historical sculpted-model
+        // QA executables. Shipping builds always use the generated Westie.
+#if LEGACY_WESTIE_QA
+        const bool LegacyQa = true;
+#else
+        const bool LegacyQa = false;
+#endif
+        public WestieModel() : this(false, true, "westie", LegacyQa) { }
 
-        public WestieModel(string breed) : this(false, true, breed) { }
+        public WestieModel(string breed) : this(false, true, breed, LegacyQa) { }
 
-        internal WestieModel(bool naturalLook, bool withCoat) : this(naturalLook, withCoat, "westie") { }
+        // Explicit appearance-study constructors retain the archived procedural
+        // model so its old visual research remains reproducible.
+        internal WestieModel(bool naturalLook, bool withCoat) : this(naturalLook, withCoat, "westie", true) { }
 
-        internal WestieModel(bool naturalLook, bool withCoat, string breed)
+        internal WestieModel(bool naturalLook, bool withCoat, string breed) : this(naturalLook, withCoat, breed, true) { }
+
+        WestieModel(bool naturalLook, bool withCoat, string breed, bool legacyStudy)
         {
             this.naturalLook = naturalLook;
             Breed = PetSettings.ReadBreed(breed); corgi = Breed == "corgi";
             if (corgi)
             {
-                // The quality-first option uses the user's high-resolution
-                // artwork, with local 2.5D rigging; it is not a turntable model.
+                // Real skeleton/morph clips rendered into continuous frames.
+                // The ball and treat already share the baked frame camera.
                 artwork = new CorgiSprite(); Scene.Children.Add(artwork.Model);
                 TriangleCount = artwork.TriangleCount;
-                Scene.Children.Add(new AmbientLight(Color.FromRgb(172, 175, 180)));
-                Scene.Children.Add(new DirectionalLight(Color.FromRgb(120, 113, 100), new Vector3D(-2, -3, -4)));
-                playToy = new TennisToy(); Scene.Children.Add(playToy.Model); TriangleCount += playToy.TriangleCount;
-                Transform3DGroup food = new Transform3DGroup(); food.Children.Add(artworkTreatSize);
-                food.Children.Add(artworkTreatPosition); artworkTreat.Transform = food;
-                Material baked = Matte(198, 130, 56);
-                Ball(artworkTreat, 0, 0, 0, .07, .034, .025, baked, true);
-                for (int s = -1; s <= 1; s += 2) for (int t = -1; t <= 1; t += 2)
-                    Ball(artworkTreat, s * .061, t * .022, 0, .032, .027, .025, baked, true);
-                Scene.Children.Add(artworkTreat);
+                Scene.Children.Add(new AmbientLight(Colors.White));
                 artwork.Update(0, "idle", 0, Heading.Angle, false);
+                return;
+            }
+            if (!legacyStudy)
+            {
+                generated = new GeneratedWestie(); Scene.Children.Add(generated.Model);
+                TriangleCount = generated.TriangleCount;
+                Scene.Children.Add(new AmbientLight(Color.FromRgb(139, 144, 151)));
+                Scene.Children.Add(new DirectionalLight(Color.FromRgb(143, 135, 124), new Vector3D(-2, -3, -4)));
+                Scene.Children.Add(new DirectionalLight(Color.FromRgb(58, 70, 89), new Vector3D(3, -1, 1)));
+                Scene.Children.Add(new DirectionalLight(Color.FromRgb(83, 87, 91), new Vector3D(-1, -1, 4)));
+                BuildTreat(Scene);
+                playToy = new TennisToy(); Scene.Children.Add(playToy.Model); TriangleCount += playToy.TriangleCount;
                 return;
             }
             // Keep the visual baseline chosen by the user; animation and
@@ -242,7 +257,9 @@ namespace WestiePet
             // The treat shares the muzzle transform, so it stays at the mouth
             // while the dog lowers its head and chews, including in the home preview.
             Transform3DGroup transform = new Transform3DGroup();
-            transform.Children.Add(biscuitSize); transform.Children.Add(biscuitPosition);
+            transform.Children.Add(biscuitSize);
+            if (generated != null) transform.Children.Add(new RotateTransform3D(Heading));
+            transform.Children.Add(biscuitPosition);
             biscuit.Transform = transform; head.Children.Add(biscuit);
             Material baked = Matte(191, 121, 48), edge = Matte(219, 159, 79), holes = Matte(132, 80, 34);
             Ball(biscuit, 0, 0, 0, .105, .043, .035, baked, true);
@@ -282,6 +299,32 @@ namespace WestiePet
             }
         }
 
+        void AnimateGeneratedTreat(bool feeding, double stateTime)
+        {
+            double approach = SmoothStep(stateTime / .85);
+            double eaten = stateTime < 1.25 ? 1 : stateTime < 2.0 ? .76 : stateTime < 2.75 ? .50 : stateTime < 3.5 ? .26 : 0;
+            double size = feeding ? SmoothStep(stateTime / .18) * eaten : 0;
+            biscuitSize.ScaleX = biscuitSize.ScaleY = biscuitSize.ScaleZ = size;
+            Point3D mouthPoint = generated.Mouth;
+            RotateTransform3D turn = new RotateTransform3D(Heading);
+            Vector3D forward = turn.Transform(new Vector3D(0, 0, 1));
+            Vector3D side = turn.Transform(new Vector3D(1, 0, 0));
+            Point3D treat = mouthPoint + forward * (.055 + .42 * (1 - approach));
+            treat.Y -= .07 * (1 - approach);
+            biscuitPosition.OffsetX = treat.X; biscuitPosition.OffsetY = treat.Y; biscuitPosition.OffsetZ = treat.Z;
+            for (int i = 0; i < crumbSizes.Length; i++)
+            {
+                double age = stateTime - 1.25;
+                if (age >= 0) age %= .75;
+                bool visible = feeding && stateTime >= 1.25 && stateTime < 4 && age < .45;
+                double scale = visible ? 1 - age / .45 : 0;
+                crumbSizes[i].ScaleX = crumbSizes[i].ScaleY = crumbSizes[i].ScaleZ = scale;
+                Point3D crumb = mouthPoint + side * ((i - 2) * (.019 + Math.Max(0, age) * .11)) + forward * (.075 + i * .008);
+                crumb.Y -= .025 + Math.Max(0, age) * Math.Max(0, age) * .9;
+                crumbPositions[i].OffsetX = crumb.X; crumbPositions[i].OffsetY = crumb.Y; crumbPositions[i].OffsetZ = crumb.Z;
+            }
+        }
+
         static double SmoothStep(double value)
         {
             double t = Math.Max(0, Math.Min(1, value));
@@ -290,6 +333,7 @@ namespace WestiePet
 
         public void LookAt(double x, double y, double strength)
         {
+            if (generated != null) { generated.LookAt(x, y, strength); return; }
             attentionX = Math.Max(-1, Math.Min(1, x)); attentionY = Math.Max(-1, Math.Min(1, y));
             attentionStrength = Math.Max(0, Math.Min(1, strength));
         }
@@ -298,30 +342,34 @@ namespace WestiePet
         // between animation ticks. Animate also accepts standalone QA callers.
         internal void BeginAction(string state)
         {
+            if (generated != null) generated.BeginAction(state);
+            if (artwork != null) artwork.BeginAction(state);
             pendingAction = state;
             if (state == "play") { PlayActionTime = 0; PlayReady = false; }
         }
 
         public void Animate(double time, string state, double stateTime)
         {
+            if (generated != null)
+            {
+                generated.Update(time, state, stateTime, Heading.Angle, WalkingPaused);
+                PlayReady = generated.PlayReady; PlayActionTime = generated.PlayActionTime;
+                AnimateGeneratedTreat(state == "feed", stateTime);
+                Point3D contact = generated.PlayContactPaw;
+                Vector3D forward = new RotateTransform3D(Heading).Transform(new Vector3D(0, 0, 1));
+                double roll = Math.Max(0, Math.Min(1, (PlayActionTime - PlayContactTime) / 3.0));
+                double distance = .60 * (1 - (1 - roll) * (1 - roll));
+                double hop = PlayActionTime > PlayContactTime && PlayActionTime < PlayContactTime + .40
+                    ? Math.Sin((PlayActionTime - PlayContactTime) * Math.PI / .40) * .012 : 0;
+                Point3D ball = contact + forward * (.115 + distance);
+                ball.Y = .139 + hop;
+                playToy.UpdateAt(PlayReady, ball, distance);
+                return;
+            }
             if (artwork != null)
             {
                 artwork.Update(time, state, stateTime, Heading.Angle, WalkingPaused);
-                Point3D mouthPoint = artwork.Mouth;
-                bool feedingArtwork = state == "feed" && stateTime >= .4 && stateTime < 4.1;
-                double foodAmount = !feedingArtwork ? 0 : stateTime < 1.5 ? 1 : stateTime < 2.3 ? .72 : stateTime < 3.1 ? .43 : .18;
-                artworkTreatSize.ScaleX = artworkTreatSize.ScaleY = artworkTreatSize.ScaleZ = foodAmount * .72;
-                double approach = Math.Max(0, 1 - (stateTime - .4) / .65);
-                artworkTreatPosition.OffsetX = mouthPoint.X + (Heading.Angle < 0 ? -.18 : .18) * approach;
-                artworkTreatPosition.OffsetY = mouthPoint.Y + .035 - approach * .14;
-                artworkTreatPosition.OffsetZ = mouthPoint.Z + .18;
-                PlayReady = state == "play"; PlayActionTime = Math.Max(0, stateTime);
-                Point3D paw = artwork.FrontPaw;
-                Vector3D ball = PlayBallMotion(stateTime);
-                ball.X = paw.X + (Heading.Angle < 0 ? -1 : 1) * (.16 + Math.Max(0, stateTime - .72) * .10);
-                ball.Y = .14 + Math.Max(0, Math.Sin((stateTime - .72) * 4)) * .045 * Math.Exp(-Math.Max(0, stateTime - .72));
-                ball.Z = .18;
-                playToy.Update(state == "play", ball);
+                PlayReady = artwork.PlayReady; PlayActionTime = artwork.PlayActionTime;
                 return;
             }
             bool walking = state == "walk", sleeping = state == "sleep", playing = state == "play";
@@ -1031,6 +1079,17 @@ namespace WestiePet
             spin.Angle = distance / Radius * 180 / Math.PI;
             shadowPosition.OffsetX = position.OffsetX; shadowPosition.OffsetZ = position.OffsetZ;
             shadowScale.ScaleX = shadowScale.ScaleZ = 1 + motion.Y * .12;
+        }
+
+        // Generated and artwork pets supply scene-space positions. The old
+        // Update method above retains its calibrated procedural-model path.
+        internal void UpdateAt(bool active, Point3D center, double distance)
+        {
+            visibility.ScaleX = visibility.ScaleY = visibility.ScaleZ = active ? 1 : 0;
+            position.OffsetX = center.X; position.OffsetY = center.Y; position.OffsetZ = center.Z;
+            spin.Angle = distance / Radius * 180 / Math.PI;
+            shadowPosition.OffsetX = center.X; shadowPosition.OffsetZ = center.Z;
+            shadowScale.ScaleX = shadowScale.ScaleZ = 1 + Math.Max(0, center.Y - .139) * 10;
         }
     }
 }

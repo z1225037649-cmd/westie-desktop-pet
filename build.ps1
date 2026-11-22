@@ -8,14 +8,16 @@ $references = @('System.dll', 'System.Core.dll', 'System.Xml.dll', 'System.Xml.L
 $arguments = @('/nologo', '/target:winexe', '/optimize+', '/platform:anycpu', '/codepage:65001', "/out:$output", "/win32manifest:$PSScriptRoot\app.manifest")
 $homeIcon = Join-Path $PSScriptRoot 'assets\westie-home.ico'
 $arguments += @("/win32icon:$homeIcon", "/resource:$homeIcon,WestiePet.HomeIcon")
-$arguments += "/resource:$PSScriptRoot\assets\corgi-hd.png,WestiePet.CorgiArtwork"
+$arguments += "/resource:$PSScriptRoot\assets\corgi-animation.frames,WestiePet.CorgiAnimation"
+$arguments += "/resource:$PSScriptRoot\assets\westie-generated.mesh,WestiePet.GeneratedMesh"
+$arguments += "/resource:$PSScriptRoot\assets\westie-generated.png,WestiePet.GeneratedTexture"
 foreach ($reference in $references) { $arguments += "/reference:$framework\$reference" }
 foreach ($reference in @('PresentationCore.dll', 'PresentationFramework.dll', 'WindowsBase.dll', 'System.Xaml.dll')) {
     $path = Join-Path $framework "WPF\$reference"
     if (-not (Test-Path -LiteralPath $path)) { $path = Join-Path $framework $reference }
     $arguments += "/reference:$path"
 }
-$arguments += @("$PSScriptRoot\Program.cs", "$PSScriptRoot\WestieModel.cs", "$PSScriptRoot\SculptedCoat.cs", "$PSScriptRoot\CorgiSprite.cs", "$PSScriptRoot\PetWindow.cs")
+$arguments += @("$PSScriptRoot\Program.cs", "$PSScriptRoot\WestieModel.cs", "$PSScriptRoot\GeneratedWestie.cs", "$PSScriptRoot\SculptedCoat.cs", "$PSScriptRoot\CorgiSprite.cs", "$PSScriptRoot\CorgiFrames.cs", "$PSScriptRoot\PetWindow.cs")
 & $compiler $arguments
 if ($LASTEXITCODE -ne 0) { throw "构建失败，退出码 $LASTEXITCODE" }
 Write-Host "构建完成：$output"

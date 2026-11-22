@@ -1,0 +1,59 @@
+{
+  "status": "passed",
+  "actions": {
+    "Idle": {
+      "transparent_frames": 49,
+      "minimum_margin": 43,
+      "gif_frames": 49,
+      "gif_duration_ms": 4080
+    },
+    "Blink": {
+      "transparent_frames": 15,
+      "minimum_margin": 44,
+      "gif_frames": 9,
+      "gif_duration_ms": 1250
+    },
+    "Pet": {
+      "transparent_frames": 49,
+      "minimum_margin": 36,
+      "gif_frames": 49,
+      "gif_duration_ms": 4080
+    },
+    "Eat": {
+      "transparent_frames": 61,
+      "minimum_margin": 44,
+      "gif_frames": 58,
+      "gif_duration_ms": 5080
+    },
+    "PlayBall": {
+      "transparent_frames": 49,
+      "minimum_margin": 35,
+      "gif_frames": 49,
+      "gif_duration_ms": 4080
+    },
+    "Sleep": {
+      "transparent_frames": 61,
+      "minimum_margin": 44,
+      "gif_frames": 41,
+      "gif_duration_ms": 5080
+    },
+    "Wake": {
+      "transparent_frames": 49,
+      "minimum_margin": 43,
+      "gif_frames": 49,
+      "gif_duration_ms": 4080
+    }
+  },
+  "closed_iris_occlusion": [
+    {
+      "original_dark_iris_pixels": 229,
+      "covered_by_actual_eyelid_geometry": 1.0,
+      "highlight_coverage": 1.0
+    },
+    {
+      "original_dark_iris_pixels": 501,
+      "covered_by_actual_eyelid_geometry": 1.0,
+      "highlight_coverage": 1.0
+    }
+  ]
+}

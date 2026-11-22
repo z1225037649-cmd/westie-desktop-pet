@@ -1,0 +1,29 @@
+{
+  "status": "passed",
+  "native_blend_reopened": true,
+  "native_file": "C:\\Users\\user\\Desktop\\mimo\\westie-pet\\art\\corgi-image-to-3d\\rigged\\corgi-rigged.blend",
+  "source_glb_sha256": "e8857443eb63ce2de49b698de3978515712a239f23b3d008ed01ce60e5151a55",
+  "armatures": 1,
+  "bones": 24,
+  "skinned_objects": 1,
+  "shape_keys": [
+    "Blink.L",
+    "Blink.R",
+    "JawOpen",
+    "LieDownCorrective",
+    "Smile"
+  ],
+  "actions": [
+    "Blink",
+    "Eat",
+    "Idle",
+    "Pet",
+    "PlayBall",
+    "Sleep",
+    "Wake"
+  ],
+  "packed_images": 4,
+  "actual_bone_motion": 0.08440463394698892,
+  "actual_blink_motion": 0.047500154944008964,
+  "scope": "Native import, reopened data, real skin and shape deformation; all clip motion/contact was independently verified in the GLB."
+}

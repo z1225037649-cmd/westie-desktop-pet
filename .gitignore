@@ -19,6 +19,9 @@ qa/*
 !qa/RenderDetails.cs
 !qa/VisualStudy.cs
 !qa/EyeChecks.cs
+!qa/GeneratedChecks.cs
+!qa/GeneratedFrameChecks.cs
+!qa/CorgiAnimationChecks.cs
 !qa/BreedChecks.cs
 !qa/ArtworkUiChecks.cs
 !qa/HdRender.cs

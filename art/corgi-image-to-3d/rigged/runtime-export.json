@@ -1,0 +1,46 @@
+{
+  "status": "packed",
+  "resource_file": "C:\\Users\\user\\Desktop\\mimo\\westie-pet\\assets\\corgi-animation.frames",
+  "source_rig_sha256": "e8857443eb63ce2de49b698de3978515712a239f23b3d008ed01ce60e5151a55",
+  "resource_sha256": "5c24f7b2effb0186a83d70b8d79dc0dc378cec050f54ba9907e74ee933854731",
+  "bytes": 33119403,
+  "frame_count": 333,
+  "resolution": [
+    420,
+    420
+  ],
+  "fps": 12,
+  "clips": {
+    "Idle": {
+      "duration": 4,
+      "frames": 49
+    },
+    "Blink": {
+      "duration": 1.2,
+      "frames": 15
+    },
+    "Pet": {
+      "duration": 4,
+      "frames": 49
+    },
+    "Eat": {
+      "duration": 5,
+      "frames": 61
+    },
+    "PlayBall": {
+      "duration": 4,
+      "frames": 49
+    },
+    "Sleep": {
+      "duration": 5,
+      "frames": 61
+    },
+    "Wake": {
+      "duration": 4,
+      "frames": 49
+    }
+  },
+  "dog_only_hit_masks": true,
+  "props_baked_into_frames": true,
+  "anchors": "Projected actual GLB MouthAnchor/PawAnchor per frame"
+}

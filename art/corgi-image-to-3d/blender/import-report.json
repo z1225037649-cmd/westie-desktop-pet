@@ -1,0 +1,157 @@
+{
+  "status": "imported and validated",
+  "source_file": "C:\\Users\\user\\Desktop\\mimo\\westie-pet\\art\\corgi-image-to-3d\\source\\corgi-meshy.glb",
+  "source_sha256": "64bf73ec5491182e2f92ec0a067c40a93ca6a1aa4eb319bf9628a3a98934879c",
+  "source_bytes": 10326864,
+  "source_generator": "pygltflib@v1.16.5",
+  "blender_version": "4.5.16 LTS",
+  "blend_file": "C:\\Users\\user\\Desktop\\mimo\\westie-pet\\art\\corgi-image-to-3d\\blender\\corgi-meshy.blend",
+  "geometry_modified": false,
+  "materials_modified": false,
+  "normalization": {
+    "parent_empty": "MESHY | normalization (uniform scale + heading)",
+    "uniform_scale": 1.0530671999744912,
+    "heading_degrees": 0.0,
+    "source_bounds": [
+      [
+        -0.47460800409317017,
+        -0.8396689891815186,
+        -0.9511910080909729
+      ],
+      [
+        0.4704180061817169,
+        0.8399270176887512,
+        0.9480230212211609
+      ]
+    ],
+    "normalized_bounds": [
+      [
+        -0.4975879490375519,
+        -0.8843637108802795,
+        0.0
+      ],
+      [
+        0.4975879490375519,
+        0.8843637704849243,
+        2.0
+      ]
+    ],
+    "matrix": [
+      [
+        1.0530672073364258,
+        0.0,
+        0.0,
+        0.0022061746567487717
+      ],
+      [
+        0.0,
+        1.0530672073364258,
+        0.0,
+        -0.00013586068234872073
+      ],
+      [
+        0.0,
+        0.0,
+        1.0530672073364258,
+        1.001668095588684
+      ],
+      [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    ]
+  },
+  "mesh_objects": 1,
+  "vertices": 87641,
+  "polygons": 157182,
+  "meshes": [
+    {
+      "name": "Mesh_0",
+      "vertices": 87641,
+      "polygons": 157182,
+      "loop_triangles": 157182,
+      "uv_layers": [
+        "UVMap"
+      ],
+      "materials": [
+        "Material_0"
+      ]
+    }
+  ],
+  "materials": [
+    {
+      "name": "Material_0",
+      "use_nodes": true,
+      "image_nodes": [
+        {
+          "node": "Image Texture",
+          "image": "Image_0",
+          "linked": true
+        },
+        {
+          "node": "Image Texture.001",
+          "image": "Image_1",
+          "linked": true
+        },
+        {
+          "node": "Image Texture.002",
+          "image": "Image_2",
+          "linked": true
+        }
+      ]
+    }
+  ],
+  "textures": [
+    {
+      "name": "Image_0",
+      "size": [
+        2048,
+        2048
+      ],
+      "channels": 4,
+      "colorspace": "sRGB",
+      "packed": true
+    },
+    {
+      "name": "Image_1",
+      "size": [
+        2048,
+        2048
+      ],
+      "channels": 4,
+      "colorspace": "Non-Color",
+      "packed": true
+    },
+    {
+      "name": "Image_2",
+      "size": [
+        2048,
+        2048
+      ],
+      "channels": 4,
+      "colorspace": "Non-Color",
+      "packed": true
+    }
+  ],
+  "external_source_dependencies": [],
+  "armatures": 0,
+  "bones": 0,
+  "actions": 0,
+  "gltf_animations": 0,
+  "render_size": 900,
+  "samples": 64,
+  "views": [
+    "three-quarter",
+    "front",
+    "side",
+    "back"
+  ],
+  "renders_completed": [
+    "three-quarter",
+    "front",
+    "side",
+    "back"
+  ]
+}

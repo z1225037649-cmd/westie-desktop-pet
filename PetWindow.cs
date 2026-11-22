@@ -146,16 +146,24 @@ namespace WestiePet
         TextBlock homeBreedDescription;
         ComboBox breedChoice;
         Point[] westieHitShape;
+        Point3D[] generatedHitPoints;
+        byte[] generatedHitMask;
         bool hitFacesLeft;
         CheckBox startup;
         CheckBox roamOption;
         TextBlock homeModelHint;
         string mode = "idle";
         double stateStart, stateUntil, bubbleUntil = 9, nextAction = 22, lastTick;
+        string frameStatsMode;
+        int frameStatsCount;
+        double frameStatsStart, frameStatsSum, frameStatsMax, frameStatsGapMax;
+        double nextGeneratedFrame;
+        bool generatedRenderingAttached;
         double heading = 52, targetHeading = 52, walkDirection = -1;
         double toolbarHideAt;
         bool pressed, dragging, closing, menuOpen;
         bool manuallyHidden, fullscreenHidden;
+        bool lastCorgiRecovering;
         Point dragPoint;
         double dragLeft, dragTop;
         int affection, treats;
@@ -285,14 +293,14 @@ namespace WestiePet
                 {
                     if (runSelfTest) Dispatcher.BeginInvoke(DispatcherPriority.ApplicationIdle, new Action(SelfTest));
                 }
-                else { CreateTray(); timer.Start(); if (!startQuietly) ShowHome(); UpdateDialogue(); }
+                else { CreateTray(); timer.Start(); UpdateRenderingSubscription(); if (!startQuietly) ShowHome(); UpdateDialogue(); }
             };
-            timer.Interval = TimeSpan.FromMilliseconds(56);
+            timer.Interval = TimeSpan.FromMilliseconds(model.GeneratedPet != null ? 33 : model.CorgiPet != null ? 83 : 56);
             timer.Tick += Tick;
             Closing += delegate
             {
                 TraceState("closing");
-                closing = true; timer.Stop();
+                closing = true; timer.Stop(); UpdateRenderingSubscription();
                 if (petContextMenu != null) { petContextMenu.IsOpen = false; petContextMenu = null; }
                 quickActions.IsOpen = false;
                 dialogue.IsOpen = false;
@@ -344,6 +352,18 @@ namespace WestiePet
             bubble.Width = width; bubble.Height = height - 14;
             Rect pet = VisibleDogBounds();
             Point mouth = petHitArea.TransformToAncestor(this).Transform(new Point(235, 140));
+            if (model.CorgiPet != null)
+            {
+                OrthographicCamera camera = (OrthographicCamera)viewport.Camera;
+                Vector3D forward = camera.LookDirection; forward.Normalize();
+                Vector3D right = Vector3D.CrossProduct(forward, camera.UpDirection); right.Normalize();
+                Vector3D up = Vector3D.CrossProduct(right, forward); up.Normalize();
+                Vector3D delta = model.CorgiPet.Mouth - camera.Position;
+                double pixels = 306 / camera.Width;
+                mouth = viewport.TransformToAncestor(this).Transform(new Point(
+                    153 + Vector3D.DotProduct(delta, right) * pixels,
+                    130 - Vector3D.DotProduct(delta, up) * pixels));
+            }
             Rect area = CurrentArea();
             Rect bounds = DialogueBounds(new Rect(Left + pet.Left, Top + pet.Top, pet.Width, pet.Height),
                 new Size(width, height), area);
@@ -542,8 +562,8 @@ namespace WestiePet
             settings.Save();
         }
         string BreedName { get { return settings.Breed == "corgi" ? "柯基" : "西高地"; } }
-        string ModelDescription { get { return model.IsPreRendered ? "高清毛发 · 2.5D 坐姿互动" : "一只西高地，陪你慢慢来。"; } }
-        const string ArtworkHint = "高清柯基使用参考立绘的局部骨骼动画，保留原图毛发与光影。当前为坐姿，支持眨眼、摸摸、喂食、玩球和打盹；暂无完整转身、四足步行及趴睡动作。";
+        string ModelDescription { get { return model.IsPreRendered ? "柯基 · 连续互动动画" : "立体西高地 · 细毛与完整互动"; } }
+        const string ArtworkHint = "支持眨眼、摸摸、咬食、拨球、趴睡和起身。睡觉时会先醒来再接续互动；朝向使用镜像，暂不支持自由散步。";
 
         internal void SwitchBreed(string breed)
         {
@@ -561,6 +581,8 @@ namespace WestiePet
                 double age = Math.Max(0, now - stateStart);
                 for (int i = 0; i < 36; i++) next.Animate(now - (35 - i) / 30.0, mode, age);
                 model = next;
+                if (model.IsPreRendered && !double.IsPositiveInfinity(stateUntil) && model.TimedActionDuration > 0)
+                    stateUntil = stateStart + model.TimedActionDuration;
                 if (model.IsPreRendered && mode == "walk") { SetState("idle", 0); heading = targetHeading = 52; model.Heading.Angle = 52; }
                 ((ModelVisual3D)viewport.Children[0]).Content = model.Scene;
                 ((OrthographicCamera)viewport.Camera).Width = 2.95;
@@ -578,11 +600,14 @@ namespace WestiePet
             if (homeStatus != null) homeStatus.Text = StatusText();
             if (!verify) SaveSettings();
             PositionDialogue();
+            UpdateRenderingSubscription();
         }
 
         void UpdateBreedHitArea()
         {
             hitFacesLeft = heading < 0;
+            generatedHitPoints = null; generatedHitMask = null;
+            if (model.GeneratedPet != null) { UpdateGeneratedHitArea(); return; }
             if (!model.IsPreRendered) { pointerHitArea.SetAlphaHit(null); pointerHitArea.SetShape(westieHitShape); return; }
             pointerHitArea.SetAlphaHit(delegate(Point point) {
                 // Invert the orthographic camera onto the artwork's z=0 plane.
@@ -598,6 +623,48 @@ namespace WestiePet
                 return model.ArtworkHitTest(x, y);
             });
         }
+
+        void UpdateGeneratedHitArea()
+        {
+            GeneratedWestie pet = model.GeneratedPet;
+            if (pet == null) return;
+            // Rasterize a sparse set of actual, already-skinned surface points.
+            // This path never asks WPF to synchronously render the 95k-face dog.
+            // Reusable buffers also avoid allocating a bitmap/pose cache per tick.
+            if (generatedHitPoints == null || generatedHitPoints.Length != pet.HitPointCount)
+            {
+                generatedHitPoints = new Point3D[pet.HitPointCount];
+                generatedHitMask = new byte[306 * 260];
+                byte[] hitMask = generatedHitMask;
+                pointerHitArea.SetAlphaHit(delegate(Point point) {
+                    int x = (int)Math.Floor(point.X), y = (int)Math.Floor(point.Y);
+                    return x >= 0 && x < 306 && y >= 0 && y < 260 && hitMask[y * 306 + x] != 0;
+                });
+            }
+            Array.Clear(generatedHitMask, 0, generatedHitMask.Length);
+            pet.CopyHitPoints(generatedHitPoints);
+            OrthographicCamera camera = (OrthographicCamera)viewport.Camera;
+            Vector3D forward = camera.LookDirection; forward.Normalize();
+            Vector3D right = Vector3D.CrossProduct(forward, camera.UpDirection); right.Normalize();
+            Vector3D up = Vector3D.CrossProduct(right, forward); up.Normalize();
+            double pixels = 306 / camera.Width;
+            foreach (Point3D point in generatedHitPoints)
+            {
+                Vector3D delta = point - camera.Position;
+                int x = (int)Math.Floor(153 + Vector3D.DotProduct(delta, right) * pixels);
+                int y = (int)Math.Floor(130 - Vector3D.DotProduct(delta, up) * pixels);
+                // A small disk bridges surface-sample spacing, including thin
+                // fur edges, while preserving the gaps between moving legs.
+                for (int dy = -4; dy <= 4; dy++)
+                {
+                    int py = y + dy;
+                    if (py < 0 || py >= 260) continue;
+                    int half = Math.Abs(dy) == 4 ? 0 : Math.Abs(dy) == 3 ? 2 : Math.Abs(dy) == 0 ? 4 : 3;
+                    int first = Math.Max(0, x - half), last = Math.Min(305, x + half), row = py * 306;
+                    for (int px = first; px <= last; px++) generatedHitMask[row + px] = 1;
+                }
+            }
+        }
         void Say(string text, double seconds)
         {
             bubbleText.Text = text; bubble.Visibility = Visibility.Visible; bubbleUntil = clock.Elapsed.TotalSeconds + seconds;
@@ -607,13 +674,19 @@ namespace WestiePet
         {
             mode = state; stateStart = clock.Elapsed.TotalSeconds;
             model.BeginAction(state);
+            if (seconds > 0 && model.CorgiPet != null && model.TimedActionDuration > 0)
+                seconds = model.TimedActionDuration;
             stateUntil = seconds <= 0 ? double.PositiveInfinity : stateStart + seconds;
-            targetHeading = state == "walk" ? (walkDirection < 0 ? -68 : 68) : 52;
+            targetHeading = state == "play" && model.GeneratedPet != null ? heading
+                : state == "walk" ? (walkDirection < 0 ? -68 : 68) : 52;
             if (homeStatus != null) homeStatus.Text = StatusText();
+            nextGeneratedFrame = 0;
+            UpdateRenderingSubscription();
         }
         string StatusText()
         {
             string state = mode == "sleep" ? "正在做一个饼干味的梦" : mode == "walk" ? "正在认真巡视桌面" : mode == "feed" ? "咔嚓咔嚓，真好吃" : mode == "play" ? "今天也要开心玩耍" : mode == "pet" ? "被摸摸了，心情很好" : "今天也在这里陪你";
+            if (model.CorgiPet != null && model.CorgiPet.IsRecovering) state = "正在伸个懒腰，醒来再陪你";
             return PetSettings.ReadName(settings.Name) + " · " + state + "\n摸摸 " + affection + " 次  ·  小饼干 " + treats + " 块";
         }
         void Act(string action)
@@ -625,7 +698,7 @@ namespace WestiePet
             else if (action == "sleep") { SetState("sleep", 0); Say("我眯一会儿，你忙你的。 z Z", 5); }
             else if (action == "wake") { SetState("idle", 0); Say("醒啦！今天有什么好玩的？", 4); }
             else if (action == "walk") {
-                if (model.IsPreRendered) { Say("高清柯基目前是坐姿动画；切回西高地可自由散步。", 4); return; }
+                if (model.IsPreRendered) { Say("柯基暂不支持自由散步；切回西高地可自由散步。", 4); return; }
                 walkDirection = random.Next(2) == 0 ? -1 : 1; SetState("walk", 6); Say("出发，巡视一下我的领地！", 3); }
             if (homeStatus != null) homeStatus.Text = StatusText();
         }
@@ -640,8 +713,24 @@ namespace WestiePet
             return Math.Max(minimum, Math.Min(maximum, next));
         }
 
+        void UpdateRenderingSubscription()
+        {
+            bool required = !verify && !closing && IsLoaded && IsVisible && model.GeneratedPet != null && mode != "sleep";
+            if (required == generatedRenderingAttached) return;
+            generatedRenderingAttached = required;
+            if (required) CompositionTarget.Rendering += RenderGeneratedFrame;
+            else CompositionTarget.Rendering -= RenderGeneratedFrame;
+        }
+
+        void RenderGeneratedFrame(object sender, EventArgs e)
+        {
+            if (!closing && IsVisible && model.GeneratedPet != null && mode != "sleep"
+                && clock.Elapsed.TotalSeconds >= nextGeneratedFrame) Tick(sender, e);
+        }
+
         void Tick(object sender, EventArgs e)
         {
+            long frameStarted = Stopwatch.GetTimestamp();
             if (Program.OpenRequested != null && Program.OpenRequested.WaitOne(0)) ShowHome();
             if (settings.AutoHideFullscreen)
             {
@@ -651,6 +740,13 @@ namespace WestiePet
             else if (fullscreenHidden) { fullscreenHidden = false; ApplyPetVisibility(); }
             if (!IsVisible) { timer.Interval = TimeSpan.FromMilliseconds(350); return; }
             double t = clock.Elapsed.TotalSeconds, gap = t - lastTick;
+            if (model.GeneratedPet != null && mode != "sleep")
+            {
+                // Display callbacks and the service timer share one deadline.
+                // No duplicate updates or bursts after a delayed frame.
+                if (t < nextGeneratedFrame || (lastTick > 0 && gap < .020)) return;
+                nextGeneratedFrame = (Math.Floor(t * 30) + 1) / 30.0;
+            }
             if (lastTick > 0 && gap > 2) TraceState("dispatcher-delay-seconds=" + gap.ToString("F2", System.Globalization.CultureInfo.InvariantCulture));
             double dt = Math.Min(.08, gap); lastTick = t;
             if (t >= nextHeartbeat) { nextHeartbeat = t + 30; TraceState("heartbeat"); }
@@ -704,15 +800,49 @@ namespace WestiePet
             model.LookAt(attentionX, attentionY, proximity);
             model.WalkingPaused = blocked && mode == "walk";
             model.Animate(t, mode, t - stateStart);
+            bool recovering = model.CorgiPet != null && model.CorgiPet.IsRecovering;
+            if (lastCorgiRecovering != recovering)
+            {
+                lastCorgiRecovering = recovering;
+                if (homeStatus != null) homeStatus.Text = StatusText();
+            }
+            if (model.GeneratedPet != null) UpdateGeneratedHitArea();
             PositionDialogue();
             UpdateEffects(t);
             if (t > bubbleUntil) bubble.Visibility = Visibility.Hidden;
             UpdateDialogue();
-            TimeSpan desiredInterval = mode == "sleep" ? TimeSpan.FromMilliseconds(150) : TimeSpan.FromMilliseconds(56);
+            TimeSpan desiredInterval = model.CorgiPet != null
+                ? TimeSpan.FromMilliseconds(model.CorgiPet.CurrentClip == "Sleep"
+                    && model.CorgiPet.CurrentFrame == model.CorgiPet.FrameCount - 1 ? 250 : 83)
+                : TimeSpan.FromMilliseconds(mode == "sleep" ? 150 : model.GeneratedPet != null ? 33 : 56);
             if (timer.Interval != desiredInterval) timer.Interval = desiredInterval;
+            RecordFrameStats(t, (Stopwatch.GetTimestamp() - frameStarted) * 1000.0 / Stopwatch.Frequency, gap);
+        }
+        void RecordFrameStats(double time, double updateMs, double gapSeconds)
+        {
+            if (verify) return;
+            if (frameStatsCount > 0 && (frameStatsMode != mode || time - frameStatsStart >= 10))
+            {
+                double elapsed = Math.Max(.001, time - frameStatsStart);
+                TraceState(string.Format(System.Globalization.CultureInfo.InvariantCulture,
+                    "frame-stats action={0} samples={1} avg-update-ms={2:F2} max-update-ms={3:F2} max-gap-ms={4:F2} tick-rate={5:F1} render-tier={6}",
+                    frameStatsMode, frameStatsCount, frameStatsSum / frameStatsCount,
+                    frameStatsMax, frameStatsGapMax, frameStatsCount / elapsed, RenderCapability.Tier >> 16));
+                frameStatsCount = 0;
+            }
+            if (frameStatsCount == 0)
+            {
+                frameStatsMode = mode; frameStatsStart = time;
+                frameStatsSum = frameStatsMax = frameStatsGapMax = 0;
+            }
+            frameStatsCount++; frameStatsSum += updateMs;
+            frameStatsMax = Math.Max(frameStatsMax, updateMs);
+            frameStatsGapMax = Math.Max(frameStatsGapMax, gapSeconds * 1000);
         }
         void UpdateEffects(double t)
         {
+            if (model.CorgiPet != null && model.CorgiPet.IsRecovering)
+            { effect.Visibility = Visibility.Hidden; return; }
             bool heart = mode == "pet", sleep = mode == "sleep", feed = mode == "feed";
             effect.Visibility = heart || sleep || feed ? Visibility.Visible : Visibility.Hidden;
             effect.Text = sleep ? "z Z" : feed ? "✦" : "♥";
@@ -732,7 +862,7 @@ namespace WestiePet
             else if (e.Key == Key.B) Act("play");
             else if (e.Key == Key.S) Act(mode == "sleep" ? "wake" : "sleep");
             else if (e.Key == Key.R) {
-                if (model.IsPreRendered) { Say("高清柯基目前是坐姿动画；切回西高地可自由散步。", 4); }
+                if (model.IsPreRendered) { Say("柯基暂不支持自由散步；切回西高地可自由散步。", 4); }
                 else { settings.Roam = !settings.Roam; SaveSettings(); Say(settings.Roam ? "好耶，可以自由散步啦。" : "我会乖乖待在这里。", 3); } }
             else return;
             e.Handled = true;
@@ -780,6 +910,7 @@ namespace WestiePet
                 TraceState("shown");
             }
             else if (!shouldShow && IsVisible) { Hide(); TraceState("hidden"); }
+            UpdateRenderingSubscription();
         }
 
         void ShowPet()

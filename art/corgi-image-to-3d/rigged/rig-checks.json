@@ -1,0 +1,256 @@
+{
+  "status": "passed",
+  "independent_numpy_skinning": true,
+  "rig_sha256": "e8857443eb63ce2de49b698de3978515712a239f23b3d008ed01ce60e5151a55",
+  "ground_axis": "Y",
+  "rest_bounds": [
+    [
+      -0.49758793830871584,
+      -2.0709768141916177e-09,
+      -0.8843636860149006
+    ],
+    [
+      0.49758793830871584,
+      2.0000000476837156,
+      0.8843636965751648
+    ]
+  ],
+  "skinned_primitives": 11,
+  "skin_checks": [
+    {
+      "node": "CorgiSkin",
+      "vertices": 88171,
+      "triangles": 157682,
+      "bones": 24,
+      "weight_sum_max_error": 4.866160452365875e-08,
+      "inverse_bind_max_error": 4.768371586472142e-08,
+      "deformation_role": "body"
+    },
+    {
+      "node": "CorgiSkin",
+      "vertices": 275,
+      "triangles": 480,
+      "bones": 24,
+      "weight_sum_max_error": 0.0,
+      "inverse_bind_max_error": 4.768371586472142e-08,
+      "deformation_role": "eyelid_cover"
+    },
+    {
+      "node": "CorgiSkin",
+      "vertices": 275,
+      "triangles": 480,
+      "bones": 24,
+      "weight_sum_max_error": 0.0,
+      "inverse_bind_max_error": 4.768371586472142e-08,
+      "deformation_role": "eyelid_cover"
+    },
+    {
+      "node": "CorgiSkin",
+      "vertices": 50,
+      "triangles": 48,
+      "bones": 24,
+      "weight_sum_max_error": 0.0,
+      "inverse_bind_max_error": 4.768371586472142e-08,
+      "deformation_role": "eyelid_cover"
+    },
+    {
+      "node": "CorgiSkin",
+      "vertices": 275,
+      "triangles": 480,
+      "bones": 24,
+      "weight_sum_max_error": 0.0,
+      "inverse_bind_max_error": 4.768371586472142e-08,
+      "deformation_role": "eyelid_cover"
+    },
+    {
+      "node": "CorgiSkin",
+      "vertices": 275,
+      "triangles": 480,
+      "bones": 24,
+      "weight_sum_max_error": 0.0,
+      "inverse_bind_max_error": 4.768371586472142e-08,
+      "deformation_role": "eyelid_cover"
+    },
+    {
+      "node": "CorgiSkin",
+      "vertices": 50,
+      "triangles": 48,
+      "bones": 24,
+      "weight_sum_max_error": 0.0,
+      "inverse_bind_max_error": 4.768371586472142e-08,
+      "deformation_role": "eyelid_cover"
+    },
+    {
+      "node": "CorgiSkin",
+      "vertices": 125,
+      "triangles": 192,
+      "bones": 24,
+      "weight_sum_max_error": 0.0,
+      "inverse_bind_max_error": 4.768371586472142e-08,
+      "deformation_role": "oral_cavity"
+    },
+    {
+      "node": "CorgiSkin",
+      "vertices": 117,
+      "triangles": 192,
+      "bones": 24,
+      "weight_sum_max_error": 0.0,
+      "inverse_bind_max_error": 4.768371586472142e-08,
+      "deformation_role": "tongue"
+    },
+    {
+      "node": "CorgiSkin",
+      "vertices": 117,
+      "triangles": 192,
+      "bones": 24,
+      "weight_sum_max_error": 0.0,
+      "inverse_bind_max_error": 4.768371586472142e-08,
+      "deformation_role": "tooth"
+    },
+    {
+      "node": "CorgiSkin",
+      "vertices": 117,
+      "triangles": 192,
+      "bones": 24,
+      "weight_sum_max_error": 0.0,
+      "inverse_bind_max_error": 4.768371586472142e-08,
+      "deformation_role": "tooth"
+    }
+  ],
+  "morph_checks": {
+    "Blink.L": {
+      "affected_vertices": 600,
+      "max_evaluated_displacement": 0.04750005503720916
+    },
+    "Blink.R": {
+      "affected_vertices": 600,
+      "max_evaluated_displacement": 0.048962942303228056
+    },
+    "JawOpen": {
+      "affected_vertices": 1948,
+      "max_evaluated_displacement": 0.07710382569799057
+    },
+    "Smile": {
+      "affected_vertices": 9504,
+      "max_evaluated_displacement": 0.010650623514059642
+    },
+    "LieDownCorrective": {
+      "affected_vertices": 28614,
+      "max_evaluated_displacement": 0.2332380873959094
+    }
+  },
+  "animations": {
+    "Idle": {
+      "duration_seconds": 4.0,
+      "sample_count": 21,
+      "max_surface_motion": 0.033707916298306585,
+      "min_ground_coordinate": -1.1365693941556287e-08,
+      "max_edge_growth": 0.0017965614536935431,
+      "endpoint_distance": 1.3877787807814457e-17
+    },
+    "Pet": {
+      "duration_seconds": 4.0,
+      "sample_count": 21,
+      "max_surface_motion": 0.31045236675922006,
+      "min_ground_coordinate": -1.1365693941556287e-08,
+      "max_edge_growth": 0.016187752908336697,
+      "endpoint_distance": 3.851859888774472e-34
+    },
+    "Eat": {
+      "duration_seconds": 5.0,
+      "sample_count": 22,
+      "max_surface_motion": 0.21177000286312456,
+      "min_ground_coordinate": -1.1365693941556287e-08,
+      "max_edge_growth": 0.023266996937224116,
+      "endpoint_distance": 0.0
+    },
+    "PlayBall": {
+      "duration_seconds": 4.0,
+      "sample_count": 22,
+      "max_surface_motion": 0.23411077834062144,
+      "min_ground_coordinate": -1.1365693941556287e-08,
+      "max_edge_growth": 0.050072719887409356,
+      "endpoint_distance": 0.0
+    },
+    "Sleep": {
+      "duration_seconds": 5.0,
+      "sample_count": 21,
+      "max_surface_motion": 1.3460904744508246,
+      "min_ground_coordinate": -1.1365693941556287e-08,
+      "max_edge_growth": 0.08702823090518622,
+      "endpoint_distance": 1.3460904571858228
+    },
+    "Wake": {
+      "duration_seconds": 4.0,
+      "sample_count": 21,
+      "max_surface_motion": 1.3460904744508244,
+      "min_ground_coordinate": -1.1365693941556287e-08,
+      "max_edge_growth": 0.08717588148067933,
+      "endpoint_distance": 1.3460904571858228
+    },
+    "Blink": {
+      "duration_seconds": 1.2000000476837158,
+      "sample_count": 23,
+      "max_surface_motion": 0.04896294920850121,
+      "min_ground_coordinate": -1.1365693963433686e-08,
+      "max_edge_growth": 5.100696393034454e-09,
+      "endpoint_distance": 0.0
+    }
+  },
+  "contacts": {
+    "Eat": {
+      "time_seconds": 1.6,
+      "anchor": "MouthAnchor",
+      "prop": "Treat",
+      "anchor_skin_distance": 0.005741430333101678,
+      "prop_radius": 0.035000001503593024,
+      "center_distance": 0.026000001952506794,
+      "contact_surface_gap": 0.00899999955108623
+    },
+    "PlayBall": {
+      "time_seconds": 1.5,
+      "anchor": "PawAnchor",
+      "prop": "Ball",
+      "anchor_skin_distance": 1.1356926374509602e-06,
+      "prop_radius": 0.10500000484277203,
+      "center_distance": 0.10500003996003912,
+      "contact_surface_gap": 3.511726709426455e-08,
+      "pre_contact_motion": 0.0,
+      "post_contact_motion": 0.22500128157234592
+    }
+  },
+  "sleep_wake_continuity_error": 0.0,
+  "packed_images": [
+    {
+      "size": [
+        2048,
+        2048
+      ],
+      "sha256": "b4992849a9b66fb9191e3b8611a66658b0204574a0ae4fdd9b92102265ff4245"
+    },
+    {
+      "size": [
+        2048,
+        2048
+      ],
+      "sha256": "52ca952bd54593ef38e77acff8c07e4d8882c652670ab7ac0a4c010048076e0d"
+    },
+    {
+      "size": [
+        2048,
+        2048
+      ],
+      "sha256": "e28f6ea81e36f0b8cb37a59afe64f23727b779bb7b755d93a4cc16ab52aa7ae3"
+    },
+    {
+      "size": [
+        256,
+        128
+      ],
+      "sha256": "8f3abad824c95743ca1d2b4137a2d8011a598c529c87c94a427c6284be620ba8"
+    }
+  ],
+  "original_source_sha256": "64bf73ec5491182e2f92ec0a067c40a93ca6a1aa4eb319bf9628a3a98934879c",
+  "original_texture_bytes_preserved": true,
+  "original_surface_uv_preserved": true
+}

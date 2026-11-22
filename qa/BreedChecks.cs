@@ -33,58 +33,32 @@ static class BreedChecks
         try
         {
             Directory.CreateDirectory(Output);
-            CheckEmbeddedArtwork();
+            CheckEmbeddedFrames();
             CheckRendering();
-            CheckCorgiFace();
             CheckSettingsAndSwitching();
             File.WriteAllText(Path.Combine(Output, "result.txt"),
-                "PASS: Westie six-state 3D and HD 2.5D Corgi five-state seated rendering; transparent margins; " +
-                "exact HD embedded alpha artwork; finite meshes and visible restrained local artwork animation; " +
-                "Corgi eye-aperture mesh compression with fixed open-eye regions and unchanged artwork colors; " +
-                "instant model and preview switching; unchanged-model reuse; state and personal values preserved; " +
-                "Corgi pointer silhouettes at four scales and both headings; real breed menu click handlers; " +
-                "saved selection, legacy settings and invalid-model fallback.\r\n");
+                "PASS: generated Westie 3D and frame-animated Corgi rendering; embedded animation resource; " +
+                "fixed billboard and real frame changes; transparent margins and mirrored alpha input; " +
+                "model/preview switching, current-model reuse, preserved state/settings and roaming preference.\r\n");
             Console.WriteLine("PASS: breed rendering, switching and isolated settings: " + Output);
             return 0;
         }
         catch (Exception error) { Console.WriteLine("BREED_CHECKS_ERROR: " + error); return 1; }
     }
 
-    static BitmapSource embeddedArtwork;
-    static byte[] embeddedPixels;
-    static int artworkWidth, artworkHeight;
-
-    static void CheckEmbeddedArtwork()
+    static void CheckEmbeddedFrames()
     {
-        byte[] resource;
-        using (Stream stream = typeof(WestieModel).Assembly.GetManifestResourceStream("WestiePet.CorgiArtwork"))
-        {
-            Require(stream != null, "The HD artwork must be an embedded application resource.");
-            using (MemoryStream memory = new MemoryStream()) { stream.CopyTo(memory); resource = memory.ToArray(); }
-        }
-        using (MemoryStream memory = new MemoryStream(resource))
-        {
-            BitmapDecoder decoder = BitmapDecoder.Create(memory, BitmapCreateOptions.PreservePixelFormat, BitmapCacheOption.OnLoad);
-            embeddedArtwork = decoder.Frames[0]; embeddedArtwork.Freeze();
-        }
-        artworkWidth = embeddedArtwork.PixelWidth; artworkHeight = embeddedArtwork.PixelHeight;
-        Require(artworkWidth >= 1024 && artworkHeight >= 1024, "Embedded artwork must preserve HD resolution.");
-        embeddedPixels = FacePixels(embeddedArtwork);
-        int opaque = 0, transparent = 0, feathered = 0;
-        for (int i = 3; i < embeddedPixels.Length; i += 4)
-        {
-            if (embeddedPixels[i] > 240) opaque++;
-            else if (embeddedPixels[i] == 0) transparent++;
-            else feathered++;
-        }
-        Require(opaque > 10000 && transparent > 10000 && feathered > 100, "HD artwork needs a real alpha silhouette and feathered fur edges.");
-        string asset = Path.Combine(Path.GetDirectoryName(AppDomain.CurrentDomain.BaseDirectory.TrimEnd(Path.DirectorySeparatorChar)), "assets", "corgi-hd.png");
-        Require(File.Exists(asset), "The source HD artwork must exist in assets.");
+        string source = Path.Combine(Path.GetDirectoryName(AppDomain.CurrentDomain.BaseDirectory.TrimEnd(Path.DirectorySeparatorChar)),
+            "assets", "corgi-animation.frames");
+        using (Stream resource = typeof(WestieModel).Assembly.GetManifestResourceStream("WestiePet.CorgiAnimation"))
+        using (Stream file = File.OpenRead(source))
         using (System.Security.Cryptography.SHA256 hash = System.Security.Cryptography.SHA256.Create())
-        using (FileStream stream = File.OpenRead(asset))
-            Require(Convert.ToBase64String(hash.ComputeHash(resource)) == Convert.ToBase64String(hash.ComputeHash(stream)),
-                "The embedded PNG must be byte-identical to the unedited HD source asset.");
-        Console.WriteLine("PASS: exact embedded HD artwork, {0}x{1}, transparent silhouette and antialiased fur.", artworkWidth, artworkHeight);
+        {
+            Require(resource != null && resource.Length > 1000000, "Missing embedded Corgi animation sequence.");
+            Require(Convert.ToBase64String(hash.ComputeHash(resource)) == Convert.ToBase64String(hash.ComputeHash(file)),
+                "Embedded animation differs from the exported build input.");
+        }
+        Console.WriteLine("PASS: byte-identical embedded Corgi animation resource.");
     }
 
     static Grid Stage(WestieModel model, out Viewport3D view)
@@ -98,7 +72,7 @@ static class BreedChecks
     static void CheckRendering()
     {
         WestieModel westie = new WestieModel("westie");
-        Require(!westie.IsPreRendered, "Westie must retain the existing articulated 3D model.");
+        Require(!westie.IsPreRendered, "Westie must use the generated volumetric 3D model.");
         Viewport3D view; Grid stage = Stage(westie, out view); double time = 0;
         Advance(westie, "idle", 2, ref time);
         foreach (KeyValuePair<string, double> angle in new[] {
@@ -125,45 +99,39 @@ static class BreedChecks
             }
         }
         Require(Difference(idle, sleep) > 1000, "Westie must retain its visible lying sleep pose.");
-        Console.WriteLine("PASS: unchanged Westie six-state 3D rendering and walking/sleeping checks.");
+        Console.WriteLine("PASS: generated Westie six-state 3D rendering and walking/sleeping checks.");
 
-        WestieModel corgi = new WestieModel("corgi");
-        Require(corgi.IsPreRendered, "HD Corgi must identify its 2.5D artwork presentation.");
-        CorgiSprite sprite = Field<CorgiSprite>(corgi, "artwork");
-        Require(sprite != null && Field<BitmapSource>(sprite, "artwork").PixelWidth == artworkWidth,
-            "The Corgi scene must actually use the embedded HD artwork.");
-        GeometryModel3D artworkSurface = sprite.Model.Children[0] as GeometryModel3D;
-        MaterialGroup artworkMaterial = artworkSurface == null ? null : artworkSurface.Material as MaterialGroup;
-        EmissiveMaterial artworkEmission = artworkMaterial == null || artworkMaterial.Children.Count < 2 ? null
-            : artworkMaterial.Children[1] as EmissiveMaterial;
-        ImageBrush artworkTexture = artworkEmission == null ? null : artworkEmission.Brush as ImageBrush;
-        Require(sprite.Model.Children.Count == 1 && artworkTexture != null && artworkTexture.ImageSource is CroppedBitmap,
-            "Corgi eyes must deform the original image mesh; no painted eyelid layers or composite textures are allowed.");
-        stage = Stage(corgi, out view); time = 0;
-        foreach (double heading in new[] { -52.0, 52.0 })
+        foreach (string state in new[] { "idle", "pet", "feed", "play", "sleep", "wake" })
         {
-            corgi.Heading.Angle = heading; Advance(corgi, "idle", 1.2, ref time);
-            Save(stage, heading < 0 ? "corgi-facing-left" : "corgi-facing-right");
-        }
-        foreach (string state in new[] { "idle", "pet", "feed", "play", "sleep" })
-        {
-            corgi.Heading.Angle = 52; Advance(corgi, "idle", 1.2, ref time);
-            double duration = state == "sleep" ? 2.4 : state == "pet" ? 1 : state == "play" ? .6 : 1.4;
-            Advance(corgi, state, duration, ref time);
-            CheckMesh(corgi.Scene, "corgi-" + state);
-            byte[] before = Save(stage, "corgi-" + state);
-            MeshGeometry3D surface = (MeshGeometry3D)((GeometryModel3D)sprite.Model.Children[0]).Geometry;
+            WestieModel corgi = new WestieModel("corgi");
+            Require(corgi.IsPreRendered, "Corgi must identify its pre-rendered animation presentation.");
+            CorgiSprite sprite = Field<CorgiSprite>(corgi, "artwork");
+            Require(sprite != null, "Production Corgi lacks its frame player.");
+            MeshGeometry3D surface = FrameGeometry(sprite).Geometry as MeshGeometry3D;
+            Require(surface != null && surface.Positions.Count <= 8 && surface.TriangleIndices.Count <= 12,
+                "Corgi must play frames on a fixed billboard instead of deforming the source-image mesh.");
             Point3D[] positions = new Point3D[surface.Positions.Count]; surface.Positions.CopyTo(positions, 0);
-            for (int tick = 0; tick < 8; tick++) { time += 1.0 / 30; corgi.Animate(time, state, duration + tick / 30.0); }
-            byte[] after = Save(stage, "corgi-" + state + "-next");
-            double movement = 0;
-            for (int i = 0; i < positions.Length; i++) movement = Math.Max(movement, (positions[i] - surface.Positions[i]).Length);
-            Require(movement > .00001 && movement < .12, "Corgi " + state + ": expected restrained local artwork deformation.");
-            Require(Difference(before, after) > 8, "Corgi " + state + ": local animation must be visible in actual pixels.");
-            Console.WriteLine("Corgi {0}: local movement {1:F5}, changed pixels {2}.", state, movement, Difference(before, after));
+            stage = Stage(corgi, out view); time = 0;
+            if (state == "wake") Advance(corgi, "sleep", 5.1, ref time);
+            corgi.BeginAction(state);
+            double age = state == "idle" ? 1.2 : state == "feed" ? 1.6 : state == "play" ? 1.3 : 1.8;
+            for (double step = 0; step <= age; step += 1.0 / 30)
+            { time += 1.0 / 30; corgi.Animate(time, state, step); }
+            byte[] before = Save(stage, "corgi-" + state);
+            for (int tick = 1; tick <= 9; tick++)
+            { time += 1.0 / 30; corgi.Animate(time, state, age + tick / 30.0); }
+            byte[] after = Save(stage, "corgi-" + state + "-next"); CheckMesh(corgi.Scene, "corgi-" + state);
+            Require(Difference(before, after) > 8, "Corgi " + state + ": frame changes must be visible.");
+            for (int vertex = 0; vertex < positions.Length; vertex++)
+                Require((positions[vertex] - surface.Positions[vertex]).Length < 1e-10, "Frame playback distorted its billboard.");
+            BitmapSource frame = FrameBitmap(sprite);
+            Require(frame.PixelWidth >= 306 && frame.PixelHeight >= 260, "Animation resolution must cover the desktop viewport.");
         }
-        Require(sprite.Bounds.SizeY > 1.5 && sprite.Bounds.SizeY < 2.2, "The seated artwork must retain its intended visible height.");
-        Console.WriteLine("PASS: HD 2.5D Corgi facing mirrors and five seated interaction states; no invented quadruped walk or lying frames.");
+        WestieModel facing = new WestieModel("corgi"); stage = Stage(facing, out view); time = 0;
+        Advance(facing, "idle", 1.2, ref time);
+        foreach (double heading in new[] { -52.0, 52.0 })
+        { facing.Heading.Angle = heading; facing.Animate(time, "idle", 1.2); Save(stage, heading < 0 ? "corgi-facing-left" : "corgi-facing-right"); }
+        Console.WriteLine("PASS: Corgi six-state frame playback, fixed billboard and facing mirrors.");
     }
 
     static void Advance(WestieModel model, string state, double duration, ref double time)
@@ -173,206 +141,55 @@ static class BreedChecks
         for (int i = 0; i < count; i++) { time += 1.0 / 30; model.Animate(time, state, i / 30.0); }
     }
 
-    sealed class FaceMetrics
+    static GeometryModel3D FrameGeometry(CorgiSprite sprite)
+    { GeometryModel3D result = FindGeometry(sprite.Model); Require(result != null, "Missing Corgi frame billboard."); return result; }
+    static GeometryModel3D FindGeometry(Model3D node)
     {
-        internal string State;
-        internal double Closure;
-        internal double[] HeightRatio = new double[2];
-        internal int[] Changed = new int[2], OpenDark = new int[2], ClosedDark = new int[2],
-            OpenBright = new int[2], ClosedBright = new int[2];
+        GeometryModel3D geometry = node as GeometryModel3D; if (geometry != null) return geometry;
+        Model3DGroup group = node as Model3DGroup;
+        if (group != null) foreach (Model3D child in group.Children)
+        { GeometryModel3D found = FindGeometry(child); if (found != null) return found; }
+        return null;
     }
-
-    static Point3D ArtworkPoint(CorgiSprite sprite, Point source)
+    static BitmapSource FrameBitmap(CorgiSprite sprite)
     {
-        Point3D local = (Point3D)typeof(CorgiSprite).GetMethod("Deform", Private)
-            .Invoke(sprite, new object[] { source.X, source.Y, 0.0 });
-        return sprite.Model.Transform.Transform(local);
+        MaterialGroup group = FrameGeometry(sprite).Material as MaterialGroup;
+        Require(group != null, "Frame needs alpha-compatible diffuse/emissive material.");
+        foreach (Material child in group.Children)
+        {
+            EmissiveMaterial emission = child as EmissiveMaterial; ImageBrush image = emission == null ? null : emission.Brush as ImageBrush;
+            if (image != null && image.ImageSource is BitmapSource) return (BitmapSource)image.ImageSource;
+        }
+        throw new InvalidOperationException("Missing decoded animation frame.");
     }
-
-    static Point SourcePoint(double x, double y)
-    { return new Point(x * artworkWidth / 1920.0, y * artworkHeight / 1920.0); }
-
+    static byte[] FramePixels(BitmapSource bitmap)
+    {
+        BitmapSource source = new FormatConvertedBitmap(bitmap, PixelFormats.Bgra32, null, 0);
+        byte[] pixels = new byte[source.PixelWidth * source.PixelHeight * 4]; source.CopyPixels(pixels, source.PixelWidth * 4, 0); return pixels;
+    }
+    static Point3D FramePoint(CorgiSprite sprite, Point pixel)
+    {
+        GeometryModel3D geometry = FrameGeometry(sprite); MeshGeometry3D mesh = (MeshGeometry3D)geometry.Geometry;
+        BitmapSource image = FrameBitmap(sprite); Point uv = new Point(pixel.X/image.PixelWidth,pixel.Y/image.PixelHeight);
+        for (int index=0;index<mesh.TriangleIndices.Count;index+=3)
+        {
+            int ia=mesh.TriangleIndices[index],ib=mesh.TriangleIndices[index+1],ic=mesh.TriangleIndices[index+2];
+            Point a=mesh.TextureCoordinates[ia],b=mesh.TextureCoordinates[ib],c=mesh.TextureCoordinates[ic];
+            double d=(b.Y-c.Y)*(a.X-c.X)+(c.X-b.X)*(a.Y-c.Y);if(Math.Abs(d)<1e-12)continue;
+            double wa=((b.Y-c.Y)*(uv.X-c.X)+(c.X-b.X)*(uv.Y-c.Y))/d;
+            double wb=((c.Y-a.Y)*(uv.X-c.X)+(a.X-c.X)*(uv.Y-c.Y))/d,wc=1-wa-wb;
+            if(wa < -1e-8 || wb < -1e-8 || wc < -1e-8)continue;
+            Point3D pa=mesh.Positions[ia],pb=mesh.Positions[ib],pc=mesh.Positions[ic];
+            Point3D value=new Point3D(pa.X*wa+pb.X*wb+pc.X*wc,pa.Y*wa+pb.Y*wb+pc.Y*wc,pa.Z*wa+pb.Z*wb+pc.Z*wc);
+            return sprite.Model.Transform.Transform(geometry.Transform.Transform(value));
+        }
+        throw new InvalidOperationException("Frame point is outside billboard UVs.");
+    }
     static Point Project(Point3D point, OrthographicCamera camera, double width, double height)
     {
-        Vector3D forward = camera.LookDirection; forward.Normalize();
-        Vector3D right = Vector3D.CrossProduct(forward, camera.UpDirection); right.Normalize();
-        Vector3D up = Vector3D.CrossProduct(right, forward); up.Normalize();
-        Vector3D delta = point - camera.Position; double pixels = width / camera.Width;
-        return new Point(width * .5 + Vector3D.DotProduct(delta, right) * pixels,
-            height * .5 - Vector3D.DotProduct(delta, up) * pixels);
-    }
-
-    static HashSet<int> EyePixels(CorgiSprite sprite, OrthographicCamera camera, int eye, bool upperOnly)
-    {
-        // Always call with closure=0, freezing the original aperture on screen.
-        // Measuring the compressed geometry's tiny ROI would hide a failure.
-        // The inset polygon excludes the source image's white muzzle fur.
-        Rect extent = eye == 0 ? new Rect(582, 675, 84, 58) : new Rect(724, 628, 114, 72);
-        Point[] aperture = eye == 0 ? new[] {
-            new Point(590,710), new Point(600,701), new Point(619,690), new Point(639,685),
-            new Point(656,685), new Point(652,695), new Point(642,708), new Point(627,718),
-            new Point(609,722), new Point(596,718)
-        } : new[] {
-            new Point(734,660), new Point(747,650), new Point(771,641), new Point(795,638),
-            new Point(825,638), new Point(819,654), new Point(807,668), new Point(788,679),
-            new Point(765,685), new Point(744,681), new Point(734,672)
-        };
-        HashSet<int> pixels = new HashSet<int>();
-        for (int y = (int)extent.Top; y < extent.Bottom; y++)
-        for (int x = (int)extent.Left; x < extent.Right; x++)
-        {
-            if (!InsidePolygon(new Point(x + .5, y + .5), aperture)) continue;
-            double angle = eye == 0 ? -.48 : -.31;
-            double dx = x + .5 - (eye == 0 ? 623 : 780), dy = y + .5 - (eye == 0 ? 703 : 663);
-            double localVertical = -dx * Math.Sin(angle) + dy * Math.Cos(angle);
-            // Upper eyelid fur should replace exposed eye white. The lower
-            // eyelid may naturally pull white cheek fur upwards, so that fur
-            // cannot serve as a detector for a painted white eye-mask defect.
-            if (upperOnly && localVertical >= -2.5) continue;
-            Point projected = Project(ArtworkPoint(sprite, SourcePoint(x + .5, y + .5)), camera, 512, 512);
-            int px = (int)Math.Round(projected.X), py = (int)Math.Round(projected.Y);
-            if (px >= 0 && py >= 0 && px < 512 && py < 512) pixels.Add((py * 512 + px) * 4);
-        }
-        Require(pixels.Count >= (upperOnly ? 30 : 100), "The actual artwork eye aperture must remain visible in the closeup.");
-        return pixels;
-    }
-
-    static double EyeSpan(CorgiSprite sprite, int eye)
-    {
-        double x = eye == 0 ? 623 : 780, y = eye == 0 ? 703 : 663;
-        double height = eye == 0 ? 18 : 22, angle = eye == 0 ? -.48 : -.31;
-        Point a = SourcePoint(x - Math.Sin(angle) * height, y + Math.Cos(angle) * height);
-        Point b = SourcePoint(x + Math.Sin(angle) * height, y - Math.Cos(angle) * height);
-        return (ArtworkPoint(sprite, a) - ArtworkPoint(sprite, b)).Length;
-    }
-
-    static bool InsidePolygon(Point point, Point[] polygon)
-    {
-        bool inside = false;
-        for (int i = 0, previous = polygon.Length - 1; i < polygon.Length; previous = i++)
-        {
-            Point a = polygon[i], b = polygon[previous];
-            if ((a.Y > point.Y) != (b.Y > point.Y)
-                && point.X < (b.X - a.X) * (point.Y - a.Y) / (b.Y - a.Y) + a.X) inside = !inside;
-        }
-        return inside;
-    }
-
-    static void CheckCorgiFace()
-    {
-        WestieModel model = new WestieModel("corgi"); model.Heading.Angle = 52;
-        CorgiSprite sprite = Field<CorgiSprite>(model, "artwork");
-        Viewport3D view = PetWindow.CreateViewport(model);
-        File.WriteAllText(Path.Combine(Output, "corgi-face-metrics.csv"),
-            "state,eye,eyeClosure,eyeHeightRatio,changedEyePixels,openDark,closedDark,openUpperBright,closedUpperBright\r\n");
-        List<FaceMetrics> samples = new List<FaceMetrics>(); double time = 0;
-        foreach (string state in new[] { "idle", "pet", "sleep" })
-        {
-            Advance(model, state, state == "sleep" ? 2.4 : state == "pet" ? 1 : 2, ref time);
-            samples.Add(MeasureCorgiFace(view, model, sprite, state));
-        }
-        // Collect every requested closeup before any coverage assertion so a
-        // failed eye always leaves all three states available for visual review.
-        foreach (FaceMetrics sample in samples)
-        for (int eye = 0; eye < 2; eye++)
-        {
-            Require(sample.OpenDark[eye] >= 12, "Corgi " + sample.State + ": closeup must include the real source eye.");
-            if (sample.State == "idle")
-                Require(sample.Closure < .05 && sample.Changed[eye] <= 3 && Math.Abs(sample.HeightRatio[eye] - 1) < .01,
-                    "Idle artwork must preserve the original eye texture and aperture geometry.");
-            else
-            {
-                Require(sample.Closure > .8 && sample.Changed[eye] >= 15 && sample.HeightRatio[eye] < .04,
-                    "The eye aperture must actually compress to a thin line at the same bone pose.");
-                Require(sample.ClosedDark[eye] <= Math.Max(8, sample.OpenDark[eye] * .25),
-                    "Corgi " + sample.State + ": original pupil remains visible in the fixed open-eye region.");
-                Require(sample.ClosedBright[eye] <= Math.Max(8, sample.OpenBright[eye] * .30),
-                    "Corgi " + sample.State + ": exposed upper eye white remains visible after mesh closure.");
-            }
-        }
-        Console.WriteLine("PASS: HD face idle/pet/sleep closeups; true mesh eye compression; fixed open-eye ROI; no repainted eyelids.");
-    }
-
-    static FaceMetrics MeasureCorgiFace(Viewport3D view, WestieModel model, CorgiSprite sprite, string state)
-    {
-        double closure = sprite.EyeClosure;
-        FaceMetrics measured = new FaceMetrics { State = state, Closure = closure };
-        HashSet<int>[] regions = new HashSet<int>[2], upperRegions = new HashSet<int>[2];
-        double[] openHeight = new double[2];
-        try
-        {
-            // SetEyeClosure refreshes vertices only. Bone pose, time, heading,
-            // source UVs and source image stay identical across the comparison.
-            sprite.SetEyeClosure(0);
-            Point3D center = ArtworkPoint(sprite, SourcePoint(700, 725));
-            OrthographicCamera camera = new OrthographicCamera(new Point3D(center.X, center.Y, 6),
-                new Vector3D(0, 0, -6), new Vector3D(0, 1, 0), .78);
-            view.Camera = camera;
-            for (int eye = 0; eye < 2; eye++)
-            {
-                regions[eye] = EyePixels(sprite, camera, eye, false);
-                upperRegions[eye] = EyePixels(sprite, camera, eye, true);
-                openHeight[eye] = EyeSpan(sprite, eye);
-            }
-            RenderTargetBitmap openedBitmap = RenderCorgiFace(view);
-            byte[] opened = FacePixels(openedBitmap);
-            if (state != "idle") SaveFaceBitmap(openedBitmap, "corgi-face-" + state + "-open");
-
-            sprite.SetEyeClosure(closure);
-            CheckMesh(model.Scene, "corgi-face-" + state);
-            RenderTargetBitmap normal = RenderCorgiFace(view); byte[] pixels = FacePixels(normal);
-            SaveFaceBitmap(normal, "corgi-face-" + state);
-            for (int eye = 0; eye < 2; eye++)
-            {
-                measured.HeightRatio[eye] = EyeSpan(sprite, eye) / openHeight[eye];
-                foreach (int i in regions[eye])
-                {
-                    if (PixelDifferent(pixels, opened, i)) measured.Changed[eye]++;
-                    if (DeepDark(opened, i)) measured.OpenDark[eye]++;
-                    if (DeepDark(pixels, i)) measured.ClosedDark[eye]++;
-                }
-                foreach (int i in upperRegions[eye])
-                {
-                    if (EyeBright(opened, i)) measured.OpenBright[eye]++;
-                    if (EyeBright(pixels, i)) measured.ClosedBright[eye]++;
-                }
-                File.AppendAllText(Path.Combine(Output, "corgi-face-metrics.csv"), state + "," + eye + "," +
-                    closure.ToString(System.Globalization.CultureInfo.InvariantCulture) + "," +
-                    measured.HeightRatio[eye].ToString(System.Globalization.CultureInfo.InvariantCulture) + "," +
-                    measured.Changed[eye] + "," + measured.OpenDark[eye] + "," + measured.ClosedDark[eye] + "," +
-                    measured.OpenBright[eye] + "," + measured.ClosedBright[eye] + "\r\n");
-            }
-        }
-        finally { sprite.SetEyeClosure(closure); }
-        return measured;
-    }
-
-    static void SaveFaceBitmap(BitmapSource bitmap, string name)
-    {
-        PngBitmapEncoder encoder = new PngBitmapEncoder(); encoder.Frames.Add(BitmapFrame.Create(bitmap));
-        using (FileStream stream = File.Create(Path.Combine(Output, name + ".png"))) encoder.Save(stream);
-    }
-
-    static bool DeepDark(byte[] p, int i)
-    { return p[i + 3] >= 224 && p[i + 2] * .2126 + p[i + 1] * .7152 + p[i] * .0722 <= 50; }
-    static bool EyeBright(byte[] p, int i)
-    { return p[i + 3] >= 224 && p[i + 2] > 215 && p[i + 1] > 195 && p[i] > 135; }
-    static bool PixelDifferent(byte[] a, byte[] b, int i)
-    { return a[i + 3] >= 224 && (Math.Abs(a[i] - b[i]) > 18 || Math.Abs(a[i + 1] - b[i + 1]) > 18 || Math.Abs(a[i + 2] - b[i + 2]) > 18); }
-
-    static RenderTargetBitmap RenderCorgiFace(Viewport3D view)
-    {
-        const int size = 512;
-        view.Measure(new Size(size, size)); view.Arrange(new Rect(0, 0, size, size)); view.UpdateLayout();
-        RenderTargetBitmap bitmap = new RenderTargetBitmap(size, size, 96, 96, PixelFormats.Pbgra32);
-        bitmap.Render(view); return bitmap;
-    }
-
-    static byte[] FacePixels(BitmapSource source)
-    {
-        BitmapSource straight = new FormatConvertedBitmap(source, PixelFormats.Bgra32, null, 0);
-        byte[] pixels = new byte[source.PixelWidth * source.PixelHeight * 4];
-        straight.CopyPixels(pixels, source.PixelWidth * 4, 0); return pixels;
+        Vector3D forward=camera.LookDirection;forward.Normalize();Vector3D right=Vector3D.CrossProduct(forward,camera.UpDirection);right.Normalize();
+        Vector3D up=Vector3D.CrossProduct(right,forward);up.Normalize();Vector3D delta=point-camera.Position;double pixels=width/camera.Width;
+        return new Point(width*.5+Vector3D.DotProduct(delta,right)*pixels,height*.5-Vector3D.DotProduct(delta,up)*pixels);
     }
 
     static byte[] Save(Grid stage, string name)
@@ -487,7 +304,7 @@ static class BreedChecks
                         "Switching must preserve name, counters, size and window position.");
                 }
                 CheckBreedMenu(pet, loaded, preview);
-                CheckArtworkRoam(pet, loaded);
+                CheckCorgiRoam(pet, loaded);
                 Console.WriteLine("PASS: saved-breed construction, scene/preview synchronization, current-model reuse and personal/state preservation.");
             }
             finally { pet.Close(); app.Shutdown(); }
@@ -499,69 +316,65 @@ static class BreedChecks
         }
     }
 
-    static int SourceAlpha(Point point)
-    {
-        int x = (int)Math.Round(point.X), y = (int)Math.Round(point.Y);
-        return x < 0 || y < 0 || x >= artworkWidth || y >= artworkHeight ? 0 : embeddedPixels[(y * artworkWidth + x) * 4 + 3];
-    }
-
     static void CheckCorgiInput(PetWindow pet, PetSettings settings)
     {
-        Viewport3D viewport = Field<Viewport3D>(pet, "viewport");
-        SilhouetteHitArea input = Field<SilhouetteHitArea>(pet, "pointerHitArea");
-        WestieModel model = Field<WestieModel>(pet, "model");
-        CorgiSprite sprite = Field<CorgiSprite>(model, "artwork");
-        Require(!viewport.IsHitTestVisible && model.IsPreRendered, "HD Corgi must use the CPU alpha input surface.");
-        double width = pet.Width, height = pet.Height;
-        double heading = Field<double>(pet, "heading"), target = Field<double>(pet, "targetHeading");
-        double until = Field<double>(pet, "stateUntil"); bool autoHide = settings.AutoHideFullscreen;
-        // Landmarks refer to the actual unedited HD PNG, not the old SDF shape.
-        Point[] solid = { SourcePoint(1000,260), SourcePoint(520,490), SourcePoint(850,800),
-            SourcePoint(900,1250), SourcePoint(925,1711), SourcePoint(1490,1370) };
-        Point[] empty = { SourcePoint(380,300), SourcePoint(1700,900), SourcePoint(500,1500), SourcePoint(1290,600) };
-        foreach (Point point in solid) Require(SourceAlpha(point) > 200, "A named HD artwork landmark must be opaque: " + point);
-        foreach (Point point in empty) Require(SourceAlpha(point) < 8, "An HD transparent test landmark must be empty: " + point);
+        Viewport3D viewport=Field<Viewport3D>(pet,"viewport");SilhouetteHitArea input=Field<SilhouetteHitArea>(pet,"pointerHitArea");
+        WestieModel model=Field<WestieModel>(pet,"model");CorgiSprite sprite=Field<CorgiSprite>(model,"artwork");
+        Require(!viewport.IsHitTestVisible && model.IsPreRendered,"Animated Corgi must use CPU alpha input.");
+        model.BeginAction("idle");model.Animate(0,"idle",0);BitmapSource frame=FrameBitmap(sprite);byte[] pixels=FramePixels(frame);
+        List<Point> solid=new List<Point>(),empty=new List<Point>();
+        for(int row=frame.PixelHeight/8;row<frame.PixelHeight*7/8;row+=Math.Max(1,frame.PixelHeight/8))
+        {
+            int bestStart=0,bestLength=0,start=0,length=0;
+            for(int x=0;x<frame.PixelWidth;x++)
+            {
+                if(pixels[(row*frame.PixelWidth+x)*4+3]>240)
+                {if(length==0)start=x;length++;if(length>bestLength){bestStart=start;bestLength=length;}}else length=0;
+            }
+            if(bestLength>12)solid.Add(new Point(bestStart+bestLength/2+.5,row+.5));
+        }
+        foreach(Point point in new[]{new Point(3.5,3.5),new Point(frame.PixelWidth-3.5,3.5),
+            new Point(3.5,frame.PixelHeight-3.5),new Point(frame.PixelWidth-3.5,frame.PixelHeight-3.5)})
+            if(pixels[((int)point.Y*frame.PixelWidth+(int)point.X)*4+3]<8)empty.Add(point);
+        Require(solid.Count>=4 && empty.Count==4,"Idle frame needs opaque anatomy rows and transparent margins.");
+        double width=pet.Width,height=pet.Height,heading=Field<double>(pet,"heading"),target=Field<double>(pet,"targetHeading");
+        double until=Field<double>(pet,"stateUntil");bool autoHide=settings.AutoHideFullscreen;
         try
         {
-            settings.AutoHideFullscreen = false; Set(pet, "stateUntil", double.PositiveInfinity);
-            foreach (bool leftFacing in new[] { false, true })
+            settings.AutoHideFullscreen=false;Set(pet,"stateUntil",double.PositiveInfinity);
+            foreach(double facing in new[]{-52.0,52.0})
             {
-                double facing = leftFacing ? -52 : 52;
-                Set(pet, "heading", facing); Set(pet, "targetHeading", facing);
-                typeof(PetWindow).GetMethod("Tick", Private).Invoke(pet, new object[] { null, EventArgs.Empty });
-                OrthographicCamera camera = (OrthographicCamera)viewport.Camera;
-                foreach (double scale in new[] { .4, .57, 1.0, 1.6 })
+                Set(pet,"heading",facing);Set(pet,"targetHeading",facing);model.Heading.Angle=facing;model.Animate(0,"idle",0);
+                typeof(PetWindow).GetMethod("UpdateBreedHitArea",Private).Invoke(pet,null);
+                OrthographicCamera camera=(OrthographicCamera)viewport.Camera;
+                foreach(double scale in new[]{.4,.57,1.0,1.6})
                 {
-                    pet.Width = 320 * scale; pet.Height = 350 * scale; pet.UpdateLayout();
-                    foreach (Point source in solid)
+                    pet.Width=320*scale;pet.Height=350*scale;pet.UpdateLayout();
+                    foreach(Point source in solid)
                     {
-                        Point3D world = ArtworkPoint(sprite, source); Point local = Project(world, camera, 306, 260);
-                        Require(model.ArtworkHitTest(world.X, world.Y), "The sprite alpha sampler missed an opaque HD source landmark.");
-                        Require(ReferenceEquals(pet.InputHitTest(input.TranslatePoint(local, pet)), input),
-                            "HD ear/face/body/paw/tail missed actual input at scale " + scale + ", " + local + ".");
+                        Point3D world=FramePoint(sprite,source);Point local=Project(world,camera,306,260);
+                        Require(model.ArtworkHitTest(world.X,world.Y),"Frame sampler missed an opaque dog pixel.");
+                        Require(ReferenceEquals(pet.InputHitTest(input.TranslatePoint(local,pet)),input),"Corgi silhouette missed input at "+scale+", "+local+".");
                     }
-                    foreach (Point source in empty)
+                    foreach(Point source in empty)
                     {
-                        Point3D world = ArtworkPoint(sprite, source); Point local = Project(world, camera, 306, 260);
-                        Require(!model.ArtworkHitTest(world.X, world.Y), "The sprite alpha sampler hit a transparent HD source landmark.");
-                        Require(!ReferenceEquals(pet.InputHitTest(input.TranslatePoint(local, pet)), input),
-                            "Transparent HD artwork margin intercepted desktop input at scale " + scale + ", " + local + ".");
+                        Point3D world=FramePoint(sprite,source);Point local=Project(world,camera,306,260);
+                        Require(!model.ArtworkHitTest(world.X,world.Y),"Frame sampler intercepted a transparent pixel.");
+                        Require(!ReferenceEquals(pet.InputHitTest(input.TranslatePoint(local,pet)),input),"Transparent margin intercepted input at "+scale+", "+local+".");
                     }
                 }
             }
         }
         finally
         {
-            pet.Width = width; pet.Height = height; pet.UpdateLayout();
-            Set(pet, "heading", heading); Set(pet, "targetHeading", target); Set(pet, "stateUntil", until);
-            model.Heading.Angle = heading; model.Animate(0, "idle", 0);
-            typeof(PetWindow).GetMethod("UpdateBreedHitArea", Private).Invoke(pet, null);
-            settings.AutoHideFullscreen = autoHide;
+            pet.Width=width;pet.Height=height;pet.UpdateLayout();Set(pet,"heading",heading);Set(pet,"targetHeading",target);Set(pet,"stateUntil",until);
+            model.Heading.Angle=heading;model.Animate(0,"idle",0);typeof(PetWindow).GetMethod("UpdateBreedHitArea",Private).Invoke(pet,null);
+            settings.AutoHideFullscreen=autoHide;
         }
-        Console.WriteLine("PASS: real PNG alpha input at 40%, 57%, 100%, 160%, both mirrored headings, fur/body/paw/tail and transparent margins; 3D input remains off.");
+        Console.WriteLine("PASS: actual frame alpha input at four scales and both headings; transparent margins pass through.");
     }
 
-    static void CheckArtworkRoam(PetWindow pet, PetSettings settings)
+    static void CheckCorgiRoam(PetWindow pet, PetSettings settings)
     {
         bool roam = settings.Roam, autoHide = settings.AutoHideFullscreen;
         double until = Field<double>(pet, "stateUntil"), next = Field<double>(pet, "nextAction");
@@ -572,21 +385,21 @@ static class BreedChecks
             Set(pet, "mode", "idle"); Set(pet, "stateUntil", double.PositiveInfinity); Set(pet, "nextAction", -1.0);
             typeof(PetWindow).GetMethod("Tick", Private).Invoke(pet, new object[] { null, EventArgs.Empty });
             Require(Field<string>(pet, "mode") == "idle" && pet.Left == left && pet.Top == top && settings.Roam,
-                "Seated HD artwork must not roam or erase the saved Westie roaming preference.");
+                "Frame-animated Corgi must not roam or erase the saved Westie roaming preference.");
             typeof(PetWindow).GetMethod("Act", Private).Invoke(pet, new object[] { "walk" });
-            Require(Field<string>(pet, "mode") != "walk" && settings.Roam, "Manual walk must not slide the seated artwork or clear the preference.");
+            Require(Field<string>(pet, "mode") != "walk" && settings.Roam, "Manual walk must not slide the frame-animated Corgi or clear the preference.");
             pet.SwitchBreed("westie");
             Require(!Field<WestieModel>(pet, "model").IsPreRendered && settings.Roam, "Westie must recover the retained roaming preference.");
             Set(pet, "mode", "walk"); pet.SwitchBreed("corgi");
             Require(Field<string>(pet, "mode") == "idle" && settings.Roam,
-                "Switching from a walking Westie must stop the seated artwork without deleting the preference.");
+                "Switching from a walking Westie must stop the frame-animated Corgi without deleting the preference.");
         }
         finally
         {
             settings.Roam = roam; settings.AutoHideFullscreen = autoHide;
             Set(pet, "mode", mode); Set(pet, "stateUntil", until); Set(pet, "nextAction", next);
         }
-        Console.WriteLine("PASS: seated 2.5D artwork cannot roam; saved Westie roam preference survives model switches.");
+        Console.WriteLine("PASS: Frame-animated Corgi cannot roam; saved Westie roam preference survives model switches.");
     }
 
     static void CheckBreedMenu(PetWindow pet, PetSettings settings, Viewport3D preview)

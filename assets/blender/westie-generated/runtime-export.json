@@ -1,0 +1,90 @@
+{
+  "source_sha256": "7d440cb75ba688d5eb3101431973d6fc71e0c9ec4c3f3ab7b79d00e1958e2965",
+  "skin_vertices": 66195,
+  "skin_triangles": 88216,
+  "fur_vertices": 19500,
+  "fur_triangles": 6500,
+  "anchors": [
+    [
+      0,
+      1.075,
+      1.003
+    ],
+    [
+      0.253736573791096,
+      0.07928582224061213,
+      0.555183477546289
+    ],
+    [
+      0.135,
+      1.424,
+      0.748
+    ],
+    [
+      -0.135,
+      1.424,
+      0.748
+    ],
+    [
+      0,
+      1.26,
+      1.04
+    ],
+    [
+      0,
+      1.82,
+      0.62
+    ]
+  ],
+  "pivots": [
+    [
+      0,
+      0.68,
+      -0.25
+    ],
+    [
+      0,
+      1.06,
+      0.54
+    ],
+    [
+      0.255,
+      0.61,
+      0.27
+    ],
+    [
+      -0.255,
+      0.61,
+      0.27
+    ],
+    [
+      0.27,
+      0.61,
+      -0.77
+    ],
+    [
+      -0.27,
+      0.61,
+      -0.77
+    ],
+    [
+      0,
+      1.01,
+      -0.91
+    ],
+    [
+      0,
+      1.2,
+      0.82
+    ]
+  ],
+  "source_vertices": 313164,
+  "source_triangles": 499582,
+  "texture_size": [
+    4096,
+    4096
+  ],
+  "max_cluster_displacement": 0.02295799919256171,
+  "technique": "face/material/UV-aware vertex clustering and root-weighted fine tapered geometry; eight analytic bones",
+  "runtime_axes": "Y up, Z forward; source display scale times .85"
+}

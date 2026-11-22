@@ -1,0 +1,158 @@
+{
+  "status": "verified editable GLB and animation previews",
+  "source_file": "C:\\Users\\user\\Desktop\\mimo\\westie-pet\\art\\corgi-image-to-3d\\source\\corgi-meshy.glb",
+  "source_sha256": "64bf73ec5491182e2f92ec0a067c40a93ca6a1aa4eb319bf9628a3a98934879c",
+  "rigged_file": "C:\\Users\\user\\Desktop\\mimo\\westie-pet\\art\\corgi-image-to-3d\\rigged\\corgi-rigged.glb",
+  "armature_object": "Root",
+  "skin_objects": [
+    "CorgiSkin"
+  ],
+  "required_shape_keys": [
+    "Blink.L",
+    "Blink.R",
+    "JawOpen",
+    "Smile",
+    "LieDownCorrective"
+  ],
+  "joint_count": 24,
+  "coordinate_system": "glTF Y up, ground Y=0, height 2 units",
+  "up_axis": 1,
+  "ground_tolerance": 0.055,
+  "max_edge_growth": 0.16,
+  "actions": [
+    {
+      "name": "Idle",
+      "duration": 4,
+      "sample_times": [
+        0,
+        1.0,
+        2.0,
+        3.0,
+        4
+      ],
+      "returns_to_rest": true
+    },
+    {
+      "name": "Blink",
+      "duration": 1.2,
+      "sample_times": [
+        0,
+        0.3,
+        0.6,
+        0.8999999999999999,
+        1.2
+      ],
+      "returns_to_rest": true
+    },
+    {
+      "name": "Pet",
+      "duration": 4,
+      "sample_times": [
+        0,
+        1.0,
+        2.0,
+        3.0,
+        4
+      ],
+      "returns_to_rest": true
+    },
+    {
+      "name": "Eat",
+      "duration": 5,
+      "sample_times": [
+        0,
+        1.25,
+        1.6,
+        2.5,
+        3.75,
+        5
+      ],
+      "returns_to_rest": true,
+      "contact_time": 1.6,
+      "contact_kind": "mouth_food",
+      "prop_node": "Treat",
+      "prop_radius": 0.035,
+      "mouth_anchor": "MouthAnchor",
+      "paw_anchor": "PawAnchor"
+    },
+    {
+      "name": "PlayBall",
+      "duration": 4,
+      "sample_times": [
+        0,
+        1.0,
+        1.5,
+        2.0,
+        3.0,
+        4
+      ],
+      "returns_to_rest": true,
+      "contact_time": 1.5,
+      "contact_kind": "paw_ball",
+      "prop_node": "Ball",
+      "prop_radius": 0.105,
+      "mouth_anchor": "MouthAnchor",
+      "paw_anchor": "PawAnchor"
+    },
+    {
+      "name": "Sleep",
+      "duration": 5,
+      "sample_times": [
+        0,
+        1.25,
+        2.5,
+        3.75,
+        5
+      ],
+      "returns_to_rest": false,
+      "holds_sleep_pose": true
+    },
+    {
+      "name": "Wake",
+      "duration": 4,
+      "sample_times": [
+        0,
+        1.0,
+        2.0,
+        3.0,
+        4
+      ],
+      "returns_to_rest": true,
+      "starts_from": "Sleep"
+    }
+  ],
+  "split_lip_triangles": 250,
+  "eyelid_patches": [
+    {
+      "side": "L",
+      "center_blender": [
+        0.119,
+        -0.595,
+        1.487
+      ],
+      "upper_lower_lids": true,
+      "closed_crease": true
+    },
+    {
+      "side": "R",
+      "center_blender": [
+        -0.113,
+        -0.595,
+        1.48
+      ],
+      "upper_lower_lids": true,
+      "closed_crease": true
+    }
+  ],
+  "surface_notes": "Original texture/UV retained; lip triangles split with interpolated UV, curved eyelid cover primitives and inner mouth/tongue/teeth added.",
+  "blender_export_status": "saved and reopened; actual skin/morph and packed images verified",
+  "rigged_sha256": "e8857443eb63ce2de49b698de3978515712a239f23b3d008ed01ce60e5151a55",
+  "transparent_frame_count": 333,
+  "verification_files": [
+    "rig-checks.json",
+    "previews/preview-checks.json",
+    "native-checks.json"
+  ],
+  "native_blend_file": "C:\\Users\\user\\Desktop\\mimo\\westie-pet\\art\\corgi-image-to-3d\\rigged\\corgi-rigged.blend",
+  "native_blend_sha256": "7b51b9bc2f7c0b30e9dc402bf49d69fed639d91c6bb32b668b075b8124b95658"
+}

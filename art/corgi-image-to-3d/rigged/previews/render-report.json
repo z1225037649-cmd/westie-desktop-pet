@@ -1,0 +1,51 @@
+{
+  "Idle": {
+    "peak_time": 1.0,
+    "frames": 49,
+    "duration": 4,
+    "fps": 12,
+    "preview_render": "Actual delivered GLB, evaluated joints and morphs, CPU texture/depth-buffer rendering"
+  },
+  "Blink": {
+    "peak_time": 0.6,
+    "frames": 15,
+    "duration": 1.2,
+    "fps": 12,
+    "preview_render": "Actual delivered GLB, evaluated joints and morphs, CPU texture/depth-buffer rendering"
+  },
+  "Pet": {
+    "peak_time": 2.0,
+    "frames": 49,
+    "duration": 4,
+    "fps": 12,
+    "preview_render": "Actual delivered GLB, evaluated joints and morphs, CPU texture/depth-buffer rendering"
+  },
+  "Eat": {
+    "peak_time": 1.7,
+    "frames": 61,
+    "duration": 5,
+    "fps": 12,
+    "preview_render": "Actual delivered GLB, evaluated joints and morphs, CPU texture/depth-buffer rendering"
+  },
+  "PlayBall": {
+    "peak_time": 1.5,
+    "frames": 49,
+    "duration": 4,
+    "fps": 12,
+    "preview_render": "Actual delivered GLB, evaluated joints and morphs, CPU texture/depth-buffer rendering"
+  },
+  "Sleep": {
+    "peak_time": 5.0,
+    "frames": 61,
+    "duration": 5,
+    "fps": 12,
+    "preview_render": "Actual delivered GLB, evaluated joints and morphs, CPU texture/depth-buffer rendering"
+  },
+  "Wake": {
+    "peak_time": 2.0,
+    "frames": 49,
+    "duration": 4,
+    "fps": 12,
+    "preview_render": "Actual delivered GLB, evaluated joints and morphs, CPU texture/depth-buffer rendering"
+  }
+}

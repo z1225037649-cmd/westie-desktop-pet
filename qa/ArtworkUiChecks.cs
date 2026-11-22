@@ -25,17 +25,17 @@ static class ArtworkUiChecks
         {
             string output=Path.Combine(root,"hd-preview"); Directory.CreateDirectory(output);
             PetSettings settings = new PetSettings { Breed="corgi", Roam=true, Name="小白", Size=1 };
-            pet = new PetWindow(settings, true, true, false); pet.Show(); pet.UpdateLayout();
+            pet = new PetWindow(settings, true, true, false); pet.Opacity=0; pet.Show(); pet.UpdateLayout();
             typeof(PetWindow).GetMethod("ShowHome",Private).Invoke(pet,null);
-            Window home = Field<Window>(pet,"home"); home.UpdateLayout();
+            Window home = Field<Window>(pet,"home"); home.Opacity=0; home.Left=SystemParameters.VirtualScreenLeft-home.Width-100; home.UpdateLayout();
             ComboBox choice = Field<ComboBox>(pet,"breedChoice");
-            Require(choice.SelectedIndex==1,"Home must restore HD Corgi selection.");
+            Require(choice.SelectedIndex==1,"Home must restore the animated Corgi selection.");
             Require(!Field<CheckBox>(pet,"roamOption").IsEnabled && settings.Roam,"Corgi must suspend roaming without losing the Westie preference.");
             choice.SelectedIndex=0;
             Require(Field<WestieModel>(pet,"model").Breed=="westie" && Field<CheckBox>(pet,"roamOption").IsEnabled,"Real home SelectionChanged did not switch back to Westie.");
             choice.SelectedIndex=1;
             WestieModel corgi = Field<WestieModel>(pet,"model");
-            Require(corgi.IsPreRendered && settings.Breed=="corgi","Real home SelectionChanged did not switch to the HD artwork.");
+            Require(corgi.IsPreRendered && settings.Breed=="corgi","Real home SelectionChanged did not switch to animated Corgi.");
             Viewport3D preview=Field<Viewport3D>(pet,"homePreview"), desktop=Field<Viewport3D>(pet,"viewport");
             Require(ReferenceEquals(((ModelVisual3D)preview.Children[0]).Content,corgi.Scene)
                 && ReferenceEquals(((ModelVisual3D)desktop.Children[0]).Content,corgi.Scene),"Home selector did not synchronize both scenes.");
@@ -43,8 +43,10 @@ static class ArtworkUiChecks
             home.UpdateLayout(); Save((FrameworkElement)home.Content,home.Background,Path.Combine(output,"home.png"));
             ScrollViewer scroll=(ScrollViewer)home.Content;
             scroll.ScrollToEnd(); home.UpdateLayout(); Save(scroll,home.Background,Path.Combine(output,"home-settings.png"));
-            Require(Field<TextBlock>(pet,"homeModelHint").Text.Contains("2.5D") || Field<TextBlock>(pet,"homeBreedDescription").Text.Contains("2.5D"),"Artwork mode must identify its presentation honestly.");
-            Console.WriteLine("PASS: production home selector changes both models and previews; HD roam suspension preserves saved preference; home layout renders.");
+            string description=Field<TextBlock>(pet,"homeModelHint").Text+" "+Field<TextBlock>(pet,"homeBreedDescription").Text;
+            Require(description.Contains("动画") && !description.Contains("2.5D"),"Home must describe the new animation sequence instead of the archived single-picture deformation.");
+            Require(description.Contains("睡") || description.Contains("互动"),"Home must describe Corgi interaction capability.");
+            Console.WriteLine("PASS: production home selector changes both models and previews; Corgi roaming suspension preserves saved preference; home layout renders.");
             return 0;
         }
         catch(Exception error) { Console.WriteLine("ARTWORK_UI_ERROR: "+error); return 1; }
