@@ -59,6 +59,7 @@ namespace WestiePet
         double walkPhase, tailAngle, jawAngle;
         double playStartTime;
         bool playRecovering;
+        bool deferGeometry;
         string previousState, pendingAction;
         readonly Random random = new Random(199);
 
@@ -122,7 +123,7 @@ namespace WestiePet
             hitVertices = SelectHitVertices(surfaces[0].Bind);
             CreateSleepingLegs();
             AddEyeGlints();
-            CacheSleepingLegs();
+            CacheSleepingBody();
             CacheCervicalJoint();
             Update(0, "idle", 0, 52, false);
         }
@@ -311,7 +312,7 @@ namespace WestiePet
                 : MoveAngle(headYaw, (-8 + lookX * 9 + pet * Math.Sin(stateTime * 4.4) * 7) * (1 - sleepPose), dt, petting ? 60 : 12);
             headTilt = sleeping ? Approach(headTilt, 0, dt, 24)
                 : MoveAngle(headTilt, (pet * (-4 + Math.Sin(stateTime * 4.4) * 10) - lookX * 3) * (1 - sleepPose), dt, petting ? 65 : 9);
-            headNod = MoveAngle(headNod, -1 - lookY * 5 + feed * (18 + chew * 5) + sleepPose * 9 + playPrepare * 5, dt,
+            headNod = MoveAngle(headNod, -1 - lookY * 5 + feed * (18 + chew * 5) + sleepPose * 19 + playPrepare * 5, dt,
                 feeding || sleeping || sleepPose > .001 ? 55 : 14);
             if (!sleeping && time >= nextBlink)
             {
@@ -323,16 +324,16 @@ namespace WestiePet
             jawAngle = feeding ? feed * (2 + chew * 12) : pet * .6;
             tailAngle = Approach(tailAngle, Math.Sin((petting || feeding ? stateTime : time) * (petting ? 11 : playing ? 8 : 4))
                 * (petting ? 22 : playing ? 14 : feeding ? 13 : moving ? 8 : 3) * (1 - sleepPose), dt, 12);
-            rootLift = -.36 * sleepPose + (moving ? (1 - Math.Cos(walkPhase * 2)) * .004 : Math.Sin(time * 2.0) * .0010) * (1 - sleepPose);
+            rootLift = -.30 * sleepPose + (moving ? (1 - Math.Cos(walkPhase * 2)) * .004 : Math.Sin(time * 2.0) * .0010) * (1 - sleepPose);
 
             double breath = Math.Sin(time * (sleeping ? 1.7 : 2.0)) * .0025;
             bones[0] = Matrix3D.Identity;
             bones[0].ScaleAt(new Vector3D(1 + breath * .5, 1 + breath, 1), new Point3D(0, .65, -.1));
-            bones[0].Append(Pose(new Point3D(0, .65, -.55), new Vector3D(6 * sleepPose, 0, 0), new Vector3D(0, -.015 * sleepPose, 0)));
-            double neckNod = 65 * sleepPose;
+            bones[0].OffsetY -= .015 * sleepPose;
+            double neckNod = 45 * sleepPose;
             bones[8] = Pose(pivots[8], new Vector3D(neckNod, 0, 0), new Vector3D(0, -.08 * sleepPose, 0));
             Vector3D headRotation = new Vector3D(headNod - neckNod, headYaw, headTilt);
-            double neckRadians = neckNod * Math.PI / 180, headClearance = .04 * sleepPose;
+            double neckRadians = neckNod * Math.PI / 180, headClearance = .08 * sleepPose;
             Vector3D headOffset = new Vector3D(pet * Math.Sin(stateTime * 4.4) * .018,
                 -feed * .040 + Math.Sin(neckRadians) * headClearance,
                 feed * .025 + Math.Cos(neckRadians) * headClearance);
@@ -357,7 +358,18 @@ namespace WestiePet
             bones[7] = Pose(pivots[7], new Vector3D(-jawAngle, 0, 0), new Vector3D());
             bones[7].Append(bones[1]);
             facing.Angle = Finite(headingAngle) ? headingAngle : 52;
-            RefreshGeometry();
+            if (!deferGeometry) RefreshGeometry();
+        }
+
+        internal void Settle(double time, string state, double age, double headingAngle, bool walkingPaused)
+        {
+            // Advance easing without rebuilding/uploading the entire mesh 36
+            // times inside the model selector's synchronous Click handler.
+            // The caller must Animate before displaying or reading geometry;
+            // that final update also synchronizes the food and ball props.
+            deferGeometry = true;
+            try { for (int i = 0; i < 36; i++) Update(time - (35 - i) / 30.0, state, age, headingAngle, walkingPaused); }
+            finally { deferGeometry = false; }
         }
 
         internal void SetEyeClosure(double closure)
@@ -391,13 +403,13 @@ namespace WestiePet
                     Point3D bind = vertex.Position;
                     CloseEyes(ref bind);
                     double x = 0, y = 0, z = 0, nx = 0, ny = 0, nz = 0;
-                    double legBlend = vertex.Position.Y < .80 && sleepPose >= .000001 ? sleepPose : 0;
-                    Accumulate(bind, vertex.Normal, bones[vertex.B0], MovingWeight(vertex.B0, vertex.W0, legBlend, vertex.CervicalWeight), ref x, ref y, ref z, ref nx, ref ny, ref nz);
-                    Accumulate(bind, vertex.Normal, bones[vertex.B1], MovingWeight(vertex.B1, vertex.W1, legBlend, vertex.CervicalWeight), ref x, ref y, ref z, ref nx, ref ny, ref nz);
-                    Accumulate(bind, vertex.Normal, bones[vertex.B2], MovingWeight(vertex.B2, vertex.W2, legBlend, vertex.CervicalWeight), ref x, ref y, ref z, ref nx, ref ny, ref nz);
-                    Accumulate(bind, vertex.Normal, bones[vertex.B3], MovingWeight(vertex.B3, vertex.W3, legBlend, vertex.CervicalWeight), ref x, ref y, ref z, ref nx, ref ny, ref nz);
+                    double legBlend = sleepPose;
+                    Accumulate(bind, vertex.Normal, ref bones[vertex.B0], MovingWeight(vertex.B0, vertex.W0, legBlend, vertex.CervicalWeight), ref x, ref y, ref z, ref nx, ref ny, ref nz);
+                    Accumulate(bind, vertex.Normal, ref bones[vertex.B1], MovingWeight(vertex.B1, vertex.W1, legBlend, vertex.CervicalWeight), ref x, ref y, ref z, ref nx, ref ny, ref nz);
+                    Accumulate(bind, vertex.Normal, ref bones[vertex.B2], MovingWeight(vertex.B2, vertex.W2, legBlend, vertex.CervicalWeight), ref x, ref y, ref z, ref nx, ref ny, ref nz);
+                    Accumulate(bind, vertex.Normal, ref bones[vertex.B3], MovingWeight(vertex.B3, vertex.W3, legBlend, vertex.CervicalWeight), ref x, ref y, ref z, ref nx, ref ny, ref nz);
                     if (vertex.CervicalWeight > 0)
-                        Accumulate(bind, vertex.Normal, cervicalPoses[vertex.CervicalPoseIndex], vertex.CervicalWeight, ref x, ref y, ref z, ref nx, ref ny, ref nz);
+                        Accumulate(bind, vertex.Normal, ref cervicalPoses[vertex.CervicalPoseIndex], vertex.CervicalWeight, ref x, ref y, ref z, ref nx, ref ny, ref nz);
                     // The root lowering is shared by skin, fur and landmarks.
                     x += vertex.SleepPosition.X * legBlend; y += vertex.SleepPosition.Y * legBlend; z += vertex.SleepPosition.Z * legBlend;
                     nx += vertex.SleepNormal.X * legBlend; ny += vertex.SleepNormal.Y * legBlend; nz += vertex.SleepNormal.Z * legBlend;
@@ -413,8 +425,10 @@ namespace WestiePet
                     if (normal.LengthSquared > .00000001) normal.Normalize();
                     surface.Normals[i] = normal;
                 }
-                surface.Mesh.Positions = new Point3DCollection(surface.Positions);
-                surface.Mesh.Normals = new Vector3DCollection(surface.Normals);
+                Point3DCollection positions = new Point3DCollection(surface.Positions); positions.Freeze();
+                Vector3DCollection normals = new Vector3DCollection(surface.Normals); normals.Freeze();
+                surface.Mesh.Positions = positions;
+                surface.Mesh.Normals = normals;
             }
             bindBounds = new Rect3D(minX, minY, minZ, maxX - minX, maxY - minY, maxZ - minZ);
         }
@@ -423,17 +437,17 @@ namespace WestiePet
         {
             for (int leg = 0; leg < 4; leg++)
             {
-                bool front = leg < 2; double side = leg % 2 == 0 ? 1 : -1;
+                bool front = leg < 2;
+                double side = leg % 2 == 0 ? 1 : -1;
                 double x = pivots[leg + 2].X;
                 Point3D a = new Point3D(x, front ? .75 : .78, front ? .27 : -.78);
                 Point3D b = new Point3D(x, front ? .42 : .47, front ? .33 : -.83);
                 Point3D c = new Point3D(x, front ? .18 : .20, front ? .44 : -.90);
                 // Targets include the eventual root lowering. Upper and lower
                 // limbs bend independently; feet retain their ground-facing pose.
-                Point3D ta = Pose(new Point3D(0, .65, -.55), new Vector3D(6, 0, 0), new Vector3D(0, -.015, 0)).Transform(a);
-                Point3D tb = new Point3D(x + side * (front ? .055 : .08), front ? .51 : .50, front ? .57 : -.63);
-                Point3D tc = new Point3D(x + (front ? 0 : side * .03),
-                    .36 + .03 + (c.Y - .03) * .65, c.Z + (front ? .52 : -.03));
+                Point3D ta = a + new Vector3D(0, -.015, 0);
+                Point3D tb = new Point3D(x + side * .09, .46, front ? .38 : -.67);
+                Point3D tc = new Point3D(x + side * .04, .30 + .03 + (c.Y - .03) * .85, c.Z + (front ? .38 : -.03));
                 sleepSegments[leg, 0] = MakeSleepSegment(a, b, ta, tb);
                 sleepSegments[leg, 1] = MakeSleepSegment(b, c, tb, tc);
             }
@@ -462,8 +476,8 @@ namespace WestiePet
         {
             SleepSegment s = sleepSegments[leg, 1];
             return new SleepFrame { Rest = new Point3D(s.RestB.X, height, s.RestB.Z),
-                Target = new Point3D(s.TargetB.X, s.TargetB.Y + (height - s.RestB.Y) * .65, s.TargetB.Z),
-                Cos = 1, Sin = 0, NormalYScale = .65 };
+                Target = new Point3D(s.TargetB.X, s.TargetB.Y + (height - s.RestB.Y) * .85, s.TargetB.Z),
+                Cos = 1, Sin = 0, NormalYScale = .85 };
         }
 
         static SleepFrame BlendSleepFrames(SleepFrame a, SleepFrame b, double amount)
@@ -480,8 +494,22 @@ namespace WestiePet
 
         void SleepingLegPoint(int leg, Point3D point, Vector3D normal, out Point3D posed, out Vector3D posedNormal)
         {
+            if (leg >= 0) SleepingSegmentPoint(leg, point, normal, out posed, out posedNormal);
+            else SleepingBodyPoint(point, normal, out posed, out posedNormal);
+        }
+
+        static void SleepingBodyPoint(Point3D point, Vector3D normal, out Point3D posed, out Vector3D posedNormal)
+        {
+            // Preserve the ribcage volume. The limbs bend around it instead
+            // of compressing the whole chest/abdomen to make the feet fit.
+            posed = point + new Vector3D(0, -.015, 0);
+            posedNormal = normal;
+        }
+
+        void SleepingSegmentPoint(int leg, Point3D point, Vector3D normal, out Point3D posed, out Vector3D posedNormal)
+        {
             double knee = sleepSegments[leg, 0].RestB.Y, ankle = sleepSegments[leg, 1].RestB.Y;
-            double band = leg < 2 ? .07 : .10;
+            const double band = .10;
             SleepFrame frame;
             if (point.Y > knee + band) frame = SegmentFrame(leg, 0, point.Y);
             else if (point.Y >= knee - band)
@@ -496,13 +524,13 @@ namespace WestiePet
             posedNormal = new Vector3D(normal.X,
                 frame.Cos * normal.Y / frame.NormalYScale - frame.Sin * normal.Z,
                 frame.Sin * normal.Y / frame.NormalYScale + frame.Cos * normal.Z);
-            if (posed.Y < .385) { posed.Y = .385; posedNormal = new Vector3D(0, -1, 0); }
+            if (posed.Y < .325) { posed.Y = .325; posedNormal = new Vector3D(0, -1, 0); }
         }
 
         static double MovingWeight(byte bone, double weight, double legBlend, double cervicalWeight)
         {
             if (cervicalWeight > 0 && (bone == 1 || bone == 8)) return 0;
-            return bone >= 2 && bone <= 5 && weight >= .000001 ? weight * (1 - legBlend) : weight;
+            return (bone == 0 || bone >= 2 && bone <= 5) && weight >= .000001 ? weight * (1 - legBlend) : weight;
         }
 
         void CacheCervicalJoint()
@@ -527,7 +555,7 @@ namespace WestiePet
         static void AddCervicalWeight(byte bone, double weight, ref double head, ref double neck)
         { if (bone == 1) head += weight; else if (bone == 8) neck += weight; }
 
-        void CacheSleepingLegs()
+        void CacheSleepingBody()
         {
             // The resting target is fixed in bind space. Compute it once,
             // then only blend its weighted contribution during animation.
@@ -535,7 +563,6 @@ namespace WestiePet
             for (int i = 0; i < surface.Bind.Length; i++)
             {
                 Vertex vertex = surface.Bind[i];
-                if (vertex.Position.Y >= .80) continue;
                 CacheSleepingBone(ref vertex, vertex.B0, vertex.W0);
                 CacheSleepingBone(ref vertex, vertex.B1, vertex.W1);
                 CacheSleepingBone(ref vertex, vertex.B2, vertex.W2);
@@ -546,7 +573,7 @@ namespace WestiePet
 
         void CacheSleepingBone(ref Vertex vertex, byte bone, double weight)
         {
-            if (bone < 2 || bone > 5 || weight < .000001) return;
+            if ((bone != 0 && (bone < 2 || bone > 5)) || weight < .000001) return;
             Point3D target; Vector3D targetNormal;
             SleepingLegPoint(bone - 2, vertex.Position, vertex.Normal, out target, out targetNormal);
             vertex.SleepPosition += new Vector3D(target.X, target.Y, target.Z) * weight;
@@ -602,7 +629,7 @@ namespace WestiePet
             matrix.Translate(offset); return matrix;
         }
 
-        static void Accumulate(Point3D p, Vector3D n, Matrix3D m, double weight,
+        static void Accumulate(Point3D p, Vector3D n, ref Matrix3D m, double weight,
             ref double x, ref double y, ref double z, ref double nx, ref double ny, ref double nz)
         {
             if (weight <= 0) return;

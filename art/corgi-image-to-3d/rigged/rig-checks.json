@@ -1,7 +1,7 @@
 {
   "status": "passed",
   "independent_numpy_skinning": true,
-  "rig_sha256": "e8857443eb63ce2de49b698de3978515712a239f23b3d008ed01ce60e5151a55",
+  "rig_sha256": "c1549da4a3bca85aa40d7a7c34e5f357fae9961489d0f2e67908f21152b4ce2b",
   "ground_axis": "Y",
   "rest_bounds": [
     [
@@ -135,8 +135,44 @@
       "max_evaluated_displacement": 0.010650623514059642
     },
     "LieDownCorrective": {
-      "affected_vertices": 28614,
-      "max_evaluated_displacement": 0.2332380873959094
+      "affected_vertices": 62348,
+      "max_evaluated_displacement": 0.2999338932052145
+    },
+    "LieDownTransition.1": {
+      "affected_vertices": 50832,
+      "max_evaluated_displacement": 0.06528137566483158
+    },
+    "LieDownTransition.2": {
+      "affected_vertices": 50849,
+      "max_evaluated_displacement": 0.07692069792610219
+    },
+    "LieDownTransition.3": {
+      "affected_vertices": 50856,
+      "max_evaluated_displacement": 0.07896594445928791
+    },
+    "LieDownTransition.4": {
+      "affected_vertices": 50856,
+      "max_evaluated_displacement": 0.07536956071575801
+    },
+    "LieDownTransition.5": {
+      "affected_vertices": 50849,
+      "max_evaluated_displacement": 0.06665015854347472
+    },
+    "LieDownTransition.6": {
+      "affected_vertices": 50839,
+      "max_evaluated_displacement": 0.05209041880000371
+    },
+    "LieDownTransition.7": {
+      "affected_vertices": 50822,
+      "max_evaluated_displacement": 0.030214923391380565
+    },
+    "LieDownTransition.8": {
+      "affected_vertices": 50783,
+      "max_evaluated_displacement": 0.016198449083695617
+    },
+    "LieDownTransition.9": {
+      "affected_vertices": 50733,
+      "max_evaluated_displacement": 0.008376026124770406
     }
   },
   "animations": {
@@ -175,18 +211,18 @@
     "Sleep": {
       "duration_seconds": 5.0,
       "sample_count": 21,
-      "max_surface_motion": 1.3460904744508246,
+      "max_surface_motion": 1.0954426969114401,
       "min_ground_coordinate": -1.1365693941556287e-08,
-      "max_edge_growth": 0.08702823090518622,
-      "endpoint_distance": 1.3460904571858228
+      "max_edge_growth": 0.02057406086865301,
+      "endpoint_distance": 1.0954426882155222
     },
     "Wake": {
       "duration_seconds": 4.0,
       "sample_count": 21,
-      "max_surface_motion": 1.3460904744508244,
+      "max_surface_motion": 1.0957179359246219,
       "min_ground_coordinate": -1.1365693941556287e-08,
-      "max_edge_growth": 0.08717588148067933,
-      "endpoint_distance": 1.3460904571858228
+      "max_edge_growth": 0.02057406086865301,
+      "endpoint_distance": 1.0954426882155222
     },
     "Blink": {
       "duration_seconds": 1.2000000476837158,

@@ -32,7 +32,9 @@ INDEX = {entry[0]: index for index, entry in enumerate(BONES)}
 PIVOTS = np.array([entry[2] for entry in BONES], dtype=float)
 PARENTS = [INDEX[entry[1]] if entry[1] else -1 for entry in BONES]
 AXIS = np.array([[1, 0, 0], [0, 0, 1], [0, -1, 0]], dtype=float)
-SHAPES = ['Blink.L', 'Blink.R', 'JawOpen', 'Smile', 'LieDownCorrective']
+SLEEP_STEPS = np.r_[np.arange(1, 8) / 8, .9375, .96875]
+SLEEP_CURVATURE = .80
+SHAPES = ['Blink.L', 'Blink.R', 'JawOpen', 'Smile', 'LieDownCorrective'] + ['LieDownTransition.%d' % index for index in range(1, len(SLEEP_STEPS) + 1)]
 DURATIONS = {'Idle': 4, 'Blink': 1.2, 'Pet': 4, 'Eat': 5, 'PlayBall': 4, 'Sleep': 5, 'Wake': 4}
 
 
@@ -100,13 +102,26 @@ def limb_ik(rotations, side, target, offsets=None):
 
 
 def sleep_rotations(amount):
-    result = {'Spine': rot(0, .97 * amount), 'Chest': rot(0, .13 * amount),
-              'Neck': rot(0, -.28 * amount), 'Head': rot(0, -.05 * amount)}
+    result = {'Spine': rot(0, .60 * amount), 'Chest': rot(0, .04 * amount),
+              'Neck': rot(0, -.02 * amount), 'Head': rot(0, .14 * amount)}
     for side, sign in [('L', 1), ('R', -1)]:
         rest = PIVOTS[INDEX['Paw.' + side]]
-        target = rest * (1 - amount) + np.array([sign * .19, -.74, .090]) * amount
-        limb_ik(result, side, target, {'Spine': np.array([0, 0, -.12 * amount])})
+        target = rest * (1 - amount) + np.array([sign * .19, -.60, .090]) * amount
+        limb_ik(result, side, target, {'Spine': np.array([0, 0, -.05 * amount])})
     return result
+
+
+def sleep_head_offset(rotations, offsets, amount):
+    if amount <= 0: return
+    curvature = SLEEP_CURVATURE * amount
+    point = PIVOTS[INDEX['Head']]
+    height = .95
+    angle = curvature * height
+    target = np.array([point[0], point[1] * math.cos(angle) - (1 - math.cos(angle)) / curvature - (point[2] - 1.05) * math.sin(angle),
+                       .10 + math.sin(angle) / curvature + point[1] * math.sin(angle) + (point[2] - 1.05) * math.cos(angle)])
+    matrices = hierarchy(rotations, offsets)
+    head, parent = INDEX['Head'], INDEX['Neck']
+    offsets['Head'] = matrices[parent, :3, :3].T @ (target - matrices[head, :3, 3])
 
 
 def pose(action, time):
@@ -149,16 +164,24 @@ def pose(action, time):
     elif action == 'Sleep':
         amount = float(smooth(.4, 3.6, t))
         rotations = sleep_rotations(amount)
-        offsets['Spine'] = np.array([0, 0, -.12 * amount])
+        offsets['Spine'] = np.array([0, 0, -.05 * amount])
+        sleep_head_offset(rotations, offsets, amount)
         morph[:2] = float(smooth(.3, 2.5, t))
         morph[4] = amount
+        knots = np.r_[0., SLEEP_STEPS, 1.]
+        for index, knot in enumerate(SLEEP_STEPS):
+            morph[5 + index] = max(0, min((amount - knots[index]) / (knot - knots[index]), (knots[index + 2] - amount) / (knots[index + 2] - knot)))
     elif action == 'Wake':
         amount = 1 - float(smooth(.3, 3.2, t))
         rotations = sleep_rotations(amount)
-        offsets['Spine'] = np.array([0, 0, -.12 * amount])
+        offsets['Spine'] = np.array([0, 0, -.05 * amount])
+        sleep_head_offset(rotations, offsets, amount)
         morph[:2] = 1 - float(smooth(.8, 1.8, t))
         morph[2] = .65 * math.sin(math.pi * float(smooth(.5, 2.5, t))) ** 4
         morph[4] = amount
+        knots = np.r_[0., SLEEP_STEPS, 1.]
+        for index, knot in enumerate(SLEEP_STEPS):
+            morph[5 + index] = max(0, min((amount - knots[index]) / (knot - knots[index]), (knots[index + 2] - amount) / (knots[index + 2] - knot)))
         rotations['Ear.L'] = rot(1, -.09 * math.sin(math.pi * t / duration))
         rotations['Ear.R'] = rot(1, .09 * math.sin(math.pi * t / duration))
     return rotations, offsets, morph

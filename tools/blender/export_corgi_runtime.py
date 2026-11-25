@@ -37,6 +37,7 @@ for entry in manifest['actions']:
     name=entry['name'];duration=entry['duration'];folder=RIG/'previews/frames'/name
     frames=sorted(folder.glob('*.png'));assert len(frames)==reports[name]['frames']
     assert reports[name].get('fps',12)==12
+    assert reports[name].get('source_rig_sha256')==hashlib.sha256(asset.raw).hexdigest(), f'{name}: rendered frames are from a different rig; rerender before packing.'
     items=[]
     for index,(path,time) in enumerate(zip(frames,np.linspace(0,duration,len(frames)))):
         image=Image.open(path);assert image.mode=='RGBA' and image.size==(420,420)

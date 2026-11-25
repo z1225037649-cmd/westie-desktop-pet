@@ -431,7 +431,7 @@ namespace WestiePet
         }
         public static Viewport3D CreateViewport(WestieModel dog)
         {
-            Viewport3D view = new Viewport3D();
+            Viewport3D view = new Viewport3D { IsHitTestVisible = false };
             view.Camera = new OrthographicCamera(new Point3D(0, 1.76, 6), new Vector3D(0, -.66, -6), new Vector3D(0, 1, 0), 2.95);
             view.Children.Add(new ModelVisual3D { Content = dog.Scene });
             RenderOptions.SetEdgeMode(view, EdgeMode.Unspecified);
@@ -563,7 +563,7 @@ namespace WestiePet
         }
         string BreedName { get { return settings.Breed == "corgi" ? "柯基" : "西高地"; } }
         string ModelDescription { get { return model.IsPreRendered ? "柯基 · 连续互动动画" : "立体西高地 · 细毛与完整互动"; } }
-        const string ArtworkHint = "支持眨眼、摸摸、咬食、拨球、趴睡和起身。睡觉时会先醒来再接续互动；朝向使用镜像，暂不支持自由散步。";
+        const string ArtworkHint = "支持眨眼、摸摸、咬食、拨球、浅伏休息和起身。睡觉时会先醒来再接续互动；朝向使用镜像，暂不支持自由散步。";
 
         internal void SwitchBreed(string breed)
         {
@@ -579,7 +579,8 @@ namespace WestiePet
                 // Settle the new skin into the current pose before it becomes visible.
                 // UI state and the interaction clock continue without a restart.
                 double age = Math.Max(0, now - stateStart);
-                for (int i = 0; i < 36; i++) next.Animate(now - (35 - i) / 30.0, mode, age);
+                if (next.GeneratedPet != null) next.GeneratedPet.Settle(now, mode, age, heading, next.WalkingPaused);
+                next.Animate(now, mode, age);
                 model = next;
                 if (model.IsPreRendered && !double.IsPositiveInfinity(stateUntil) && model.TimedActionDuration > 0)
                     stateUntil = stateStart + model.TimedActionDuration;
@@ -629,7 +630,7 @@ namespace WestiePet
             GeneratedWestie pet = model.GeneratedPet;
             if (pet == null) return;
             // Rasterize a sparse set of actual, already-skinned surface points.
-            // This path never asks WPF to synchronously render the 95k-face dog.
+            // This path never asks WPF to synchronously render the whole dog.
             // Reusable buffers also avoid allocating a bitmap/pose cache per tick.
             if (generatedHitPoints == null || generatedHitPoints.Length != pet.HitPointCount)
             {
@@ -752,6 +753,10 @@ namespace WestiePet
             if (t >= nextHeartbeat) { nextHeartbeat = t + 30; TraceState("heartbeat"); }
             if (pressed && (Forms.Control.MouseButtons & Forms.MouseButtons.Left) == Forms.MouseButtons.None)
                 FinishPointerInteraction();
+            // Moving a layered window already repaints its retained visual.
+            // Keep the held pose stable and let input move it without also
+            // skinning/uploading the dog on each animation callback.
+            if (dragging) return;
             if (!pressed && t >= stateUntil) SetState("idle", 0);
             if (!pressed && IsMouseOver && !quickActions.IsOpen) ShowQuickActions();
             if (quickActions.IsOpen)

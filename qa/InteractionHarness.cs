@@ -12,6 +12,7 @@ static class InteractionHarness
     static void Main()
     {
         Application app = new Application();
+        RuntimeLog.Start();
         app.ShutdownMode = ShutdownMode.OnMainWindowClose;
         app.DispatcherUnhandledException += delegate(object sender, System.Windows.Threading.DispatcherUnhandledExceptionEventArgs e)
         {

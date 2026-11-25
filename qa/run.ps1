@@ -1,4 +1,4 @@
-param([switch]$RenderDetails, [switch]$VisualStudy, [switch]$SkipRegistryChecks, [switch]$GeneratedOnly, [switch]$InspectGenerated, [switch]$CorgiOnly)
+param([switch]$RenderDetails, [switch]$VisualStudy, [switch]$SkipRegistryChecks, [switch]$GeneratedOnly, [switch]$InspectGenerated, [switch]$CorgiOnly, [switch]$FrameOnly, [switch]$CompileInteraction)
 $ErrorActionPreference = 'Stop'
 $projectRoot = Split-Path -Parent $PSScriptRoot
 $compilerPath = Join-Path $env:WINDIR 'Microsoft.NET\Framework64\v4.0.30319\csc.exe'
@@ -17,6 +17,20 @@ foreach ($name in @('PresentationCore.dll','PresentationFramework.dll','WindowsB
     $commonArgs += "/reference:$assemblyPath"
 }
 $sources = @("$projectRoot\Program.cs", "$projectRoot\PetWindow.cs", "$projectRoot\WestieModel.cs", "$projectRoot\GeneratedWestie.cs", "$projectRoot\SculptedCoat.cs", "$projectRoot\CorgiSprite.cs", "$projectRoot\CorgiFrames.cs")
+if ($CompileInteraction) {
+    $interactionPath = Join-Path $PSScriptRoot 'InteractionHarness.exe'
+    & $compilerPath ($commonArgs + @('/target:winexe','/main:InteractionHarness',"/out:$interactionPath") + $sources + @("$PSScriptRoot\InteractionHarness.cs"))
+    if ($LASTEXITCODE -ne 0) { throw 'Interaction harness did not compile.' }
+    return
+}
+if ($FrameOnly) {
+    $framePath = Join-Path $PSScriptRoot 'GeneratedFrameChecks.exe'
+    & $compilerPath ($commonArgs + @('/target:exe','/main:GeneratedFrameChecks',"/out:$framePath") + $sources + @("$PSScriptRoot\GeneratedFrameChecks.cs"))
+    if ($LASTEXITCODE -ne 0) { throw 'Generated frame checks did not compile.' }
+    & $framePath
+    if ($LASTEXITCODE -ne 0) { throw 'Generated frame checks failed.' }
+    return
+}
 if ($CorgiOnly) {
     foreach ($entry in @('CorgiAnimationChecks','BreedChecks','ArtworkUiChecks')) {
         $checkPath = Join-Path $PSScriptRoot "$entry.exe"

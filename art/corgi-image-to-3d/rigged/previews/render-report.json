@@ -4,6 +4,7 @@
     "frames": 49,
     "duration": 4,
     "fps": 12,
+    "source_rig_sha256": "c1549da4a3bca85aa40d7a7c34e5f357fae9961489d0f2e67908f21152b4ce2b",
     "preview_render": "Actual delivered GLB, evaluated joints and morphs, CPU texture/depth-buffer rendering"
   },
   "Blink": {
@@ -11,6 +12,7 @@
     "frames": 15,
     "duration": 1.2,
     "fps": 12,
+    "source_rig_sha256": "c1549da4a3bca85aa40d7a7c34e5f357fae9961489d0f2e67908f21152b4ce2b",
     "preview_render": "Actual delivered GLB, evaluated joints and morphs, CPU texture/depth-buffer rendering"
   },
   "Pet": {
@@ -18,6 +20,7 @@
     "frames": 49,
     "duration": 4,
     "fps": 12,
+    "source_rig_sha256": "c1549da4a3bca85aa40d7a7c34e5f357fae9961489d0f2e67908f21152b4ce2b",
     "preview_render": "Actual delivered GLB, evaluated joints and morphs, CPU texture/depth-buffer rendering"
   },
   "Eat": {
@@ -25,6 +28,7 @@
     "frames": 61,
     "duration": 5,
     "fps": 12,
+    "source_rig_sha256": "c1549da4a3bca85aa40d7a7c34e5f357fae9961489d0f2e67908f21152b4ce2b",
     "preview_render": "Actual delivered GLB, evaluated joints and morphs, CPU texture/depth-buffer rendering"
   },
   "PlayBall": {
@@ -32,6 +36,7 @@
     "frames": 49,
     "duration": 4,
     "fps": 12,
+    "source_rig_sha256": "c1549da4a3bca85aa40d7a7c34e5f357fae9961489d0f2e67908f21152b4ce2b",
     "preview_render": "Actual delivered GLB, evaluated joints and morphs, CPU texture/depth-buffer rendering"
   },
   "Sleep": {
@@ -39,6 +44,7 @@
     "frames": 61,
     "duration": 5,
     "fps": 12,
+    "source_rig_sha256": "c1549da4a3bca85aa40d7a7c34e5f357fae9961489d0f2e67908f21152b4ce2b",
     "preview_render": "Actual delivered GLB, evaluated joints and morphs, CPU texture/depth-buffer rendering"
   },
   "Wake": {
@@ -46,6 +52,7 @@
     "frames": 49,
     "duration": 4,
     "fps": 12,
+    "source_rig_sha256": "c1549da4a3bca85aa40d7a7c34e5f357fae9961489d0f2e67908f21152b4ce2b",
     "preview_render": "Actual delivered GLB, evaluated joints and morphs, CPU texture/depth-buffer rendering"
   }
 }

@@ -1,9 +1,9 @@
 {
   "source_sha256": "7d440cb75ba688d5eb3101431973d6fc71e0c9ec4c3f3ab7b79d00e1958e2965",
-  "skin_vertices": 66195,
-  "skin_triangles": 88216,
-  "fur_vertices": 19500,
-  "fur_triangles": 6500,
+  "skin_vertices": 48028,
+  "skin_triangles": 59830,
+  "fur_vertices": 10500,
+  "fur_triangles": 3500,
   "anchors": [
     [
       0,
@@ -11,9 +11,9 @@
       1.003
     ],
     [
-      0.253736573791096,
-      0.07928582224061213,
-      0.555183477546289
+      0.2523193773503833,
+      0.08757851424320708,
+      0.5513811367325914
     ],
     [
       0.135,
@@ -89,7 +89,7 @@
     4096,
     4096
   ],
-  "max_cluster_displacement": 0.02295799919256171,
+  "max_cluster_displacement": 0.027207968196944824,
   "technique": "face/material/UV-aware vertex clustering and root-weighted fine tapered geometry; nine analytic bones with a separate cervical joint",
   "runtime_axes": "Y up, Z forward; source display scale times .85"
 }

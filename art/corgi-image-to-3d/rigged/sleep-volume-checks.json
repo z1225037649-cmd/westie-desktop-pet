@@ -1,0 +1,3866 @@
+{
+  "status": "passed",
+  "rig_sha256": "c1549da4a3bca85aa40d7a7c34e5f357fae9961489d0f2e67908f21152b4ce2b",
+  "sampled_frames": 110,
+  "worst": {
+    "minimum_edge_p05": 0.5781975189404452,
+    "maximum_edge_p95": 1.0200449196935857,
+    "maximum_collapsed_edge_fraction": 0.0,
+    "maximum_stretched_edge_fraction": 0.0,
+    "minimum_skin_area_ratio": 0.7766621270840093,
+    "minimum_section_area_ratio": 0.9664253457586963,
+    "minimum_section_depth_ratio": 0.9664890193837938
+  },
+  "frames": [
+    {
+      "action": "Sleep",
+      "time": 0.0,
+      "edge_p05": 0.9999959700577802,
+      "edge_p95": 1.0000041229545062,
+      "collapsed_edge_fraction": 0.0,
+      "stretched_edge_fraction": 0.0,
+      "skin_area_ratio": 1.0000000143924597,
+      "sections": [
+        {
+          "bind_height": 0.45,
+          "width_ratio": 1.0000000000541158,
+          "depth_ratio": 0.999999997147463,
+          "section_area_ratio": 0.9999999972015787
+        },
+        {
+          "bind_height": 0.65,
+          "width_ratio": 0.9999999995308413,
+          "depth_ratio": 1.0000000002568656,
+          "section_area_ratio": 0.9999999997877069
+        },
+        {
+          "bind_height": 0.85,
+          "width_ratio": 0.9999999998049974,
+          "depth_ratio": 0.9999999991764942,
+          "section_area_ratio": 0.9999999989814917
+        },
+        {
+          "bind_height": 1.05,
+          "width_ratio": 1.0000000006330287,
+          "depth_ratio": 0.999999999860911,
+          "section_area_ratio": 1.0000000004939396
+        }
+      ]
+    },
+    {
+      "action": "Sleep",
+      "time": 0.08333333333333333,
+      "edge_p05": 0.9999959700577802,
+      "edge_p95": 1.0000041229545062,
+      "collapsed_edge_fraction": 0.0,
+      "stretched_edge_fraction": 0.0,
+      "skin_area_ratio": 1.0000000143924597,
+      "sections": [
+        {
+          "bind_height": 0.45,
+          "width_ratio": 1.0000000000541158,
+          "depth_ratio": 0.999999997147463,
+          "section_area_ratio": 0.9999999972015787
+        },
+        {
+          "bind_height": 0.65,
+          "width_ratio": 0.9999999995308413,
+          "depth_ratio": 1.0000000002568656,
+          "section_area_ratio": 0.9999999997877069
+        },
+        {
+          "bind_height": 0.85,
+          "width_ratio": 0.9999999998049974,
+          "depth_ratio": 0.9999999991764942,
+          "section_area_ratio": 0.9999999989814917
+        },
+        {
+          "bind_height": 1.05,
+          "width_ratio": 1.0000000006330287,
+          "depth_ratio": 0.999999999860911,
+          "section_area_ratio": 1.0000000004939396
+        }
+      ]
+    },
+    {
+      "action": "Sleep",
+      "time": 0.16666666666666666,
+      "edge_p05": 0.9999959700577802,
+      "edge_p95": 1.0000041229545062,
+      "collapsed_edge_fraction": 0.0,
+      "stretched_edge_fraction": 0.0,
+      "skin_area_ratio": 1.0000000143924597,
+      "sections": [
+        {
+          "bind_height": 0.45,
+          "width_ratio": 1.0000000000541158,
+          "depth_ratio": 0.999999997147463,
+          "section_area_ratio": 0.9999999972015787
+        },
+        {
+          "bind_height": 0.65,
+          "width_ratio": 0.9999999995308413,
+          "depth_ratio": 1.0000000002568656,
+          "section_area_ratio": 0.9999999997877069
+        },
+        {
+          "bind_height": 0.85,
+          "width_ratio": 0.9999999998049974,
+          "depth_ratio": 0.9999999991764942,
+          "section_area_ratio": 0.9999999989814917
+        },
+        {
+          "bind_height": 1.05,
+          "width_ratio": 1.0000000006330287,
+          "depth_ratio": 0.999999999860911,
+          "section_area_ratio": 1.0000000004939396
+        }
+      ]
+    },
+    {
+      "action": "Sleep",
+      "time": 0.25,
+      "edge_p05": 0.9999959700577802,
+      "edge_p95": 1.0000041229545062,
+      "collapsed_edge_fraction": 0.0,
+      "stretched_edge_fraction": 0.0,
+      "skin_area_ratio": 1.0000000143924597,
+      "sections": [
+        {
+          "bind_height": 0.45,
+          "width_ratio": 1.0000000000541158,
+          "depth_ratio": 0.999999997147463,
+          "section_area_ratio": 0.9999999972015787
+        },
+        {
+          "bind_height": 0.65,
+          "width_ratio": 0.9999999995308413,
+          "depth_ratio": 1.0000000002568656,
+          "section_area_ratio": 0.9999999997877069
+        },
+        {
+          "bind_height": 0.85,
+          "width_ratio": 0.9999999998049974,
+          "depth_ratio": 0.9999999991764942,
+          "section_area_ratio": 0.9999999989814917
+        },
+        {
+          "bind_height": 1.05,
+          "width_ratio": 1.0000000006330287,
+          "depth_ratio": 0.999999999860911,
+          "section_area_ratio": 1.0000000004939396
+        }
+      ]
+    },
+    {
+      "action": "Sleep",
+      "time": 0.3333333333333333,
+      "edge_p05": 0.9999959700577802,
+      "edge_p95": 1.0000041229545062,
+      "collapsed_edge_fraction": 0.0,
+      "stretched_edge_fraction": 0.0,
+      "skin_area_ratio": 1.0000000143924597,
+      "sections": [
+        {
+          "bind_height": 0.45,
+          "width_ratio": 1.0000000000541158,
+          "depth_ratio": 0.999999997147463,
+          "section_area_ratio": 0.9999999972015787
+        },
+        {
+          "bind_height": 0.65,
+          "width_ratio": 0.9999999995308413,
+          "depth_ratio": 1.0000000002568656,
+          "section_area_ratio": 0.9999999997877069
+        },
+        {
+          "bind_height": 0.85,
+          "width_ratio": 0.9999999998049974,
+          "depth_ratio": 0.9999999991764942,
+          "section_area_ratio": 0.9999999989814917
+        },
+        {
+          "bind_height": 1.05,
+          "width_ratio": 1.0000000006330287,
+          "depth_ratio": 0.999999999860911,
+          "section_area_ratio": 1.0000000004939396
+        }
+      ]
+    },
+    {
+      "action": "Sleep",
+      "time": 0.41666666666666663,
+      "edge_p05": 0.9999572151074585,
+      "edge_p95": 1.0004460340954042,
+      "collapsed_edge_fraction": 0.0,
+      "stretched_edge_fraction": 0.0,
+      "skin_area_ratio": 1.0001596067998775,
+      "sections": [
+        {
+          "bind_height": 0.45,
+          "width_ratio": 0.99999953936499,
+          "depth_ratio": 0.999876862779371,
+          "section_area_ratio": 0.9998764022010824
+        },
+        {
+          "bind_height": 0.65,
+          "width_ratio": 0.9999999978066383,
+          "depth_ratio": 0.9999931400305101,
+          "section_area_ratio": 0.9999931378371634
+        },
+        {
+          "bind_height": 0.85,
+          "width_ratio": 0.9999999792305496,
+          "depth_ratio": 0.9999906165622467,
+          "section_area_ratio": 0.9999905957929912
+        },
+        {
+          "bind_height": 1.05,
+          "width_ratio": 0.9999963228967989,
+          "depth_ratio": 0.9999999997076148,
+          "section_area_ratio": 0.9999963226044146
+        }
+      ]
+    },
+    {
+      "action": "Sleep",
+      "time": 0.5,
+      "edge_p05": 0.9985470791006992,
+      "edge_p95": 1.0029003238497545,
+      "collapsed_edge_fraction": 0.0,
+      "stretched_edge_fraction": 0.0,
+      "skin_area_ratio": 1.000553051390542,
+      "sections": [
+        {
+          "bind_height": 0.45,
+          "width_ratio": 0.9999965158886699,
+          "depth_ratio": 0.9991320014853968,
+          "section_area_ratio": 0.9991285203982703
+        },
+        {
+          "bind_height": 0.65,
+          "width_ratio": 0.999999938587911,
+          "depth_ratio": 0.9997574765726875,
+          "section_area_ratio": 0.9997574151754924
+        },
+        {
+          "bind_height": 0.85,
+          "width_ratio": 0.9999992729882992,
+          "depth_ratio": 0.9996681203868828,
+          "section_area_ratio": 0.9996673936164623
+        },
+        {
+          "bind_height": 1.05,
+          "width_ratio": 0.9998699596620643,
+          "depth_ratio": 0.9999999943658827,
+          "section_area_ratio": 0.9998699540286796
+        }
+      ]
+    },
+    {
+      "action": "Sleep",
+      "time": 0.5833333333333333,
+      "edge_p05": 0.9952869512676931,
+      "edge_p95": 1.0041381117148704,
+      "collapsed_edge_fraction": 0.0,
+      "stretched_edge_fraction": 0.0,
+      "skin_area_ratio": 0.9996761316797989,
+      "sections": [
+        {
+          "bind_height": 0.45,
+          "width_ratio": 0.999993546149859,
+          "depth_ratio": 0.9984846559034586,
+          "section_area_ratio": 0.9984782118331212
+        },
+        {
+          "bind_height": 0.65,
+          "width_ratio": 0.9999997986923036,
+          "depth_ratio": 0.9992004095823578,
+          "section_area_ratio": 0.9992002084356251
+        },
+        {
+          "bind_height": 0.85,
+          "width_ratio": 0.9999976076626175,
+          "depth_ratio": 0.9989043727293596,
+          "section_area_ratio": 0.9989019830130872
+        },
+        {
+          "bind_height": 1.05,
+          "width_ratio": 0.9995710625557769,
+          "depth_ratio": 0.9999999811059537,
+          "section_area_ratio": 0.9995710436698348
+        }
+      ]
+    },
+    {
+      "action": "Sleep",
+      "time": 0.6666666666666666,
+      "edge_p05": 0.9903737669981882,
+      "edge_p95": 1.0046834928499229,
+      "collapsed_edge_fraction": 0.0,
+      "stretched_edge_fraction": 0.0,
+      "skin_area_ratio": 0.9974714122868387,
+      "sections": [
+        {
+          "bind_height": 0.45,
+          "width_ratio": 0.9999905953466649,
+          "depth_ratio": 0.9978906705164498,
+          "section_area_ratio": 0.9978812857006272
+        },
+        {
+          "bind_height": 0.65,
+          "width_ratio": 0.999999583456638,
+          "depth_ratio": 0.9983423980913461,
+          "section_area_ratio": 0.9983419822384471
+        },
+        {
+          "bind_height": 0.85,
+          "width_ratio": 0.9999950538576177,
+          "depth_ratio": 0.9977240708584795,
+          "section_area_ratio": 0.9977191359731667
+        },
+        {
+          "bind_height": 1.05,
+          "width_ratio": 0.9991101378439184,
+          "depth_ratio": 0.9999999589628316,
+          "section_area_ratio": 0.9991100968432675
+        }
+      ]
+    },
+    {
+      "action": "Sleep",
+      "time": 0.75,
+      "edge_p05": 0.9839683824187574,
+      "edge_p95": 1.0062000310070025,
+      "collapsed_edge_fraction": 0.0,
+      "stretched_edge_fraction": 0.0,
+      "skin_area_ratio": 0.9939401133012107,
+      "sections": [
+        {
+          "bind_height": 0.45,
+          "width_ratio": 0.999987663037245,
+          "depth_ratio": 0.997322676836865,
+          "section_area_ratio": 0.9973103729041463
+        },
+        {
+          "bind_height": 0.65,
+          "width_ratio": 0.9999992985778582,
+          "depth_ratio": 0.9972050475000134,
+          "section_area_ratio": 0.9972043480383131
+        },
+        {
+          "bind_height": 0.85,
+          "width_ratio": 0.999991689198345,
+          "depth_ratio": 0.9961519903197751,
+          "section_area_ratio": 0.9961437114981654
+        },
+        {
+          "bind_height": 1.05,
+          "width_ratio": 0.9984980751249227,
+          "depth_ratio": 0.9999999264254259,
+          "section_area_ratio": 0.9984980016608521
+        }
+      ]
+    },
+    {
+      "action": "Sleep",
+      "time": 0.8333333333333333,
+      "edge_p05": 0.9762541577418539,
+      "edge_p95": 1.0075185392061334,
+      "collapsed_edge_fraction": 0.0,
+      "stretched_edge_fraction": 0.0,
+      "skin_area_ratio": 0.989120738269075,
+      "sections": [
+        {
+          "bind_height": 0.45,
+          "width_ratio": 0.9999847921400501,
+          "depth_ratio": 0.996772790823612,
+          "section_area_ratio": 0.9967576320426074
+        },
+        {
+          "bind_height": 0.65,
+          "width_ratio": 0.9999989500173437,
+          "depth_ratio": 0.9958108708250809,
+          "section_area_ratio": 0.9958098252409376
+        },
+        {
+          "bind_height": 0.85,
+          "width_ratio": 0.9999875961057145,
+          "depth_ratio": 0.9942129745946221,
+          "section_area_ratio": 0.9942006424819878
+        },
+        {
+          "bind_height": 1.05,
+          "width_ratio": 0.9977460404913383,
+          "depth_ratio": 0.999999881639269,
+          "section_area_ratio": 0.9977459223973876
+        }
+      ]
+    },
+    {
+      "action": "Sleep",
+      "time": 0.9166666666666666,
+      "edge_p05": 0.9673840561841504,
+      "edge_p95": 1.0079631234877962,
+      "collapsed_edge_fraction": 0.0,
+      "stretched_edge_fraction": 0.0,
+      "skin_area_ratio": 0.9830768071376531,
+      "sections": [
+        {
+          "bind_height": 0.45,
+          "width_ratio": 0.999982058408561,
+          "depth_ratio": 0.9962494784097728,
+          "section_area_ratio": 0.9962316041086599
+        },
+        {
+          "bind_height": 0.65,
+          "width_ratio": 0.9999985439088199,
+          "depth_ratio": 0.9941830615686843,
+          "section_area_ratio": 0.994181613947497
+        },
+        {
+          "bind_height": 0.85,
+          "width_ratio": 0.9999828596698304,
+          "depth_ratio": 0.9919319184133188,
+          "section_area_ratio": 0.9919149163727314
+        },
+        {
+          "bind_height": 1.05,
+          "width_ratio": 0.9968653711099803,
+          "depth_ratio": 0.9999998226585222,
+          "section_area_ratio": 0.9968651943244022
+        }
+      ]
+    },
+    {
+      "action": "Sleep",
+      "time": 1.0,
+      "edge_p05": 0.9578329711165214,
+      "edge_p95": 1.0064633844635142,
+      "collapsed_edge_fraction": 0.0,
+      "stretched_edge_fraction": 0.0,
+      "skin_area_ratio": 0.9758866876116763,
+      "sections": [
+        {
+          "bind_height": 0.45,
+          "width_ratio": 0.9999795594755939,
+          "depth_ratio": 0.9957739125855881,
+          "section_area_ratio": 0.9957535584446249
+        },
+        {
+          "bind_height": 0.65,
+          "width_ratio": 0.999998086471869,
+          "depth_ratio": 0.9923452777683323,
+          "section_area_ratio": 0.9923433788877276
+        },
+        {
+          "bind_height": 0.85,
+          "width_ratio": 0.9999775657008024,
+          "depth_ratio": 0.9893337468860954,
+          "section_area_ratio": 0.9893115518768115
+        },
+        {
+          "bind_height": 1.05,
+          "width_ratio": 0.995867474415733,
+          "depth_ratio": 0.9999997476903217,
+          "section_area_ratio": 0.9958672231487309
+        }
+      ]
+    },
+    {
+      "action": "Sleep",
+      "time": 1.0833333333333333,
+      "edge_p05": 0.9470948160144462,
+      "edge_p95": 1.005011869736039,
+      "collapsed_edge_fraction": 0.0,
+      "stretched_edge_fraction": 0.0,
+      "skin_area_ratio": 0.9676359206733355,
+      "sections": [
+        {
+          "bind_height": 0.45,
+          "width_ratio": 0.9999774047234932,
+          "depth_ratio": 0.9953762059206606,
+          "section_area_ratio": 0.9953537151200594
+        },
+        {
+          "bind_height": 0.65,
+          "width_ratio": 0.9999975839367986,
+          "depth_ratio": 0.990321454110381,
+          "section_area_ratio": 0.9903190614311581
+        },
+        {
+          "bind_height": 0.85,
+          "width_ratio": 0.9999717990623255,
+          "depth_ratio": 0.9864434168334415,
+          "section_area_ratio": 0.986415598204124
+        },
+        {
+          "bind_height": 1.05,
+          "width_ratio": 0.9947637436678716,
+          "depth_ratio": 0.9999996553594567,
+          "section_area_ratio": 0.9947634008319545
+        }
+      ]
+    },
+    {
+      "action": "Sleep",
+      "time": 1.1666666666666665,
+      "edge_p05": 0.9347821495988129,
+      "edge_p95": 1.0054167607387352,
+      "collapsed_edge_fraction": 0.0,
+      "stretched_edge_fraction": 0.0,
+      "skin_area_ratio": 0.9600090141607993,
+      "sections": [
+        {
+          "bind_height": 0.45,
+          "width_ratio": 0.9999738927262753,
+          "depth_ratio": 0.9947115405304036,
+          "section_area_ratio": 0.9946855713239379
+        },
+        {
+          "bind_height": 0.65,
+          "width_ratio": 0.9999971335967504,
+          "depth_ratio": 0.9885038067113268,
+          "section_area_ratio": 0.9885009732608029
+        },
+        {
+          "bind_height": 0.85,
+          "width_ratio": 0.9999667893228369,
+          "depth_ratio": 0.9839010660231297,
+          "section_area_ratio": 0.9838683900024655
+        },
+        {
+          "bind_height": 1.05,
+          "width_ratio": 0.9937830447701999,
+          "depth_ratio": 0.9999995159730063,
+          "section_area_ratio": 0.9937825637523804
+        }
+      ]
+    },
+    {
+      "action": "Sleep",
+      "time": 1.25,
+      "edge_p05": 0.921744929123871,
+      "edge_p95": 1.0066388683537142,
+      "collapsed_edge_fraction": 0.0,
+      "stretched_edge_fraction": 0.0,
+      "skin_area_ratio": 0.9524134130740814,
+      "sections": [
+        {
+          "bind_height": 0.45,
+          "width_ratio": 0.9999697599165367,
+          "depth_ratio": 0.9938960876527183,
+          "section_area_ratio": 0.9938660321520739
+        },
+        {
+          "bind_height": 0.65,
+          "width_ratio": 0.9999966933572435,
+          "depth_ratio": 0.9867273260251158,
+          "section_area_ratio": 0.9867240632703506
+        },
+        {
+          "bind_height": 0.85,
+          "width_ratio": 0.9999619732081703,
+          "depth_ratio": 0.9814214031860791,
+          "section_area_ratio": 0.9813840828786828
+        },
+        {
+          "bind_height": 1.05,
+          "width_ratio": 0.9928271837066432,
+          "depth_ratio": 0.9999993518403893,
+          "section_area_ratio": 0.9928265401961625
+        }
+      ]
+    },
+    {
+      "action": "Sleep",
+      "time": 1.3333333333333333,
+      "edge_p05": 0.9078465679563084,
+      "edge_p95": 1.0077512087590614,
+      "collapsed_edge_fraction": 0.0,
+      "stretched_edge_fraction": 0.0,
+      "skin_area_ratio": 0.9443088053300882,
+      "sections": [
+        {
+          "bind_height": 0.45,
+          "width_ratio": 0.999965674793528,
+          "depth_ratio": 0.993054236038957,
+          "section_area_ratio": 0.9930201492472672
+        },
+        {
+          "bind_height": 0.65,
+          "width_ratio": 0.9999962317779489,
+          "depth_ratio": 0.984866657227077,
+          "section_area_ratio": 0.9848629460308218
+        },
+        {
+          "bind_height": 0.85,
+          "width_ratio": 0.9999569446828993,
+          "depth_ratio": 0.9787826427832272,
+          "section_area_ratio": 0.9787405009861695
+        },
+        {
+          "bind_height": 1.05,
+          "width_ratio": 0.9918200209654168,
+          "depth_ratio": 0.999999179087393,
+          "section_area_ratio": 0.9918192067678577
+        }
+      ]
+    },
+    {
+      "action": "Sleep",
+      "time": 1.4166666666666665,
+      "edge_p05": 0.8931590902815661,
+      "edge_p95": 1.0092523626141954,
+      "collapsed_edge_fraction": 0.0,
+      "stretched_edge_fraction": 0.0,
+      "skin_area_ratio": 0.9357563565215206,
+      "sections": [
+        {
+          "bind_height": 0.45,
+          "width_ratio": 0.9999616331410002,
+          "depth_ratio": 0.9921783449849031,
+          "section_area_ratio": 0.9921402782182384
+        },
+        {
+          "bind_height": 0.65,
+          "width_ratio": 0.9999957531241852,
+          "depth_ratio": 0.9829400771678085,
+          "section_area_ratio": 0.9829359027433674
+        },
+        {
+          "bind_height": 0.85,
+          "width_ratio": 0.9999517520335446,
+          "depth_ratio": 0.97600283521887,
+          "section_area_ratio": 0.9759557450668159
+        },
+        {
+          "bind_height": 1.05,
+          "width_ratio": 0.9907699514123757,
+          "depth_ratio": 0.9999990026561228,
+          "section_area_ratio": 0.9907689632740309
+        }
+      ]
+    },
+    {
+      "action": "Sleep",
+      "time": 1.5,
+      "edge_p05": 0.8781666048869586,
+      "edge_p95": 1.0106576376589682,
+      "collapsed_edge_fraction": 0.0,
+      "stretched_edge_fraction": 0.0,
+      "skin_area_ratio": 0.9272147227644368,
+      "sections": [
+        {
+          "bind_height": 0.45,
+          "width_ratio": 0.9999582050253205,
+          "depth_ratio": 0.9915152924205475,
+          "section_area_ratio": 0.9914738520640065
+        },
+        {
+          "bind_height": 0.65,
+          "width_ratio": 0.9999953710609321,
+          "depth_ratio": 0.9814187717929993,
+          "section_area_ratio": 0.9814142288653045
+        },
+        {
+          "bind_height": 0.85,
+          "width_ratio": 0.999947777551981,
+          "depth_ratio": 0.9738619329695807,
+          "section_area_ratio": 0.9738110755154086
+        },
+        {
+          "bind_height": 1.05,
+          "width_ratio": 0.9899529165385617,
+          "depth_ratio": 0.9999987979394888,
+          "section_area_ratio": 0.9899517265552525
+        }
+      ]
+    },
+    {
+      "action": "Sleep",
+      "time": 1.5833333333333333,
+      "edge_p05": 0.8626759227529428,
+      "edge_p95": 1.012050299403155,
+      "collapsed_edge_fraction": 0.0,
+      "stretched_edge_fraction": 0.0,
+      "skin_area_ratio": 0.918597780762389,
+      "sections": [
+        {
+          "bind_height": 0.45,
+          "width_ratio": 0.9999550863475665,
+          "depth_ratio": 0.9909404950332531,
+          "section_area_ratio": 0.9908959882762769
+        },
+        {
+          "bind_height": 0.65,
+          "width_ratio": 0.999995036988984,
+          "depth_ratio": 0.9801082929924572,
+          "section_area_ratio": 0.9801034287042021
+        },
+        {
+          "bind_height": 0.85,
+          "width_ratio": 0.9999443898178294,
+          "depth_ratio": 0.9720279726055538,
+          "section_area_ratio": 0.9719739179529222
+        },
+        {
+          "bind_height": 1.05,
+          "width_ratio": 0.9892541854447736,
+          "depth_ratio": 0.9999985930093782,
+          "section_area_ratio": 0.9892527935734121
+        }
+      ]
+    },
+    {
+      "action": "Sleep",
+      "time": 1.6666666666666665,
+      "edge_p05": 0.8467442896251679,
+      "edge_p95": 1.0137405270370161,
+      "collapsed_edge_fraction": 0.0,
+      "stretched_edge_fraction": 0.0,
+      "skin_area_ratio": 0.9097675998382252,
+      "sections": [
+        {
+          "bind_height": 0.45,
+          "width_ratio": 0.9999519594808196,
+          "depth_ratio": 0.9903198038733395,
+          "section_area_ratio": 0.9902722283958068
+        },
+        {
+          "bind_height": 0.65,
+          "width_ratio": 0.999994699653728,
+          "depth_ratio": 0.9787988705451929,
+          "section_area_ratio": 0.9787936825722484
+        },
+        {
+          "bind_height": 0.85,
+          "width_ratio": 0.9999409499939426,
+          "depth_ratio": 0.9701408038461377,
+          "section_area_ratio": 0.970083517025794
+        },
+        {
+          "bind_height": 1.05,
+          "width_ratio": 0.9885486016769026,
+          "depth_ratio": 0.9999984121843782,
+          "section_area_ratio": 0.98854703204399
+        }
+      ]
+    },
+    {
+      "action": "Sleep",
+      "time": 1.75,
+      "edge_p05": 0.8304952590682209,
+      "edge_p95": 1.0155107205124045,
+      "collapsed_edge_fraction": 0.0,
+      "stretched_edge_fraction": 0.0,
+      "skin_area_ratio": 0.9008720379479696,
+      "sections": [
+        {
+          "bind_height": 0.45,
+          "width_ratio": 0.9999491794692357,
+          "depth_ratio": 0.98977453404454,
+          "section_area_ratio": 0.9897242331773827
+        },
+        {
+          "bind_height": 0.65,
+          "width_ratio": 0.9999944033240346,
+          "depth_ratio": 0.9776768670568754,
+          "section_area_ratio": 0.9776713953162515
+        },
+        {
+          "bind_height": 0.85,
+          "width_ratio": 0.9999379871819106,
+          "depth_ratio": 0.9685067832758554,
+          "section_area_ratio": 0.9684467234408858
+        },
+        {
+          "bind_height": 1.05,
+          "width_ratio": 0.9879441712427203,
+          "depth_ratio": 0.999998249847314,
+          "section_area_ratio": 0.9879424421895754
+        }
+      ]
+    },
+    {
+      "action": "Sleep",
+      "time": 1.8333333333333333,
+      "edge_p05": 0.8143142331580563,
+      "edge_p95": 1.0165123713149398,
+      "collapsed_edge_fraction": 0.0,
+      "stretched_edge_fraction": 0.0,
+      "skin_area_ratio": 0.8922146290567908,
+      "sections": [
+        {
+          "bind_height": 0.45,
+          "width_ratio": 0.9999476268442267,
+          "depth_ratio": 0.9896076770627306,
+          "section_area_ratio": 0.9895558481857052
+        },
+        {
+          "bind_height": 0.65,
+          "width_ratio": 0.9999942489040431,
+          "depth_ratio": 0.9771682732974442,
+          "section_area_ratio": 0.9771626535089384
+        },
+        {
+          "bind_height": 0.85,
+          "width_ratio": 0.999936701856597,
+          "depth_ratio": 0.967839554337809,
+          "section_area_ratio": 0.9677782918909075
+        },
+        {
+          "bind_height": 1.05,
+          "width_ratio": 0.9876908981375778,
+          "depth_ratio": 0.999998082952381,
+          "section_area_ratio": 0.9876890046870932
+        }
+      ]
+    },
+    {
+      "action": "Sleep",
+      "time": 1.9166666666666665,
+      "edge_p05": 0.797895184502788,
+      "edge_p95": 1.0178769077900323,
+      "collapsed_edge_fraction": 0.0,
+      "stretched_edge_fraction": 0.0,
+      "skin_area_ratio": 0.8835051579870616,
+      "sections": [
+        {
+          "bind_height": 0.45,
+          "width_ratio": 0.9999459491495081,
+          "depth_ratio": 0.9893747855711714,
+          "section_area_ratio": 0.989321309022556
+        },
+        {
+          "bind_height": 0.65,
+          "width_ratio": 0.999994098277695,
+          "depth_ratio": 0.9766965361123412,
+          "section_area_ratio": 0.9766907719206088
+        },
+        {
+          "bind_height": 0.85,
+          "width_ratio": 0.9999354099414914,
+          "depth_ratio": 0.967165731249107,
+          "section_area_ratio": 0.9671032619579382
+        },
+        {
+          "bind_height": 1.05,
+          "width_ratio": 0.9874499117671476,
+          "depth_ratio": 0.9999979616776767,
+          "section_area_ratio": 0.9874478990259493
+        }
+      ]
+    },
+    {
+      "action": "Sleep",
+      "time": 2.0,
+      "edge_p05": 0.7815350636118196,
+      "edge_p95": 1.0193302682579881,
+      "collapsed_edge_fraction": 0.0,
+      "stretched_edge_fraction": 0.0,
+      "skin_area_ratio": 0.8747761782203476,
+      "sections": [
+        {
+          "bind_height": 0.45,
+          "width_ratio": 0.9999440886060555,
+          "depth_ratio": 0.9890643450901893,
+          "section_area_ratio": 0.9890090451239545
+        },
+        {
+          "bind_height": 0.65,
+          "width_ratio": 0.9999939523723728,
+          "depth_ratio": 0.9762653692476282,
+          "section_area_ratio": 0.9762594651582095
+        },
+        {
+          "bind_height": 0.85,
+          "width_ratio": 0.9999341186254366,
+          "depth_ratio": 0.9664890193837938,
+          "section_area_ratio": 0.9664253457586963
+        },
+        {
+          "bind_height": 1.05,
+          "width_ratio": 0.987222909462326,
+          "depth_ratio": 0.9999978881614762,
+          "section_area_ratio": 0.9872208246069542
+        }
+      ]
+    },
+    {
+      "action": "Sleep",
+      "time": 2.083333333333333,
+      "edge_p05": 0.765215300359182,
+      "edge_p95": 1.0195222695773778,
+      "collapsed_edge_fraction": 0.0,
+      "stretched_edge_fraction": 0.0,
+      "skin_area_ratio": 0.8664981091035527,
+      "sections": [
+        {
+          "bind_height": 0.45,
+          "width_ratio": 0.9999443684597625,
+          "depth_ratio": 0.9893622629103037,
+          "section_area_ratio": 0.9893072231637652
+        },
+        {
+          "bind_height": 0.65,
+          "width_ratio": 0.9999939993577938,
+          "depth_ratio": 0.976665735462697,
+          "section_area_ratio": 0.9766598748410634
+        },
+        {
+          "bind_height": 0.85,
+          "width_ratio": 0.9999351120742893,
+          "depth_ratio": 0.9671403684882939,
+          "section_area_ratio": 0.9670776127559116
+        },
+        {
+          "bind_height": 1.05,
+          "width_ratio": 0.987470079397773,
+          "depth_ratio": 0.9999977848236827,
+          "section_area_ratio": 0.987467891977439
+        }
+      ]
+    },
+    {
+      "action": "Sleep",
+      "time": 2.1666666666666665,
+      "edge_p05": 0.7492494960135572,
+      "edge_p95": 1.0197789543813924,
+      "collapsed_edge_fraction": 0.0,
+      "stretched_edge_fraction": 0.0,
+      "skin_area_ratio": 0.8582798367269532,
+      "sections": [
+        {
+          "bind_height": 0.45,
+          "width_ratio": 0.9999443490988302,
+          "depth_ratio": 0.9895625520598997,
+          "section_area_ratio": 0.9895074820121137
+        },
+        {
+          "bind_height": 0.65,
+          "width_ratio": 0.9999940514780724,
+          "depth_ratio": 0.9771068606218143,
+          "section_area_ratio": 0.9771010482802283
+        },
+        {
+          "bind_height": 0.85,
+          "width_ratio": 0.999936106590707,
+          "depth_ratio": 0.9677889683541278,
+          "section_area_ratio": 0.9677271330174635
+        },
+        {
+          "bind_height": 1.05,
+          "width_ratio": 0.9877311312942577,
+          "depth_ratio": 0.9999977239621168,
+          "section_area_ratio": 0.9877288831807844
+        }
+      ]
+    },
+    {
+      "action": "Sleep",
+      "time": 2.25,
+      "edge_p05": 0.7333186565011994,
+      "edge_p95": 1.0200449196935857,
+      "collapsed_edge_fraction": 0.0,
+      "stretched_edge_fraction": 0.0,
+      "skin_area_ratio": 0.8501455049190767,
+      "sections": [
+        {
+          "bind_height": 0.45,
+          "width_ratio": 0.999943963295224,
+          "depth_ratio": 0.989654008133519,
+          "section_area_ratio": 0.9895985511840348
+        },
+        {
+          "bind_height": 0.65,
+          "width_ratio": 0.9999941083329256,
+          "depth_ratio": 0.9775851885192914,
+          "section_area_ratio": 0.9775794289128238
+        },
+        {
+          "bind_height": 0.85,
+          "width_ratio": 0.9999370966323317,
+          "depth_ratio": 0.9684312577258444,
+          "section_area_ratio": 0.9683703401383781
+        },
+        {
+          "bind_height": 1.05,
+          "width_ratio": 0.9880045059951015,
+          "depth_ratio": 0.9999976996342358,
+          "section_area_ratio": 0.988002233223361
+        }
+      ]
+    },
+    {
+      "action": "Sleep",
+      "time": 2.333333333333333,
+      "edge_p05": 0.7179751748392117,
+      "edge_p95": 1.0195737666543518,
+      "collapsed_edge_fraction": 0.0,
+      "stretched_edge_fraction": 0.0,
+      "skin_area_ratio": 0.8424986984296892,
+      "sections": [
+        {
+          "bind_height": 0.45,
+          "width_ratio": 0.9999454717840509,
+          "depth_ratio": 0.9902333904641037,
+          "section_area_ratio": 0.9901793948039486
+        },
+        {
+          "bind_height": 0.65,
+          "width_ratio": 0.9999943087484751,
+          "depth_ratio": 0.9786782635653914,
+          "section_area_ratio": 0.9786726936612314
+        },
+        {
+          "bind_height": 0.85,
+          "width_ratio": 0.9999398137876213,
+          "depth_ratio": 0.9700402533661395,
+          "section_area_ratio": 0.9699818703174344
+        },
+        {
+          "bind_height": 1.05,
+          "width_ratio": 0.9886215706643043,
+          "depth_ratio": 0.9999976325914244,
+          "section_area_ratio": 0.9886192301931198
+        }
+      ]
+    },
+    {
+      "action": "Sleep",
+      "time": 2.4166666666666665,
+      "edge_p05": 0.7026630886770435,
+      "edge_p95": 1.0188421824875167,
+      "collapsed_edge_fraction": 0.0,
+      "stretched_edge_fraction": 0.0,
+      "skin_area_ratio": 0.835106988398401,
+      "sections": [
+        {
+          "bind_height": 0.45,
+          "width_ratio": 0.9999471809328779,
+          "depth_ratio": 0.9908593357724595,
+          "section_area_ratio": 0.9908069995066948
+        },
+        {
+          "bind_height": 0.65,
+          "width_ratio": 0.9999945520448581,
+          "depth_ratio": 0.9799596800761876,
+          "section_area_ratio": 0.9799543412998097
+        },
+        {
+          "bind_height": 0.85,
+          "width_ratio": 0.999943024646158,
+          "depth_ratio": 0.9719028421985735,
+          "section_area_ratio": 0.9718474676902391
+        },
+        {
+          "bind_height": 1.05,
+          "width_ratio": 0.9893373585020251,
+          "depth_ratio": 0.9999975647719114,
+          "section_area_ratio": 0.9893349492399004
+        }
+      ]
+    },
+    {
+      "action": "Sleep",
+      "time": 2.5,
+      "edge_p05": 0.688016996744672,
+      "edge_p95": 1.0179389436831725,
+      "collapsed_edge_fraction": 0.0,
+      "stretched_edge_fraction": 0.0,
+      "skin_area_ratio": 0.8278833018956959,
+      "sections": [
+        {
+          "bind_height": 0.45,
+          "width_ratio": 0.9999483408391268,
+          "depth_ratio": 0.9913428957848868,
+          "section_area_ratio": 0.9912916838427529
+        },
+        {
+          "bind_height": 0.65,
+          "width_ratio": 0.9999947944319095,
+          "depth_ratio": 0.9812429881976557,
+          "section_area_ratio": 0.9812378802704672
+        },
+        {
+          "bind_height": 0.85,
+          "width_ratio": 0.9999461875464345,
+          "depth_ratio": 0.9737129796805863,
+          "section_area_ratio": 0.9736605817960812
+        },
+        {
+          "bind_height": 1.05,
+          "width_ratio": 0.9900462044295434,
+          "depth_ratio": 0.9999975092894766,
+          "section_area_ratio": 0.9900437385110434
+        }
+      ]
+    },
+    {
+      "action": "Sleep",
+      "time": 2.583333333333333,
+      "edge_p05": 0.6739719415545506,
+      "edge_p95": 1.0168254355076798,
+      "collapsed_edge_fraction": 0.0,
+      "stretched_edge_fraction": 0.0,
+      "skin_area_ratio": 0.8210463611037594,
+      "sections": [
+        {
+          "bind_height": 0.45,
+          "width_ratio": 0.9999500835789311,
+          "depth_ratio": 0.9919567738611345,
+          "section_area_ratio": 0.9919072589291283
+        },
+        {
+          "bind_height": 0.65,
+          "width_ratio": 0.9999950879092923,
+          "depth_ratio": 0.9827387130118205,
+          "section_area_ratio": 0.9827338857101201
+        },
+        {
+          "bind_height": 0.85,
+          "width_ratio": 0.999949979759485,
+          "depth_ratio": 0.9758305933831567,
+          "section_area_ratio": 0.9757817821021738
+        },
+        {
+          "bind_height": 1.05,
+          "width_ratio": 0.99086727549165,
+          "depth_ratio": 0.9999974274199547,
+          "section_area_ratio": 0.9908647264062694
+        }
+      ]
+    },
+    {
+      "action": "Sleep",
+      "time": 2.6666666666666665,
+      "edge_p05": 0.6606040027643594,
+      "edge_p95": 1.0151427116103229,
+      "collapsed_edge_fraction": 0.0,
+      "stretched_edge_fraction": 0.0,
+      "skin_area_ratio": 0.8148092663071584,
+      "sections": [
+        {
+          "bind_height": 0.45,
+          "width_ratio": 0.9999535163874013,
+          "depth_ratio": 0.9929596118166688,
+          "section_area_ratio": 0.992913455466747
+        },
+        {
+          "bind_height": 0.65,
+          "width_ratio": 0.9999954817003354,
+          "depth_ratio": 0.9846420090555502,
+          "section_area_ratio": 0.9846375601478911
+        },
+        {
+          "bind_height": 0.85,
+          "width_ratio": 0.9999550686754308,
+          "depth_ratio": 0.9785875109078046,
+          "section_area_ratio": 0.9785435416747327
+        },
+        {
+          "bind_height": 1.05,
+          "width_ratio": 0.9919091106770421,
+          "depth_ratio": 0.999997285590654,
+          "section_area_ratio": 0.9919064182296817
+        }
+      ]
+    },
+    {
+      "action": "Sleep",
+      "time": 2.75,
+      "edge_p05": 0.6479376948125614,
+      "edge_p95": 1.0134804144566736,
+      "collapsed_edge_fraction": 0.0,
+      "stretched_edge_fraction": 0.0,
+      "skin_area_ratio": 0.8088257416366219,
+      "sections": [
+        {
+          "bind_height": 0.45,
+          "width_ratio": 0.9999562554252613,
+          "depth_ratio": 0.9937909725429934,
+          "section_area_ratio": 0.9937474995795204
+        },
+        {
+          "bind_height": 0.65,
+          "width_ratio": 0.9999958623114091,
+          "depth_ratio": 0.9864805996931195,
+          "section_area_ratio": 0.986476517943597
+        },
+        {
+          "bind_height": 0.85,
+          "width_ratio": 0.9999599972051829,
+          "depth_ratio": 0.9812046902586445,
+          "section_area_ratio": 0.9811654393287467
+        },
+        {
+          "bind_height": 1.05,
+          "width_ratio": 0.9929081117529721,
+          "depth_ratio": 0.9999971437189557,
+          "section_area_ratio": 0.9929052757283536
+        }
+      ]
+    },
+    {
+      "action": "Sleep",
+      "time": 2.833333333333333,
+      "edge_p05": 0.6361087930363322,
+      "edge_p95": 1.0118366289359426,
+      "collapsed_edge_fraction": 0.0,
+      "stretched_edge_fraction": 0.0,
+      "skin_area_ratio": 0.8031372023416974,
+      "sections": [
+        {
+          "bind_height": 0.45,
+          "width_ratio": 0.9999583096997414,
+          "depth_ratio": 0.9944577421399052,
+          "section_area_ratio": 0.994416282898041
+        },
+        {
+          "bind_height": 0.65,
+          "width_ratio": 0.9999962260907662,
+          "depth_ratio": 0.9882363456157188,
+          "section_area_ratio": 0.988232616101449
+        },
+        {
+          "bind_height": 0.85,
+          "width_ratio": 0.99996471792289,
+          "depth_ratio": 0.9836641923327374,
+          "section_area_ratio": 0.9836294866168531
+        },
+        {
+          "bind_height": 1.05,
+          "width_ratio": 0.9938560633236606,
+          "depth_ratio": 0.9999969993581912,
+          "section_area_ratio": 0.9938530811176052
+        }
+      ]
+    },
+    {
+      "action": "Sleep",
+      "time": 2.9166666666666665,
+      "edge_p05": 0.6248127962488438,
+      "edge_p95": 1.010142442002486,
+      "collapsed_edge_fraction": 0.0,
+      "stretched_edge_fraction": 0.0,
+      "skin_area_ratio": 0.7979090343670512,
+      "sections": [
+        {
+          "bind_height": 0.45,
+          "width_ratio": 0.9999604500140414,
+          "depth_ratio": 0.9951288975573561,
+          "section_area_ratio": 0.9950895402234308
+        },
+        {
+          "bind_height": 0.65,
+          "width_ratio": 0.9999965965648449,
+          "depth_ratio": 0.990000408301431,
+          "section_area_ratio": 0.9899970388992377
+        },
+        {
+          "bind_height": 0.85,
+          "width_ratio": 0.9999695555660749,
+          "depth_ratio": 0.986129632913236,
+          "section_area_ratio": 0.9860996107547852
+        },
+        {
+          "bind_height": 1.05,
+          "width_ratio": 0.9948040126355926,
+          "depth_ratio": 0.9999968370650595,
+          "section_area_ratio": 0.994800866135222
+        }
+      ]
+    },
+    {
+      "action": "Sleep",
+      "time": 3.0,
+      "edge_p05": 0.6149435476232703,
+      "edge_p95": 1.0082124658179479,
+      "collapsed_edge_fraction": 0.0,
+      "stretched_edge_fraction": 0.0,
+      "skin_area_ratio": 0.793339678479668,
+      "sections": [
+        {
+          "bind_height": 0.45,
+          "width_ratio": 0.9999636879426822,
+          "depth_ratio": 0.9960194291690448,
+          "section_area_ratio": 0.9959832616544433
+        },
+        {
+          "bind_height": 0.65,
+          "width_ratio": 0.999997005259031,
+          "depth_ratio": 0.991893975088439,
+          "section_area_ratio": 0.9918910046229149
+        },
+        {
+          "bind_height": 0.85,
+          "width_ratio": 0.9999749607756057,
+          "depth_ratio": 0.98881273091029,
+          "section_area_ratio": 0.9887879718064368
+        },
+        {
+          "bind_height": 1.05,
+          "width_ratio": 0.9958179958300983,
+          "depth_ratio": 0.9999966413010432,
+          "section_area_ratio": 0.9958146511772344
+        }
+      ]
+    },
+    {
+      "action": "Sleep",
+      "time": 3.083333333333333,
+      "edge_p05": 0.6057178255132266,
+      "edge_p95": 1.0064157447757172,
+      "collapsed_edge_fraction": 0.0,
+      "stretched_edge_fraction": 0.0,
+      "skin_area_ratio": 0.7891808882056813,
+      "sections": [
+        {
+          "bind_height": 0.45,
+          "width_ratio": 0.9999662228032777,
+          "depth_ratio": 0.9967409954897152,
+          "section_area_ratio": 0.9967073283730293
+        },
+        {
+          "bind_height": 0.65,
+          "width_ratio": 0.9999973775658446,
+          "depth_ratio": 0.993613908456022,
+          "section_area_ratio": 0.9936113027689711
+        },
+        {
+          "bind_height": 0.85,
+          "width_ratio": 0.9999799156854461,
+          "depth_ratio": 0.9912246098685386,
+          "section_area_ratio": 0.9912047018016804
+        },
+        {
+          "bind_height": 1.05,
+          "width_ratio": 0.9967346859534193,
+          "depth_ratio": 0.9999964542227532,
+          "section_area_ratio": 0.9967311517542486
+        }
+      ]
+    },
+    {
+      "action": "Sleep",
+      "time": 3.1666666666666665,
+      "edge_p05": 0.5979501125349853,
+      "edge_p95": 1.0047167065838245,
+      "collapsed_edge_fraction": 0.0,
+      "stretched_edge_fraction": 0.0,
+      "skin_area_ratio": 0.7855956978864512,
+      "sections": [
+        {
+          "bind_height": 0.45,
+          "width_ratio": 0.9999688140975086,
+          "depth_ratio": 0.9974481789246435,
+          "section_area_ratio": 0.9974170726029955
+        },
+        {
+          "bind_height": 0.65,
+          "width_ratio": 0.9999977302441153,
+          "depth_ratio": 0.9952241049985154,
+          "section_area_ratio": 0.9952218460827466
+        },
+        {
+          "bind_height": 0.85,
+          "width_ratio": 0.9999846563488486,
+          "depth_ratio": 0.9934844181054763,
+          "section_area_ratio": 0.9934691744271406
+        },
+        {
+          "bind_height": 1.05,
+          "width_ratio": 0.99758942496399,
+          "depth_ratio": 0.9999962690636263,
+          "section_area_ratio": 0.9975857030213183
+        }
+      ]
+    },
+    {
+      "action": "Sleep",
+      "time": 3.25,
+      "edge_p05": 0.5913726303677531,
+      "edge_p95": 1.0032003728943624,
+      "collapsed_edge_fraction": 0.0,
+      "stretched_edge_fraction": 0.0,
+      "skin_area_ratio": 0.7825688970483199,
+      "sections": [
+        {
+          "bind_height": 0.45,
+          "width_ratio": 0.9999711166909526,
+          "depth_ratio": 0.9980692916090187,
+          "section_area_ratio": 0.9980404640652184
+        },
+        {
+          "bind_height": 0.65,
+          "width_ratio": 0.9999980441592199,
+          "depth_ratio": 0.9966463773436953,
+          "section_area_ratio": 0.9966444280620671
+        },
+        {
+          "bind_height": 0.85,
+          "width_ratio": 0.9999889111064564,
+          "depth_ratio": 0.9954762722046525,
+          "section_area_ratio": 0.995465233474245
+        },
+        {
+          "bind_height": 1.05,
+          "width_ratio": 0.9983417307687347,
+          "depth_ratio": 0.9999960988088751,
+          "section_area_ratio": 0.9983378360468349
+        }
+      ]
+    },
+    {
+      "action": "Sleep",
+      "time": 3.333333333333333,
+      "edge_p05": 0.5861424916657382,
+      "edge_p95": 1.001912447406757,
+      "collapsed_edge_fraction": 0.0,
+      "stretched_edge_fraction": 0.0,
+      "skin_area_ratio": 0.7801639642044003,
+      "sections": [
+        {
+          "bind_height": 0.45,
+          "width_ratio": 0.9999732722761759,
+          "depth_ratio": 0.9986283099792043,
+          "section_area_ratio": 0.9986016189175323
+        },
+        {
+          "bind_height": 0.65,
+          "width_ratio": 0.999998314343377,
+          "depth_ratio": 0.9978590537856079,
+          "section_area_ratio": 0.9978573717378851
+        },
+        {
+          "bind_height": 0.85,
+          "width_ratio": 0.9999926065498059,
+          "depth_ratio": 0.9971774074026034,
+          "section_area_ratio": 0.9971700348211071
+        },
+        {
+          "bind_height": 1.05,
+          "width_ratio": 0.9989810582726749,
+          "depth_ratio": 0.9999959491386922,
+          "section_area_ratio": 0.9989770115389587
+        }
+      ]
+    },
+    {
+      "action": "Sleep",
+      "time": 3.4166666666666665,
+      "edge_p05": 0.581984500089192,
+      "edge_p95": 1.0009235038595359,
+      "collapsed_edge_fraction": 0.0,
+      "stretched_edge_fraction": 0.0,
+      "skin_area_ratio": 0.7783536408894712,
+      "sections": [
+        {
+          "bind_height": 0.45,
+          "width_ratio": 0.9999748492432912,
+          "depth_ratio": 0.9990394893423804,
+          "section_area_ratio": 0.9990143627432415
+        },
+        {
+          "bind_height": 0.65,
+          "width_ratio": 0.999998520394215,
+          "depth_ratio": 0.9987807327937781,
+          "section_area_ratio": 0.9987792549920279
+        },
+        {
+          "bind_height": 0.85,
+          "width_ratio": 0.9999954401644869,
+          "depth_ratio": 0.9984659933650722,
+          "section_area_ratio": 0.998461440524377
+        },
+        {
+          "bind_height": 1.05,
+          "width_ratio": 0.9994657992298691,
+          "depth_ratio": 0.9999958328410027,
+          "section_area_ratio": 0.9994616342969713
+        }
+      ]
+    },
+    {
+      "action": "Sleep",
+      "time": 3.5,
+      "edge_p05": 0.5793678218482153,
+      "edge_p95": 1.000279702774478,
+      "collapsed_edge_fraction": 0.0,
+      "stretched_edge_fraction": 0.0,
+      "skin_area_ratio": 0.7771756505082477,
+      "sections": [
+        {
+          "bind_height": 0.45,
+          "width_ratio": 0.9999758216784094,
+          "depth_ratio": 0.9992961737463408,
+          "section_area_ratio": 0.9992720124420877
+        },
+        {
+          "bind_height": 0.65,
+          "width_ratio": 0.9999986543917432,
+          "depth_ratio": 0.9993791154592108,
+          "section_area_ratio": 0.9993777706864213
+        },
+        {
+          "bind_height": 0.85,
+          "width_ratio": 0.9999972893794592,
+          "depth_ratio": 0.9992998587775457,
+          "section_area_ratio": 0.9992971500548221
+        },
+        {
+          "bind_height": 1.05,
+          "width_ratio": 0.9997799962264018,
+          "depth_ratio": 0.9999957561160657,
+          "section_area_ratio": 0.999775753276138
+        }
+      ]
+    },
+    {
+      "action": "Sleep",
+      "time": 3.583333333333333,
+      "edge_p05": 0.5782361522813954,
+      "edge_p95": 1.0000078752530308,
+      "collapsed_edge_fraction": 0.0,
+      "stretched_edge_fraction": 0.0,
+      "skin_area_ratio": 0.7766766527599996,
+      "sections": [
+        {
+          "bind_height": 0.45,
+          "width_ratio": 0.9999762206719971,
+          "depth_ratio": 0.9994023150926442,
+          "section_area_ratio": 0.9993785499771867
+        },
+        {
+          "bind_height": 0.65,
+          "width_ratio": 0.9999987111306631,
+          "depth_ratio": 0.9996322515600603,
+          "section_area_ratio": 0.9996309631647031
+        },
+        {
+          "bind_height": 0.85,
+          "width_ratio": 0.9999980739450881,
+          "depth_ratio": 0.9996519733282133,
+          "section_area_ratio": 0.9996500479436199
+        },
+        {
+          "bind_height": 1.05,
+          "width_ratio": 0.9999127935259562,
+          "depth_ratio": 0.999995723360878,
+          "section_area_ratio": 0.9999085172597848
+        }
+      ]
+    },
+    {
+      "action": "Sleep",
+      "time": 3.6666666666666665,
+      "edge_p05": 0.5781975189404629,
+      "edge_p95": 1.000000684195117,
+      "collapsed_edge_fraction": 0.0,
+      "stretched_edge_fraction": 0.0,
+      "skin_area_ratio": 0.7766621270840093,
+      "sections": [
+        {
+          "bind_height": 0.45,
+          "width_ratio": 0.9999762321941742,
+          "depth_ratio": 0.9994053868687176,
+          "section_area_ratio": 0.9993816331955413
+        },
+        {
+          "bind_height": 0.65,
+          "width_ratio": 0.9999987127828236,
+          "depth_ratio": 0.9996396207996959,
+          "section_area_ratio": 0.9996383340464058
+        },
+        {
+          "bind_height": 0.85,
+          "width_ratio": 0.9999980968040638,
+          "depth_ratio": 0.9996622177088107,
+          "section_area_ratio": 0.9996603151557404
+        },
+        {
+          "bind_height": 1.05,
+          "width_ratio": 0.9999166584616577,
+          "depth_ratio": 0.9999957224045618,
+          "section_area_ratio": 0.9999123812227207
+        }
+      ]
+    },
+    {
+      "action": "Sleep",
+      "time": 3.75,
+      "edge_p05": 0.5781975189404629,
+      "edge_p95": 1.000000684195117,
+      "collapsed_edge_fraction": 0.0,
+      "stretched_edge_fraction": 0.0,
+      "skin_area_ratio": 0.7766621270840093,
+      "sections": [
+        {
+          "bind_height": 0.45,
+          "width_ratio": 0.9999762321941742,
+          "depth_ratio": 0.9994053868687176,
+          "section_area_ratio": 0.9993816331955413
+        },
+        {
+          "bind_height": 0.65,
+          "width_ratio": 0.9999987127828236,
+          "depth_ratio": 0.9996396207996959,
+          "section_area_ratio": 0.9996383340464058
+        },
+        {
+          "bind_height": 0.85,
+          "width_ratio": 0.9999980968040638,
+          "depth_ratio": 0.9996622177088107,
+          "section_area_ratio": 0.9996603151557404
+        },
+        {
+          "bind_height": 1.05,
+          "width_ratio": 0.9999166584616577,
+          "depth_ratio": 0.9999957224045618,
+          "section_area_ratio": 0.9999123812227207
+        }
+      ]
+    },
+    {
+      "action": "Sleep",
+      "time": 3.833333333333333,
+      "edge_p05": 0.5781975189404629,
+      "edge_p95": 1.000000684195117,
+      "collapsed_edge_fraction": 0.0,
+      "stretched_edge_fraction": 0.0,
+      "skin_area_ratio": 0.7766621270840093,
+      "sections": [
+        {
+          "bind_height": 0.45,
+          "width_ratio": 0.9999762321941742,
+          "depth_ratio": 0.9994053868687176,
+          "section_area_ratio": 0.9993816331955413
+        },
+        {
+          "bind_height": 0.65,
+          "width_ratio": 0.9999987127828236,
+          "depth_ratio": 0.9996396207996959,
+          "section_area_ratio": 0.9996383340464058
+        },
+        {
+          "bind_height": 0.85,
+          "width_ratio": 0.9999980968040638,
+          "depth_ratio": 0.9996622177088107,
+          "section_area_ratio": 0.9996603151557404
+        },
+        {
+          "bind_height": 1.05,
+          "width_ratio": 0.9999166584616577,
+          "depth_ratio": 0.9999957224045618,
+          "section_area_ratio": 0.9999123812227207
+        }
+      ]
+    },
+    {
+      "action": "Sleep",
+      "time": 3.9166666666666665,
+      "edge_p05": 0.5781975189404629,
+      "edge_p95": 1.000000684195117,
+      "collapsed_edge_fraction": 0.0,
+      "stretched_edge_fraction": 0.0,
+      "skin_area_ratio": 0.7766621270840093,
+      "sections": [
+        {
+          "bind_height": 0.45,
+          "width_ratio": 0.9999762321941742,
+          "depth_ratio": 0.9994053868687176,
+          "section_area_ratio": 0.9993816331955413
+        },
+        {
+          "bind_height": 0.65,
+          "width_ratio": 0.9999987127828236,
+          "depth_ratio": 0.9996396207996959,
+          "section_area_ratio": 0.9996383340464058
+        },
+        {
+          "bind_height": 0.85,
+          "width_ratio": 0.9999980968040638,
+          "depth_ratio": 0.9996622177088107,
+          "section_area_ratio": 0.9996603151557404
+        },
+        {
+          "bind_height": 1.05,
+          "width_ratio": 0.9999166584616577,
+          "depth_ratio": 0.9999957224045618,
+          "section_area_ratio": 0.9999123812227207
+        }
+      ]
+    },
+    {
+      "action": "Sleep",
+      "time": 4.0,
+      "edge_p05": 0.5781975189404629,
+      "edge_p95": 1.000000684195117,
+      "collapsed_edge_fraction": 0.0,
+      "stretched_edge_fraction": 0.0,
+      "skin_area_ratio": 0.7766621270840093,
+      "sections": [
+        {
+          "bind_height": 0.45,
+          "width_ratio": 0.9999762321941742,
+          "depth_ratio": 0.9994053868687176,
+          "section_area_ratio": 0.9993816331955413
+        },
+        {
+          "bind_height": 0.65,
+          "width_ratio": 0.9999987127828236,
+          "depth_ratio": 0.9996396207996959,
+          "section_area_ratio": 0.9996383340464058
+        },
+        {
+          "bind_height": 0.85,
+          "width_ratio": 0.9999980968040638,
+          "depth_ratio": 0.9996622177088107,
+          "section_area_ratio": 0.9996603151557404
+        },
+        {
+          "bind_height": 1.05,
+          "width_ratio": 0.9999166584616577,
+          "depth_ratio": 0.9999957224045618,
+          "section_area_ratio": 0.9999123812227207
+        }
+      ]
+    },
+    {
+      "action": "Sleep",
+      "time": 4.083333333333333,
+      "edge_p05": 0.5781975189404629,
+      "edge_p95": 1.000000684195117,
+      "collapsed_edge_fraction": 0.0,
+      "stretched_edge_fraction": 0.0,
+      "skin_area_ratio": 0.7766621270840093,
+      "sections": [
+        {
+          "bind_height": 0.45,
+          "width_ratio": 0.9999762321941742,
+          "depth_ratio": 0.9994053868687176,
+          "section_area_ratio": 0.9993816331955413
+        },
+        {
+          "bind_height": 0.65,
+          "width_ratio": 0.9999987127828236,
+          "depth_ratio": 0.9996396207996959,
+          "section_area_ratio": 0.9996383340464058
+        },
+        {
+          "bind_height": 0.85,
+          "width_ratio": 0.9999980968040638,
+          "depth_ratio": 0.9996622177088107,
+          "section_area_ratio": 0.9996603151557404
+        },
+        {
+          "bind_height": 1.05,
+          "width_ratio": 0.9999166584616577,
+          "depth_ratio": 0.9999957224045618,
+          "section_area_ratio": 0.9999123812227207
+        }
+      ]
+    },
+    {
+      "action": "Sleep",
+      "time": 4.166666666666666,
+      "edge_p05": 0.5781975189404629,
+      "edge_p95": 1.000000684195117,
+      "collapsed_edge_fraction": 0.0,
+      "stretched_edge_fraction": 0.0,
+      "skin_area_ratio": 0.7766621270840093,
+      "sections": [
+        {
+          "bind_height": 0.45,
+          "width_ratio": 0.9999762321941742,
+          "depth_ratio": 0.9994053868687176,
+          "section_area_ratio": 0.9993816331955413
+        },
+        {
+          "bind_height": 0.65,
+          "width_ratio": 0.9999987127828236,
+          "depth_ratio": 0.9996396207996959,
+          "section_area_ratio": 0.9996383340464058
+        },
+        {
+          "bind_height": 0.85,
+          "width_ratio": 0.9999980968040638,
+          "depth_ratio": 0.9996622177088107,
+          "section_area_ratio": 0.9996603151557404
+        },
+        {
+          "bind_height": 1.05,
+          "width_ratio": 0.9999166584616577,
+          "depth_ratio": 0.9999957224045618,
+          "section_area_ratio": 0.9999123812227207
+        }
+      ]
+    },
+    {
+      "action": "Sleep",
+      "time": 4.25,
+      "edge_p05": 0.5781975189404629,
+      "edge_p95": 1.000000684195117,
+      "collapsed_edge_fraction": 0.0,
+      "stretched_edge_fraction": 0.0,
+      "skin_area_ratio": 0.7766621270840093,
+      "sections": [
+        {
+          "bind_height": 0.45,
+          "width_ratio": 0.9999762321941742,
+          "depth_ratio": 0.9994053868687176,
+          "section_area_ratio": 0.9993816331955413
+        },
+        {
+          "bind_height": 0.65,
+          "width_ratio": 0.9999987127828236,
+          "depth_ratio": 0.9996396207996959,
+          "section_area_ratio": 0.9996383340464058
+        },
+        {
+          "bind_height": 0.85,
+          "width_ratio": 0.9999980968040638,
+          "depth_ratio": 0.9996622177088107,
+          "section_area_ratio": 0.9996603151557404
+        },
+        {
+          "bind_height": 1.05,
+          "width_ratio": 0.9999166584616577,
+          "depth_ratio": 0.9999957224045618,
+          "section_area_ratio": 0.9999123812227207
+        }
+      ]
+    },
+    {
+      "action": "Sleep",
+      "time": 4.333333333333333,
+      "edge_p05": 0.5781975189404629,
+      "edge_p95": 1.000000684195117,
+      "collapsed_edge_fraction": 0.0,
+      "stretched_edge_fraction": 0.0,
+      "skin_area_ratio": 0.7766621270840093,
+      "sections": [
+        {
+          "bind_height": 0.45,
+          "width_ratio": 0.9999762321941742,
+          "depth_ratio": 0.9994053868687176,
+          "section_area_ratio": 0.9993816331955413
+        },
+        {
+          "bind_height": 0.65,
+          "width_ratio": 0.9999987127828236,
+          "depth_ratio": 0.9996396207996959,
+          "section_area_ratio": 0.9996383340464058
+        },
+        {
+          "bind_height": 0.85,
+          "width_ratio": 0.9999980968040638,
+          "depth_ratio": 0.9996622177088107,
+          "section_area_ratio": 0.9996603151557404
+        },
+        {
+          "bind_height": 1.05,
+          "width_ratio": 0.9999166584616577,
+          "depth_ratio": 0.9999957224045618,
+          "section_area_ratio": 0.9999123812227207
+        }
+      ]
+    },
+    {
+      "action": "Sleep",
+      "time": 4.416666666666666,
+      "edge_p05": 0.5781975189404629,
+      "edge_p95": 1.000000684195117,
+      "collapsed_edge_fraction": 0.0,
+      "stretched_edge_fraction": 0.0,
+      "skin_area_ratio": 0.7766621270840093,
+      "sections": [
+        {
+          "bind_height": 0.45,
+          "width_ratio": 0.9999762321941742,
+          "depth_ratio": 0.9994053868687176,
+          "section_area_ratio": 0.9993816331955413
+        },
+        {
+          "bind_height": 0.65,
+          "width_ratio": 0.9999987127828236,
+          "depth_ratio": 0.9996396207996959,
+          "section_area_ratio": 0.9996383340464058
+        },
+        {
+          "bind_height": 0.85,
+          "width_ratio": 0.9999980968040638,
+          "depth_ratio": 0.9996622177088107,
+          "section_area_ratio": 0.9996603151557404
+        },
+        {
+          "bind_height": 1.05,
+          "width_ratio": 0.9999166584616577,
+          "depth_ratio": 0.9999957224045618,
+          "section_area_ratio": 0.9999123812227207
+        }
+      ]
+    },
+    {
+      "action": "Sleep",
+      "time": 4.5,
+      "edge_p05": 0.5781975189404629,
+      "edge_p95": 1.000000684195117,
+      "collapsed_edge_fraction": 0.0,
+      "stretched_edge_fraction": 0.0,
+      "skin_area_ratio": 0.7766621270840093,
+      "sections": [
+        {
+          "bind_height": 0.45,
+          "width_ratio": 0.9999762321941742,
+          "depth_ratio": 0.9994053868687176,
+          "section_area_ratio": 0.9993816331955413
+        },
+        {
+          "bind_height": 0.65,
+          "width_ratio": 0.9999987127828236,
+          "depth_ratio": 0.9996396207996959,
+          "section_area_ratio": 0.9996383340464058
+        },
+        {
+          "bind_height": 0.85,
+          "width_ratio": 0.9999980968040638,
+          "depth_ratio": 0.9996622177088107,
+          "section_area_ratio": 0.9996603151557404
+        },
+        {
+          "bind_height": 1.05,
+          "width_ratio": 0.9999166584616577,
+          "depth_ratio": 0.9999957224045618,
+          "section_area_ratio": 0.9999123812227207
+        }
+      ]
+    },
+    {
+      "action": "Sleep",
+      "time": 4.583333333333333,
+      "edge_p05": 0.5781975189404629,
+      "edge_p95": 1.000000684195117,
+      "collapsed_edge_fraction": 0.0,
+      "stretched_edge_fraction": 0.0,
+      "skin_area_ratio": 0.7766621270840093,
+      "sections": [
+        {
+          "bind_height": 0.45,
+          "width_ratio": 0.9999762321941742,
+          "depth_ratio": 0.9994053868687176,
+          "section_area_ratio": 0.9993816331955413
+        },
+        {
+          "bind_height": 0.65,
+          "width_ratio": 0.9999987127828236,
+          "depth_ratio": 0.9996396207996959,
+          "section_area_ratio": 0.9996383340464058
+        },
+        {
+          "bind_height": 0.85,
+          "width_ratio": 0.9999980968040638,
+          "depth_ratio": 0.9996622177088107,
+          "section_area_ratio": 0.9996603151557404
+        },
+        {
+          "bind_height": 1.05,
+          "width_ratio": 0.9999166584616577,
+          "depth_ratio": 0.9999957224045618,
+          "section_area_ratio": 0.9999123812227207
+        }
+      ]
+    },
+    {
+      "action": "Sleep",
+      "time": 4.666666666666666,
+      "edge_p05": 0.5781975189404629,
+      "edge_p95": 1.000000684195117,
+      "collapsed_edge_fraction": 0.0,
+      "stretched_edge_fraction": 0.0,
+      "skin_area_ratio": 0.7766621270840093,
+      "sections": [
+        {
+          "bind_height": 0.45,
+          "width_ratio": 0.9999762321941742,
+          "depth_ratio": 0.9994053868687176,
+          "section_area_ratio": 0.9993816331955413
+        },
+        {
+          "bind_height": 0.65,
+          "width_ratio": 0.9999987127828236,
+          "depth_ratio": 0.9996396207996959,
+          "section_area_ratio": 0.9996383340464058
+        },
+        {
+          "bind_height": 0.85,
+          "width_ratio": 0.9999980968040638,
+          "depth_ratio": 0.9996622177088107,
+          "section_area_ratio": 0.9996603151557404
+        },
+        {
+          "bind_height": 1.05,
+          "width_ratio": 0.9999166584616577,
+          "depth_ratio": 0.9999957224045618,
+          "section_area_ratio": 0.9999123812227207
+        }
+      ]
+    },
+    {
+      "action": "Sleep",
+      "time": 4.75,
+      "edge_p05": 0.5781975189404629,
+      "edge_p95": 1.000000684195117,
+      "collapsed_edge_fraction": 0.0,
+      "stretched_edge_fraction": 0.0,
+      "skin_area_ratio": 0.7766621270840093,
+      "sections": [
+        {
+          "bind_height": 0.45,
+          "width_ratio": 0.9999762321941742,
+          "depth_ratio": 0.9994053868687176,
+          "section_area_ratio": 0.9993816331955413
+        },
+        {
+          "bind_height": 0.65,
+          "width_ratio": 0.9999987127828236,
+          "depth_ratio": 0.9996396207996959,
+          "section_area_ratio": 0.9996383340464058
+        },
+        {
+          "bind_height": 0.85,
+          "width_ratio": 0.9999980968040638,
+          "depth_ratio": 0.9996622177088107,
+          "section_area_ratio": 0.9996603151557404
+        },
+        {
+          "bind_height": 1.05,
+          "width_ratio": 0.9999166584616577,
+          "depth_ratio": 0.9999957224045618,
+          "section_area_ratio": 0.9999123812227207
+        }
+      ]
+    },
+    {
+      "action": "Sleep",
+      "time": 4.833333333333333,
+      "edge_p05": 0.5781975189404629,
+      "edge_p95": 1.000000684195117,
+      "collapsed_edge_fraction": 0.0,
+      "stretched_edge_fraction": 0.0,
+      "skin_area_ratio": 0.7766621270840093,
+      "sections": [
+        {
+          "bind_height": 0.45,
+          "width_ratio": 0.9999762321941742,
+          "depth_ratio": 0.9994053868687176,
+          "section_area_ratio": 0.9993816331955413
+        },
+        {
+          "bind_height": 0.65,
+          "width_ratio": 0.9999987127828236,
+          "depth_ratio": 0.9996396207996959,
+          "section_area_ratio": 0.9996383340464058
+        },
+        {
+          "bind_height": 0.85,
+          "width_ratio": 0.9999980968040638,
+          "depth_ratio": 0.9996622177088107,
+          "section_area_ratio": 0.9996603151557404
+        },
+        {
+          "bind_height": 1.05,
+          "width_ratio": 0.9999166584616577,
+          "depth_ratio": 0.9999957224045618,
+          "section_area_ratio": 0.9999123812227207
+        }
+      ]
+    },
+    {
+      "action": "Sleep",
+      "time": 4.916666666666666,
+      "edge_p05": 0.5781975189404629,
+      "edge_p95": 1.000000684195117,
+      "collapsed_edge_fraction": 0.0,
+      "stretched_edge_fraction": 0.0,
+      "skin_area_ratio": 0.7766621270840093,
+      "sections": [
+        {
+          "bind_height": 0.45,
+          "width_ratio": 0.9999762321941742,
+          "depth_ratio": 0.9994053868687176,
+          "section_area_ratio": 0.9993816331955413
+        },
+        {
+          "bind_height": 0.65,
+          "width_ratio": 0.9999987127828236,
+          "depth_ratio": 0.9996396207996959,
+          "section_area_ratio": 0.9996383340464058
+        },
+        {
+          "bind_height": 0.85,
+          "width_ratio": 0.9999980968040638,
+          "depth_ratio": 0.9996622177088107,
+          "section_area_ratio": 0.9996603151557404
+        },
+        {
+          "bind_height": 1.05,
+          "width_ratio": 0.9999166584616577,
+          "depth_ratio": 0.9999957224045618,
+          "section_area_ratio": 0.9999123812227207
+        }
+      ]
+    },
+    {
+      "action": "Sleep",
+      "time": 5.0,
+      "edge_p05": 0.5781975189404452,
+      "edge_p95": 1.0000006841951221,
+      "collapsed_edge_fraction": 0.0,
+      "stretched_edge_fraction": 0.0,
+      "skin_area_ratio": 0.7766621270840093,
+      "sections": [
+        {
+          "bind_height": 0.45,
+          "width_ratio": 0.9999762321941741,
+          "depth_ratio": 0.9994053868687177,
+          "section_area_ratio": 0.9993816331955413
+        },
+        {
+          "bind_height": 0.65,
+          "width_ratio": 0.9999987127828236,
+          "depth_ratio": 0.999639620799696,
+          "section_area_ratio": 0.999638334046406
+        },
+        {
+          "bind_height": 0.85,
+          "width_ratio": 0.9999980968040639,
+          "depth_ratio": 0.9996622177088101,
+          "section_area_ratio": 0.9996603151557399
+        },
+        {
+          "bind_height": 1.05,
+          "width_ratio": 0.9999166584616577,
+          "depth_ratio": 0.9999957224045618,
+          "section_area_ratio": 0.9999123812227207
+        }
+      ]
+    },
+    {
+      "action": "Wake",
+      "time": 0.0,
+      "edge_p05": 0.5781975189404452,
+      "edge_p95": 1.0000006841951221,
+      "collapsed_edge_fraction": 0.0,
+      "stretched_edge_fraction": 0.0,
+      "skin_area_ratio": 0.7766621270840093,
+      "sections": [
+        {
+          "bind_height": 0.45,
+          "width_ratio": 0.9999762321941741,
+          "depth_ratio": 0.9994053868687177,
+          "section_area_ratio": 0.9993816331955413
+        },
+        {
+          "bind_height": 0.65,
+          "width_ratio": 0.9999987127828236,
+          "depth_ratio": 0.999639620799696,
+          "section_area_ratio": 0.999638334046406
+        },
+        {
+          "bind_height": 0.85,
+          "width_ratio": 0.9999980968040639,
+          "depth_ratio": 0.9996622177088101,
+          "section_area_ratio": 0.9996603151557399
+        },
+        {
+          "bind_height": 1.05,
+          "width_ratio": 0.9999166584616577,
+          "depth_ratio": 0.9999957224045618,
+          "section_area_ratio": 0.9999123812227207
+        }
+      ]
+    },
+    {
+      "action": "Wake",
+      "time": 0.08333333333333333,
+      "edge_p05": 0.5781975189404629,
+      "edge_p95": 1.000000684195117,
+      "collapsed_edge_fraction": 0.0,
+      "stretched_edge_fraction": 0.0,
+      "skin_area_ratio": 0.7766621270840093,
+      "sections": [
+        {
+          "bind_height": 0.45,
+          "width_ratio": 0.9999762321941742,
+          "depth_ratio": 0.9994053868687176,
+          "section_area_ratio": 0.9993816331955413
+        },
+        {
+          "bind_height": 0.65,
+          "width_ratio": 0.9999987127828236,
+          "depth_ratio": 0.9996396207996959,
+          "section_area_ratio": 0.9996383340464058
+        },
+        {
+          "bind_height": 0.85,
+          "width_ratio": 0.9999980968040638,
+          "depth_ratio": 0.9996622177088107,
+          "section_area_ratio": 0.9996603151557404
+        },
+        {
+          "bind_height": 1.05,
+          "width_ratio": 0.9999166584616577,
+          "depth_ratio": 0.9999957224045618,
+          "section_area_ratio": 0.9999123812227207
+        }
+      ]
+    },
+    {
+      "action": "Wake",
+      "time": 0.16666666666666666,
+      "edge_p05": 0.5781975189404629,
+      "edge_p95": 1.000000684195117,
+      "collapsed_edge_fraction": 0.0,
+      "stretched_edge_fraction": 0.0,
+      "skin_area_ratio": 0.7766621270840093,
+      "sections": [
+        {
+          "bind_height": 0.45,
+          "width_ratio": 0.9999762321941742,
+          "depth_ratio": 0.9994053868687176,
+          "section_area_ratio": 0.9993816331955413
+        },
+        {
+          "bind_height": 0.65,
+          "width_ratio": 0.9999987127828236,
+          "depth_ratio": 0.9996396207996959,
+          "section_area_ratio": 0.9996383340464058
+        },
+        {
+          "bind_height": 0.85,
+          "width_ratio": 0.9999980968040638,
+          "depth_ratio": 0.9996622177088107,
+          "section_area_ratio": 0.9996603151557404
+        },
+        {
+          "bind_height": 1.05,
+          "width_ratio": 0.9999166584616577,
+          "depth_ratio": 0.9999957224045618,
+          "section_area_ratio": 0.9999123812227207
+        }
+      ]
+    },
+    {
+      "action": "Wake",
+      "time": 0.25,
+      "edge_p05": 0.5781975189404629,
+      "edge_p95": 1.000000684195117,
+      "collapsed_edge_fraction": 0.0,
+      "stretched_edge_fraction": 0.0,
+      "skin_area_ratio": 0.7766621270840093,
+      "sections": [
+        {
+          "bind_height": 0.45,
+          "width_ratio": 0.9999762321941742,
+          "depth_ratio": 0.9994053868687176,
+          "section_area_ratio": 0.9993816331955413
+        },
+        {
+          "bind_height": 0.65,
+          "width_ratio": 0.9999987127828236,
+          "depth_ratio": 0.9996396207996959,
+          "section_area_ratio": 0.9996383340464058
+        },
+        {
+          "bind_height": 0.85,
+          "width_ratio": 0.9999980968040638,
+          "depth_ratio": 0.9996622177088107,
+          "section_area_ratio": 0.9996603151557404
+        },
+        {
+          "bind_height": 1.05,
+          "width_ratio": 0.9999166584616577,
+          "depth_ratio": 0.9999957224045618,
+          "section_area_ratio": 0.9999123812227207
+        }
+      ]
+    },
+    {
+      "action": "Wake",
+      "time": 0.3333333333333333,
+      "edge_p05": 0.5783644411955102,
+      "edge_p95": 1.0000385435987107,
+      "collapsed_edge_fraction": 0.0,
+      "stretched_edge_fraction": 0.0,
+      "skin_area_ratio": 0.7767326023983447,
+      "sections": [
+        {
+          "bind_height": 0.45,
+          "width_ratio": 0.9999761763566293,
+          "depth_ratio": 0.9993904995900595,
+          "section_area_ratio": 0.9993666904672092
+        },
+        {
+          "bind_height": 0.65,
+          "width_ratio": 0.9999987047707776,
+          "depth_ratio": 0.9996038848232087,
+          "section_area_ratio": 0.9996025901070462
+        },
+        {
+          "bind_height": 0.85,
+          "width_ratio": 0.9999979859573029,
+          "depth_ratio": 0.999612533537131,
+          "section_area_ratio": 0.9996105202748078
+        },
+        {
+          "bind_height": 1.05,
+          "width_ratio": 0.999897915489885,
+          "depth_ratio": 0.999995727040189,
+          "section_area_ratio": 0.999893642966277
+        }
+      ]
+    },
+    {
+      "action": "Wake",
+      "time": 0.41666666666666663,
+      "edge_p05": 0.5800882083615809,
+      "edge_p95": 1.000461665763202,
+      "collapsed_edge_fraction": 0.0,
+      "stretched_edge_fraction": 0.0,
+      "skin_area_ratio": 0.777507418990615,
+      "sections": [
+        {
+          "bind_height": 0.45,
+          "width_ratio": 0.999975552101929,
+          "depth_ratio": 0.9992247432048266,
+          "section_area_ratio": 0.9992003142601547
+        },
+        {
+          "bind_height": 0.65,
+          "width_ratio": 0.9999986166586273,
+          "depth_ratio": 0.9992106933537799,
+          "section_area_ratio": 0.9992093111042877
+        },
+        {
+          "bind_height": 0.85,
+          "width_ratio": 0.9999967681294659,
+          "depth_ratio": 0.9990653723018569,
+          "section_area_ratio": 0.9990621434519186
+        },
+        {
+          "bind_height": 1.05,
+          "width_ratio": 0.9996916015369792,
+          "depth_ratio": 0.9999957778093841,
+          "section_area_ratio": 0.9996873806484804
+        }
+      ]
+    },
+    {
+      "action": "Wake",
+      "time": 0.5,
+      "edge_p05": 0.5837792902465219,
+      "edge_p95": 1.0013265505648314,
+      "collapsed_edge_fraction": 0.0,
+      "stretched_edge_fraction": 0.0,
+      "skin_area_ratio": 0.7790899062589328,
+      "sections": [
+        {
+          "bind_height": 0.45,
+          "width_ratio": 0.9999742198861281,
+          "depth_ratio": 0.9988747066985725,
+          "section_area_ratio": 0.9988489555948901
+        },
+        {
+          "bind_height": 0.65,
+          "width_ratio": 0.9999984366109944,
+          "depth_ratio": 0.9984061880512125,
+          "section_area_ratio": 0.998404627153955
+        },
+        {
+          "bind_height": 0.85,
+          "width_ratio": 0.999994286524786,
+          "depth_ratio": 0.9979429656712955,
+          "section_area_ratio": 0.9979372639488961
+        },
+        {
+          "bind_height": 1.05,
+          "width_ratio": 0.9992689307759939,
+          "depth_ratio": 0.9999958803726849,
+          "section_area_ratio": 0.9992648141604116
+        }
+      ]
+    },
+    {
+      "action": "Wake",
+      "time": 0.5833333333333333,
+      "edge_p05": 0.5889250908303203,
+      "edge_p95": 1.0025913525074377,
+      "collapsed_edge_fraction": 0.0,
+      "stretched_edge_fraction": 0.0,
+      "skin_area_ratio": 0.7814152092795628,
+      "sections": [
+        {
+          "bind_height": 0.45,
+          "width_ratio": 0.999972124465715,
+          "depth_ratio": 0.9983322293227354,
+          "section_area_ratio": 0.9983044002784491
+        },
+        {
+          "bind_height": 0.65,
+          "width_ratio": 0.9999981718384302,
+          "depth_ratio": 0.9972205411776769,
+          "section_area_ratio": 0.9972187180974068
+        },
+        {
+          "bind_height": 0.85,
+          "width_ratio": 0.9999906538268913,
+          "depth_ratio": 0.9962816887329362,
+          "section_area_ratio": 0.9962723773118083
+        },
+        {
+          "bind_height": 1.05,
+          "width_ratio": 0.9986446678012066,
+          "depth_ratio": 0.9999960284108625,
+          "section_area_ratio": 0.9986407015948917
+        }
+      ]
+    },
+    {
+      "action": "Wake",
+      "time": 0.6666666666666666,
+      "edge_p05": 0.59555790545445,
+      "edge_p95": 1.004164099253592,
+      "collapsed_edge_fraction": 0.0,
+      "stretched_edge_fraction": 0.0,
+      "skin_area_ratio": 0.7844932458713056,
+      "sections": [
+        {
+          "bind_height": 0.45,
+          "width_ratio": 0.9999696815576159,
+          "depth_ratio": 0.9976803821586735,
+          "section_area_ratio": 0.9976501340434895
+        },
+        {
+          "bind_height": 0.65,
+          "width_ratio": 0.9999978445975078,
+          "depth_ratio": 0.9957426799810346,
+          "section_area_ratio": 0.9957405337547807
+        },
+        {
+          "bind_height": 0.85,
+          "width_ratio": 0.9999862033294541,
+          "depth_ratio": 0.994212237432553,
+          "section_area_ratio": 0.9941985206138605
+        },
+        {
+          "bind_height": 1.05,
+          "width_ratio": 0.9978640061594186,
+          "depth_ratio": 0.9999962076617436,
+          "section_area_ratio": 0.9978602219215733
+        }
+      ]
+    },
+    {
+      "action": "Wake",
+      "time": 0.75,
+      "edge_p05": 0.603861339168722,
+      "edge_p95": 1.0060055259456042,
+      "collapsed_edge_fraction": 0.0,
+      "stretched_edge_fraction": 0.0,
+      "skin_area_ratio": 0.7882436454982257,
+      "sections": [
+        {
+          "bind_height": 0.45,
+          "width_ratio": 0.9999667375957534,
+          "depth_ratio": 0.9968917022500013,
+          "section_area_ratio": 0.9968585432352111
+        },
+        {
+          "bind_height": 0.65,
+          "width_ratio": 0.9999974614032219,
+          "depth_ratio": 0.9940005220681571,
+          "section_area_ratio": 0.9939979987016343
+        },
+        {
+          "bind_height": 0.85,
+          "width_ratio": 0.9999810355907313,
+          "depth_ratio": 0.9917635577175511,
+          "section_area_ratio": 0.9917447495075448
+        },
+        {
+          "bind_height": 1.05,
+          "width_ratio": 0.996940213051301,
+          "depth_ratio": 0.9999964108065762,
+          "section_area_ratio": 0.9969366348400444
+        }
+      ]
+    },
+    {
+      "action": "Wake",
+      "time": 0.8333333333333333,
+      "edge_p05": 0.6135333621670837,
+      "edge_p95": 1.0079210120515978,
+      "collapsed_edge_fraction": 0.0,
+      "stretched_edge_fraction": 0.0,
+      "skin_area_ratio": 0.7927316924980495,
+      "sections": [
+        {
+          "bind_height": 0.45,
+          "width_ratio": 0.9999640778584573,
+          "depth_ratio": 0.9961286442716918,
+          "section_area_ratio": 0.9960928611975376
+        },
+        {
+          "bind_height": 0.65,
+          "width_ratio": 0.9999970588911073,
+          "depth_ratio": 0.992142039760305,
+          "section_area_ratio": 0.992139121762529
+        },
+        {
+          "bind_height": 0.85,
+          "width_ratio": 0.9999756727113699,
+          "depth_ratio": 0.989162050363464,
+          "section_area_ratio": 0.9891379867327629
+        },
+        {
+          "bind_height": 1.05,
+          "width_ratio": 0.9959504541670581,
+          "depth_ratio": 0.9999966148989002,
+          "section_area_ratio": 0.9959470827740804
+        }
+      ]
+    },
+    {
+      "action": "Wake",
+      "time": 0.9166666666666666,
+      "edge_p05": 0.6244803924954844,
+      "edge_p95": 1.009916520329542,
+      "collapsed_edge_fraction": 0.0,
+      "stretched_edge_fraction": 0.0,
+      "skin_area_ratio": 0.7977013566697744,
+      "sections": [
+        {
+          "bind_height": 0.45,
+          "width_ratio": 0.999960574051636,
+          "depth_ratio": 0.9951625859749442,
+          "section_area_ratio": 0.9951233507462158
+        },
+        {
+          "bind_height": 0.65,
+          "width_ratio": 0.99999661120798,
+          "depth_ratio": 0.9900683500589161,
+          "section_area_ratio": 0.9900649949231921
+        },
+        {
+          "bind_height": 0.85,
+          "width_ratio": 0.9999697486255331,
+          "depth_ratio": 0.9862264192419271,
+          "section_area_ratio": 0.9861965845372096
+        },
+        {
+          "bind_height": 1.05,
+          "width_ratio": 0.9948404856146852,
+          "depth_ratio": 0.9999968302047013,
+          "section_area_ratio": 0.9948373321739908
+        }
+      ]
+    },
+    {
+      "action": "Wake",
+      "time": 1.0,
+      "edge_p05": 0.6368717344426691,
+      "edge_p95": 1.0117243126382025,
+      "collapsed_edge_fraction": 0.0,
+      "stretched_edge_fraction": 0.0,
+      "skin_area_ratio": 0.8033660531436376,
+      "sections": [
+        {
+          "bind_height": 0.45,
+          "width_ratio": 0.9999581893008718,
+          "depth_ratio": 0.99441681717053,
+          "section_area_ratio": 0.9943752399081792
+        },
+        {
+          "bind_height": 0.65,
+          "width_ratio": 0.9999962016201512,
+          "depth_ratio": 0.9881182987084846,
+          "section_area_ratio": 0.9881145454598506
+        },
+        {
+          "bind_height": 0.85,
+          "width_ratio": 0.9999644000406324,
+          "depth_ratio": 0.9835000020515409,
+          "section_area_ratio": 0.9834649894914297
+        },
+        {
+          "bind_height": 1.05,
+          "width_ratio": 0.9937924988969755,
+          "depth_ratio": 0.999997009415751,
+          "section_area_ratio": 0.9937895268767815
+        }
+      ]
+    },
+    {
+      "action": "Wake",
+      "time": 1.0833333333333333,
+      "edge_p05": 0.6500573259791433,
+      "edge_p95": 1.0135052207704425,
+      "collapsed_edge_fraction": 0.0,
+      "stretched_edge_fraction": 0.0,
+      "skin_area_ratio": 0.8094306425454919,
+      "sections": [
+        {
+          "bind_height": 0.45,
+          "width_ratio": 0.9999558327151773,
+          "depth_ratio": 0.9936596377185277,
+          "section_area_ratio": 0.9936157504702918
+        },
+        {
+          "bind_height": 0.65,
+          "width_ratio": 0.9999957977862316,
+          "depth_ratio": 0.9861690016498175,
+          "section_area_ratio": 0.9861648575568607
+        },
+        {
+          "bind_height": 0.85,
+          "width_ratio": 0.9999591609332178,
+          "depth_ratio": 0.9807642030962206,
+          "section_area_ratio": 0.9807241496014327
+        },
+        {
+          "bind_height": 1.05,
+          "width_ratio": 0.9927392804998726,
+          "depth_ratio": 0.9999971683121183,
+          "section_area_ratio": 0.9927364693720823
+        }
+      ]
+    },
+    {
+      "action": "Wake",
+      "time": 1.1666666666666665,
+      "edge_p05": 0.6642378000422391,
+      "edge_p95": 1.0152728525181325,
+      "collapsed_edge_fraction": 0.0,
+      "stretched_edge_fraction": 0.0,
+      "skin_area_ratio": 0.8156381957192206,
+      "sections": [
+        {
+          "bind_height": 0.45,
+          "width_ratio": 0.9999526382707017,
+          "depth_ratio": 0.9927002569131951,
+          "section_area_ratio": 0.9926532409123529
+        },
+        {
+          "bind_height": 0.65,
+          "width_ratio": 0.9999953742333337,
+          "depth_ratio": 0.9841226657603028,
+          "section_area_ratio": 0.98411811343848
+        },
+        {
+          "bind_height": 0.85,
+          "width_ratio": 0.9999536789052464,
+          "depth_ratio": 0.977840177853389,
+          "section_area_ratio": 0.9777948832258567
+        },
+        {
+          "bind_height": 1.05,
+          "width_ratio": 0.9916256436975265,
+          "depth_ratio": 0.9999973245733624,
+          "section_area_ratio": 0.9916229906758649
+        }
+      ]
+    },
+    {
+      "action": "Wake",
+      "time": 1.25,
+      "edge_p05": 0.6793028113054214,
+      "edge_p95": 1.0170727826289259,
+      "collapsed_edge_fraction": 0.0,
+      "stretched_edge_fraction": 0.0,
+      "skin_area_ratio": 0.8219693669598516,
+      "sections": [
+        {
+          "bind_height": 0.45,
+          "width_ratio": 0.9999487705404637,
+          "depth_ratio": 0.9915705067444321,
+          "section_area_ratio": 0.9915197091232796
+        },
+        {
+          "bind_height": 0.65,
+          "width_ratio": 0.9999949435669678,
+          "depth_ratio": 0.9820354436189036,
+          "section_area_ratio": 0.9820304780224477
+        },
+        {
+          "bind_height": 0.85,
+          "width_ratio": 0.9999481169220584,
+          "depth_ratio": 0.974805380663769,
+          "section_area_ratio": 0.9747548047602262
+        },
+        {
+          "bind_height": 1.05,
+          "width_ratio": 0.9904804478310536,
+          "depth_ratio": 0.9999974775628442,
+          "section_area_ratio": 0.9904779494063699
+        }
+      ]
+    },
+    {
+      "action": "Wake",
+      "time": 1.3333333333333333,
+      "edge_p05": 0.6945209976817877,
+      "edge_p95": 1.017981923618136,
+      "collapsed_edge_fraction": 0.0,
+      "stretched_edge_fraction": 0.0,
+      "skin_area_ratio": 0.8290832298880176,
+      "sections": [
+        {
+          "bind_height": 0.45,
+          "width_ratio": 0.999947851949394,
+          "depth_ratio": 0.9911274505213143,
+          "section_area_ratio": 0.9910757651568676
+        },
+        {
+          "bind_height": 0.65,
+          "width_ratio": 0.9999946776517046,
+          "depth_ratio": 0.9806239355390654,
+          "section_area_ratio": 0.9806187163169335
+        },
+        {
+          "bind_height": 0.85,
+          "width_ratio": 0.9999446679924299,
+          "depth_ratio": 0.9728463527997194,
+          "section_area_ratio": 0.9727925232579617
+        },
+        {
+          "bind_height": 1.05,
+          "width_ratio": 0.9897051868738472,
+          "depth_ratio": 0.9999975350471221,
+          "section_area_ratio": 0.9897027472971984
+        }
+      ]
+    },
+    {
+      "action": "Wake",
+      "time": 1.4166666666666665,
+      "edge_p05": 0.7106749835197392,
+      "edge_p95": 1.0188807772790547,
+      "collapsed_edge_fraction": 0.0,
+      "stretched_edge_fraction": 0.0,
+      "skin_area_ratio": 0.8365684017789895,
+      "sections": [
+        {
+          "bind_height": 0.45,
+          "width_ratio": 0.9999462426467892,
+          "depth_ratio": 0.9905093595343666,
+          "section_area_ratio": 0.9904561123728675
+        },
+        {
+          "bind_height": 0.65,
+          "width_ratio": 0.9999944094131822,
+          "depth_ratio": 0.9792075677287665,
+          "section_area_ratio": 0.9792020933838465
+        },
+        {
+          "bind_height": 0.85,
+          "width_ratio": 0.9999411468593556,
+          "depth_ratio": 0.970816648427078,
+          "section_area_ratio": 0.9707595128183282
+        },
+        {
+          "bind_height": 1.05,
+          "width_ratio": 0.9889182844818165,
+          "depth_ratio": 0.9999976025025651,
+          "section_area_ratio": 0.9889159135527661
+        }
+      ]
+    },
+    {
+      "action": "Wake",
+      "time": 1.5,
+      "edge_p05": 0.7277436282681956,
+      "edge_p95": 1.0196457037872402,
+      "collapsed_edge_fraction": 0.0,
+      "stretched_edge_fraction": 0.0,
+      "skin_area_ratio": 0.8446004122236092,
+      "sections": [
+        {
+          "bind_height": 0.45,
+          "width_ratio": 0.9999440008934388,
+          "depth_ratio": 0.9897219965812712,
+          "section_area_ratio": 0.9896665730337187
+        },
+        {
+          "bind_height": 0.65,
+          "width_ratio": 0.99999414138291,
+          "depth_ratio": 0.9778012700375489,
+          "section_area_ratio": 0.9777955414743176
+        },
+        {
+          "bind_height": 0.85,
+          "width_ratio": 0.9999375824884776,
+          "depth_ratio": 0.9687307756462197,
+          "section_area_ratio": 0.9686703098818686
+        },
+        {
+          "bind_height": 1.05,
+          "width_ratio": 0.9881264084079477,
+          "depth_ratio": 0.9999976909112548,
+          "section_area_ratio": 0.9881241267363791
+        }
+      ]
+    },
+    {
+      "action": "Wake",
+      "time": 1.5833333333333333,
+      "edge_p05": 0.745152498464853,
+      "edge_p95": 1.019419814725258,
+      "collapsed_edge_fraction": 0.0,
+      "stretched_edge_fraction": 0.0,
+      "skin_area_ratio": 0.853730384464023,
+      "sections": [
+        {
+          "bind_height": 0.45,
+          "width_ratio": 0.9999443013460124,
+          "depth_ratio": 0.9895907158411028,
+          "section_area_ratio": 0.9895355969702319
+        },
+        {
+          "bind_height": 0.65,
+          "width_ratio": 0.9999940628680652,
+          "depth_ratio": 0.977202907436174,
+          "section_area_ratio": 0.9771971056535855
+        },
+        {
+          "bind_height": 0.85,
+          "width_ratio": 0.9999363119809781,
+          "depth_ratio": 0.9679224923267449,
+          "section_area_ratio": 0.9678608472606419
+        },
+        {
+          "bind_height": 1.05,
+          "width_ratio": 0.9877867372482657,
+          "depth_ratio": 0.9999977161602548,
+          "section_area_ratio": 0.9877844813016554
+        }
+      ]
+    },
+    {
+      "action": "Wake",
+      "time": 1.6666666666666665,
+      "edge_p05": 0.7629263772472504,
+      "edge_p95": 1.0191304179266514,
+      "collapsed_edge_fraction": 0.0,
+      "stretched_edge_fraction": 0.0,
+      "skin_area_ratio": 0.8633726081517795,
+      "sections": [
+        {
+          "bind_height": 0.45,
+          "width_ratio": 0.9999443815807283,
+          "depth_ratio": 0.9893877279059325,
+          "section_area_ratio": 0.9893326997244595
+        },
+        {
+          "bind_height": 0.65,
+          "width_ratio": 0.9999940045171861,
+          "depth_ratio": 0.9767095316319666,
+          "section_area_ratio": 0.9767036757867555
+        },
+        {
+          "bind_height": 0.85,
+          "width_ratio": 0.9999352149976428,
+          "depth_ratio": 0.9672076521723143,
+          "section_area_ratio": 0.9671449916222884
+        },
+        {
+          "bind_height": 1.05,
+          "width_ratio": 0.9874964651026406,
+          "depth_ratio": 0.9999977766413645,
+          "section_area_ratio": 0.9874942695438473
+        }
+      ]
+    },
+    {
+      "action": "Wake",
+      "time": 1.75,
+      "edge_p05": 0.7811228911939163,
+      "edge_p95": 1.018869111794875,
+      "collapsed_edge_fraction": 0.0,
+      "stretched_edge_fraction": 0.0,
+      "skin_area_ratio": 0.8732407198716986,
+      "sections": [
+        {
+          "bind_height": 0.45,
+          "width_ratio": 0.9999440886060552,
+          "depth_ratio": 0.9890643450901893,
+          "section_area_ratio": 0.9890090451239542
+        },
+        {
+          "bind_height": 0.65,
+          "width_ratio": 0.9999939523723728,
+          "depth_ratio": 0.9762653692476282,
+          "section_area_ratio": 0.9762594651582097
+        },
+        {
+          "bind_height": 0.85,
+          "width_ratio": 0.9999341186254366,
+          "depth_ratio": 0.9664890193837938,
+          "section_area_ratio": 0.9664253457586963
+        },
+        {
+          "bind_height": 1.05,
+          "width_ratio": 0.987222909462326,
+          "depth_ratio": 0.9999978881614762,
+          "section_area_ratio": 0.9872208246069542
+        }
+      ]
+    },
+    {
+      "action": "Wake",
+      "time": 1.8333333333333333,
+      "edge_p05": 0.7996054246385962,
+      "edge_p95": 1.0173389025907262,
+      "collapsed_edge_fraction": 0.0,
+      "stretched_edge_fraction": 0.0,
+      "skin_area_ratio": 0.8835353633178478,
+      "sections": [
+        {
+          "bind_height": 0.45,
+          "width_ratio": 0.9999461302221135,
+          "depth_ratio": 0.9894022934658439,
+          "section_area_ratio": 0.9893489945840546
+        },
+        {
+          "bind_height": 0.65,
+          "width_ratio": 0.9999941136555993,
+          "depth_ratio": 0.9767435108845306,
+          "section_area_ratio": 0.9767377614358344
+        },
+        {
+          "bind_height": 0.85,
+          "width_ratio": 0.9999355436810105,
+          "depth_ratio": 0.9672356339382823,
+          "section_area_ratio": 0.967173289489723
+        },
+        {
+          "bind_height": 1.05,
+          "width_ratio": 0.9874742197398922,
+          "depth_ratio": 0.9999979720255459,
+          "section_area_ratio": 0.9874722171674005
+        }
+      ]
+    },
+    {
+      "action": "Wake",
+      "time": 1.9166666666666665,
+      "edge_p05": 0.8176941379628778,
+      "edge_p95": 1.0159250192336025,
+      "collapsed_edge_fraction": 0.0,
+      "stretched_edge_fraction": 0.0,
+      "skin_area_ratio": 0.8936018741041606,
+      "sections": [
+        {
+          "bind_height": 0.45,
+          "width_ratio": 0.9999479564052939,
+          "depth_ratio": 0.9896472047807836,
+          "section_area_ratio": 0.989595699982756
+        },
+        {
+          "bind_height": 0.65,
+          "width_ratio": 0.9999942805745118,
+          "depth_ratio": 0.9772706148340324,
+          "section_area_ratio": 0.9772650254075691
+        },
+        {
+          "bind_height": 0.85,
+          "width_ratio": 0.9999369685665453,
+          "depth_ratio": 0.9679782650983384,
+          "section_area_ratio": 0.9679172520407362
+        },
+        {
+          "bind_height": 1.05,
+          "width_ratio": 0.9877423520087061,
+          "depth_ratio": 0.9999981138534557,
+          "section_area_ratio": 0.9877404889818822
+        }
+      ]
+    },
+    {
+      "action": "Wake",
+      "time": 2.0,
+      "edge_p05": 0.8354934967194267,
+      "edge_p95": 1.0149194812841906,
+      "collapsed_edge_fraction": 0.0,
+      "stretched_edge_fraction": 0.0,
+      "skin_area_ratio": 0.903423804281124,
+      "sections": [
+        {
+          "bind_height": 0.45,
+          "width_ratio": 0.999949780005628,
+          "depth_ratio": 0.9898600549301763,
+          "section_area_ratio": 0.9898103441637885
+        },
+        {
+          "bind_height": 0.65,
+          "width_ratio": 0.999994466354174,
+          "depth_ratio": 0.9779021613134835,
+          "section_area_ratio": 0.9778967499492702
+        },
+        {
+          "bind_height": 0.85,
+          "width_ratio": 0.999938559158248,
+          "depth_ratio": 0.9688140165958331,
+          "section_area_ratio": 0.9687544918471523
+        },
+        {
+          "bind_height": 1.05,
+          "width_ratio": 0.9880605869314465,
+          "depth_ratio": 0.9999983056173599,
+          "section_area_ratio": 0.9880589127787406
+        }
+      ]
+    },
+    {
+      "action": "Wake",
+      "time": 2.083333333333333,
+      "edge_p05": 0.8534169154398765,
+      "edge_p95": 1.0129725732150836,
+      "collapsed_edge_fraction": 0.0,
+      "stretched_edge_fraction": 0.0,
+      "skin_area_ratio": 0.9134001748416758,
+      "sections": [
+        {
+          "bind_height": 0.45,
+          "width_ratio": 0.99995325654122,
+          "depth_ratio": 0.990582841609511,
+          "section_area_ratio": 0.9905365383412862
+        },
+        {
+          "bind_height": 0.65,
+          "width_ratio": 0.99999483948121,
+          "depth_ratio": 0.9793398567697503,
+          "section_area_ratio": 0.9793348028680178
+        },
+        {
+          "bind_height": 0.85,
+          "width_ratio": 0.9999423782213456,
+          "depth_ratio": 0.9709274553793138,
+          "section_area_ratio": 0.9708715088123904
+        },
+        {
+          "bind_height": 1.05,
+          "width_ratio": 0.9888410767057229,
+          "depth_ratio": 0.9999984835738764,
+          "section_area_ratio": 0.988839577201282
+        }
+      ]
+    },
+    {
+      "action": "Wake",
+      "time": 2.1666666666666665,
+      "edge_p05": 0.8707455207299761,
+      "edge_p95": 1.0112397509274456,
+      "collapsed_edge_fraction": 0.0,
+      "stretched_edge_fraction": 0.0,
+      "skin_area_ratio": 0.9230755939777175,
+      "sections": [
+        {
+          "bind_height": 0.45,
+          "width_ratio": 0.9999566983632834,
+          "depth_ratio": 0.9912428818387694,
+          "section_area_ratio": 0.991199959399602
+        },
+        {
+          "bind_height": 0.65,
+          "width_ratio": 0.9999952103475201,
+          "depth_ratio": 0.9807867121559596,
+          "section_area_ratio": 0.9807820145284515
+        },
+        {
+          "bind_height": 0.85,
+          "width_ratio": 0.9999461500578634,
+          "depth_ratio": 0.9729839034242673,
+          "section_area_ratio": 0.9729315082973681
+        },
+        {
+          "bind_height": 1.05,
+          "width_ratio": 0.989616774779256,
+          "depth_ratio": 0.9999986965040502,
+          "section_area_ratio": 0.9896154848177982
+        }
+      ]
+    },
+    {
+      "action": "Wake",
+      "time": 2.25,
+      "edge_p05": 0.8874238854414116,
+      "edge_p95": 1.0099633730959774,
+      "collapsed_edge_fraction": 0.0,
+      "stretched_edge_fraction": 0.0,
+      "skin_area_ratio": 0.9324340280063582,
+      "sections": [
+        {
+          "bind_height": 0.45,
+          "width_ratio": 0.9999601509959979,
+          "depth_ratio": 0.9918537125650815,
+          "section_area_ratio": 0.99181418818252
+        },
+        {
+          "bind_height": 0.65,
+          "width_ratio": 0.9999955756732112,
+          "depth_ratio": 0.9822276095927543,
+          "section_area_ratio": 0.9822232638968285
+        },
+        {
+          "bind_height": 0.85,
+          "width_ratio": 0.9999498437518964,
+          "depth_ratio": 0.9749686851396693,
+          "section_area_ratio": 0.9749197843684041
+        },
+        {
+          "bind_height": 1.05,
+          "width_ratio": 0.9903808887540639,
+          "depth_ratio": 0.9999989337299071,
+          "section_area_ratio": 0.9903798327405418
+        }
+      ]
+    },
+    {
+      "action": "Wake",
+      "time": 2.333333333333333,
+      "edge_p05": 0.903878873046904,
+      "edge_p95": 1.0080622310178373,
+      "collapsed_edge_fraction": 0.0,
+      "stretched_edge_fraction": 0.0,
+      "skin_area_ratio": 0.9419915933520915,
+      "sections": [
+        {
+          "bind_height": 0.45,
+          "width_ratio": 0.9999645557523239,
+          "depth_ratio": 0.992816284793088,
+          "section_area_ratio": 0.992781095166793
+        },
+        {
+          "bind_height": 0.65,
+          "width_ratio": 0.999996101263924,
+          "depth_ratio": 0.9843410061277439,
+          "section_area_ratio": 0.9843371684419523
+        },
+        {
+          "bind_height": 0.85,
+          "width_ratio": 0.9999555266361901,
+          "depth_ratio": 0.9780291221091629,
+          "section_area_ratio": 0.9779856258641987
+        },
+        {
+          "bind_height": 1.05,
+          "width_ratio": 0.9915342823364379,
+          "depth_ratio": 0.9999991305437744,
+          "section_area_ratio": 0.9915334202407833
+        }
+      ]
+    },
+    {
+      "action": "Wake",
+      "time": 2.4166666666666665,
+      "edge_p05": 0.9194154394671731,
+      "edge_p95": 1.0068641732078223,
+      "collapsed_edge_fraction": 0.0,
+      "stretched_edge_fraction": 0.0,
+      "skin_area_ratio": 0.9510506699198303,
+      "sections": [
+        {
+          "bind_height": 0.45,
+          "width_ratio": 0.9999690522643034,
+          "depth_ratio": 0.9937530631227964,
+          "section_area_ratio": 0.9937223087156513
+        },
+        {
+          "bind_height": 0.65,
+          "width_ratio": 0.999996615175592,
+          "depth_ratio": 0.9864120098696335,
+          "section_area_ratio": 0.9864086710381863
+        },
+        {
+          "bind_height": 0.85,
+          "width_ratio": 0.9999611199894819,
+          "depth_ratio": 0.9809772883333157,
+          "section_area_ratio": 0.9809391479260272
+        },
+        {
+          "bind_height": 1.05,
+          "width_ratio": 0.9926569564650705,
+          "depth_ratio": 0.9999993225481957,
+          "section_area_ratio": 0.9926562839878241
+        }
+      ]
+    },
+    {
+      "action": "Wake",
+      "time": 2.5,
+      "edge_p05": 0.9339346169751819,
+      "edge_p95": 1.0054965544755337,
+      "collapsed_edge_fraction": 0.0,
+      "stretched_edge_fraction": 0.0,
+      "skin_area_ratio": 0.9595027785957234,
+      "sections": [
+        {
+          "bind_height": 0.45,
+          "width_ratio": 0.999973606122067,
+          "depth_ratio": 0.9946559594196305,
+          "section_area_ratio": 0.9946297065916524
+        },
+        {
+          "bind_height": 0.65,
+          "width_ratio": 0.9999971040110728,
+          "depth_ratio": 0.9883843781374544,
+          "section_area_ratio": 0.9883815157872395
+        },
+        {
+          "bind_height": 0.85,
+          "width_ratio": 0.999966465034184,
+          "depth_ratio": 0.983735536630525,
+          "section_area_ratio": 0.983702547092932
+        },
+        {
+          "bind_height": 1.05,
+          "width_ratio": 0.9937189478670574,
+          "depth_ratio": 0.9999995050142535,
+          "section_area_ratio": 0.9937184559903421
+        }
+      ]
+    },
+    {
+      "action": "Wake",
+      "time": 2.583333333333333,
+      "edge_p05": 0.9475189621951218,
+      "edge_p95": 1.005048993703097,
+      "collapsed_edge_fraction": 0.0,
+      "stretched_edge_fraction": 0.0,
+      "skin_area_ratio": 0.9679371352130448,
+      "sections": [
+        {
+          "bind_height": 0.45,
+          "width_ratio": 0.9999774720620576,
+          "depth_ratio": 0.9953882469790069,
+          "section_area_ratio": 0.9953658229343504
+        },
+        {
+          "bind_height": 0.65,
+          "width_ratio": 0.9999976019491134,
+          "depth_ratio": 0.9903940775040682,
+          "section_area_ratio": 0.9903917024886725
+        },
+        {
+          "bind_height": 0.85,
+          "width_ratio": 0.9999720048760966,
+          "depth_ratio": 0.9865476766398062,
+          "section_area_ratio": 0.9865200581153621
+        },
+        {
+          "bind_height": 1.05,
+          "width_ratio": 0.9948034423339542,
+          "depth_ratio": 0.9999996588433077,
+          "section_area_ratio": 0.9948031029501023
+        }
+      ]
+    },
+    {
+      "action": "Wake",
+      "time": 2.6666666666666665,
+      "edge_p05": 0.9591838056736635,
+      "edge_p95": 1.0067497255883364,
+      "collapsed_edge_fraction": 0.0,
+      "stretched_edge_fraction": 0.0,
+      "skin_area_ratio": 0.9769434409931265,
+      "sections": [
+        {
+          "bind_height": 0.45,
+          "width_ratio": 0.9999798862236824,
+          "depth_ratio": 0.9958356290074732,
+          "section_area_ratio": 0.9958155989923823
+        },
+        {
+          "bind_height": 0.65,
+          "width_ratio": 0.99999815238751,
+          "depth_ratio": 0.9926103652955125,
+          "section_area_ratio": 0.992608531336204
+        },
+        {
+          "bind_height": 0.85,
+          "width_ratio": 0.9999783258938618,
+          "depth_ratio": 0.9897100452527964,
+          "section_area_ratio": 0.9896885941722294
+        },
+        {
+          "bind_height": 1.05,
+          "width_ratio": 0.9960116626624316,
+          "depth_ratio": 0.9999997590375549,
+          "section_area_ratio": 0.9960114226610259
+        }
+      ]
+    },
+    {
+      "action": "Wake",
+      "time": 2.75,
+      "edge_p05": 0.9695746536766499,
+      "edge_p95": 1.0079781385919167,
+      "collapsed_edge_fraction": 0.0,
+      "stretched_edge_fraction": 0.0,
+      "skin_area_ratio": 0.9846437561944081,
+      "sections": [
+        {
+          "bind_height": 0.45,
+          "width_ratio": 0.999982700739596,
+          "depth_ratio": 0.996372402639666,
+          "section_area_ratio": 0.9963551661340134
+        },
+        {
+          "bind_height": 0.65,
+          "width_ratio": 0.9999986468707891,
+          "depth_ratio": 0.9945961077855839,
+          "section_area_ratio": 0.9945947619685375
+        },
+        {
+          "bind_height": 0.85,
+          "width_ratio": 0.9999840572397685,
+          "depth_ratio": 0.9925124969038419,
+          "section_area_ratio": 0.992496673515077
+        },
+        {
+          "bind_height": 1.05,
+          "width_ratio": 0.9970891119136861,
+          "depth_ratio": 0.9999998382949973,
+          "section_area_ratio": 0.9970889506793885
+        }
+      ]
+    },
+    {
+      "action": "Wake",
+      "time": 2.833333333333333,
+      "edge_p05": 0.9790545859040362,
+      "edge_p95": 1.0071083659358442,
+      "collapsed_edge_fraction": 0.0,
+      "stretched_edge_fraction": 0.0,
+      "skin_area_ratio": 0.9909245459379782,
+      "sections": [
+        {
+          "bind_height": 0.45,
+          "width_ratio": 0.9999857710141047,
+          "depth_ratio": 0.9969601372606847,
+          "section_area_ratio": 0.9969459515289534
+        },
+        {
+          "bind_height": 0.65,
+          "width_ratio": 0.9999990770249298,
+          "depth_ratio": 0.9963192006686844,
+          "section_area_ratio": 0.9963182810909003
+        },
+        {
+          "bind_height": 0.85,
+          "width_ratio": 0.999989084536515,
+          "depth_ratio": 0.9949215016616519,
+          "section_area_ratio": 0.9949106416323301
+        },
+        {
+          "bind_height": 1.05,
+          "width_ratio": 0.9980204708876065,
+          "depth_ratio": 0.9999998985891029,
+          "section_area_ratio": 0.998020369677455
+        }
+      ]
+    },
+    {
+      "action": "Wake",
+      "time": 2.9166666666666665,
+      "edge_p05": 0.9870134458352623,
+      "edge_p95": 1.0054669331426371,
+      "collapsed_edge_fraction": 0.0,
+      "stretched_edge_fraction": 0.0,
+      "skin_area_ratio": 0.9956854079241282,
+      "sections": [
+        {
+          "bind_height": 0.45,
+          "width_ratio": 0.9999889733712931,
+          "depth_ratio": 0.997575002136881,
+          "section_area_ratio": 0.9975640022477252
+        },
+        {
+          "bind_height": 0.65,
+          "width_ratio": 0.9999994345177102,
+          "depth_ratio": 0.9977480148677143,
+          "section_area_ratio": 0.9977474506588822
+        },
+        {
+          "bind_height": 0.85,
+          "width_ratio": 0.9999932925750594,
+          "depth_ratio": 0.9969035746712018,
+          "section_area_ratio": 0.9968968880153016
+        },
+        {
+          "bind_height": 1.05,
+          "width_ratio": 0.9987904282988577,
+          "depth_ratio": 0.9999999424126546,
+          "section_area_ratio": 0.9987903707811681
+        }
+      ]
+    },
+    {
+      "action": "Wake",
+      "time": 3.0,
+      "edge_p05": 0.9932762795470724,
+      "edge_p95": 1.0042029260213976,
+      "collapsed_edge_fraction": 0.0,
+      "stretched_edge_fraction": 0.0,
+      "skin_area_ratio": 0.9988529646874735,
+      "sections": [
+        {
+          "bind_height": 0.45,
+          "width_ratio": 0.9999922221782879,
+          "depth_ratio": 0.9982139033528467,
+          "section_area_ratio": 0.9982061394230758
+        },
+        {
+          "bind_height": 0.65,
+          "width_ratio": 0.9999997111912081,
+          "depth_ratio": 0.9988517331555405,
+          "section_area_ratio": 0.9988514446783782
+        },
+        {
+          "bind_height": 0.85,
+          "width_ratio": 0.9999965682277387,
+          "depth_ratio": 0.9984253065469242,
+          "section_area_ratio": 0.9984218801786522
+        },
+        {
+          "bind_height": 1.05,
+          "width_ratio": 0.9993838353881914,
+          "depth_ratio": 0.9999999723581015,
+          "section_area_ratio": 0.9993838077633247
+        }
+      ]
+    },
+    {
+      "action": "Wake",
+      "time": 3.083333333333333,
+      "edge_p05": 0.9976223490171087,
+      "edge_p95": 1.0035063496001853,
+      "collapsed_edge_fraction": 0.0,
+      "stretched_edge_fraction": 0.0,
+      "skin_area_ratio": 1.0003987475982234,
+      "sections": [
+        {
+          "bind_height": 0.45,
+          "width_ratio": 0.9999954876431671,
+          "depth_ratio": 0.9989001765840844,
+          "section_area_ratio": 0.9988956691900472
+        },
+        {
+          "bind_height": 0.65,
+          "width_ratio": 0.9999998991999226,
+          "depth_ratio": 0.9996006819366415,
+          "section_area_ratio": 0.9996005811768154
+        },
+        {
+          "bind_height": 0.85,
+          "width_ratio": 0.9999988036757821,
+          "depth_ratio": 0.9994533552506953,
+          "section_area_ratio": 0.9994521595804419
+        },
+        {
+          "bind_height": 1.05,
+          "width_ratio": 0.9997858588136176,
+          "depth_ratio": 0.9999999907208328,
+          "section_area_ratio": 0.9997858495364373
+        }
+      ]
+    },
+    {
+      "action": "Wake",
+      "time": 3.1666666666666665,
+      "edge_p05": 0.9997968095402585,
+      "edge_p95": 1.0011195368092147,
+      "collapsed_edge_fraction": 0.0,
+      "stretched_edge_fraction": 0.0,
+      "skin_area_ratio": 1.000362770480319,
+      "sections": [
+        {
+          "bind_height": 0.45,
+          "width_ratio": 0.9999988074794156,
+          "depth_ratio": 0.9996868029091485,
+          "section_area_ratio": 0.9996856107620581
+        },
+        {
+          "bind_height": 0.65,
+          "width_ratio": 0.9999999911692892,
+          "depth_ratio": 0.9999667307707797,
+          "section_area_ratio": 0.9999667219403627
+        },
+        {
+          "bind_height": 0.85,
+          "width_ratio": 0.9999999000349783,
+          "depth_ratio": 0.9999544942552996,
+          "section_area_ratio": 0.9999543942948269
+        },
+        {
+          "bind_height": 1.05,
+          "width_ratio": 0.9999821646300862,
+          "depth_ratio": 0.9999999991173774,
+          "section_area_ratio": 0.9999821637474793
+        }
+      ]
+    },
+    {
+      "action": "Wake",
+      "time": 3.25,
+      "edge_p05": 0.9999959700577802,
+      "edge_p95": 1.0000041229545062,
+      "collapsed_edge_fraction": 0.0,
+      "stretched_edge_fraction": 0.0,
+      "skin_area_ratio": 1.0000000143924597,
+      "sections": [
+        {
+          "bind_height": 0.45,
+          "width_ratio": 1.0000000000541158,
+          "depth_ratio": 0.999999997147463,
+          "section_area_ratio": 0.9999999972015787
+        },
+        {
+          "bind_height": 0.65,
+          "width_ratio": 0.9999999995308413,
+          "depth_ratio": 1.0000000002568656,
+          "section_area_ratio": 0.9999999997877069
+        },
+        {
+          "bind_height": 0.85,
+          "width_ratio": 0.9999999998049974,
+          "depth_ratio": 0.9999999991764942,
+          "section_area_ratio": 0.9999999989814917
+        },
+        {
+          "bind_height": 1.05,
+          "width_ratio": 1.0000000006330287,
+          "depth_ratio": 0.999999999860911,
+          "section_area_ratio": 1.0000000004939396
+        }
+      ]
+    },
+    {
+      "action": "Wake",
+      "time": 3.333333333333333,
+      "edge_p05": 0.9999959700577802,
+      "edge_p95": 1.0000041229545062,
+      "collapsed_edge_fraction": 0.0,
+      "stretched_edge_fraction": 0.0,
+      "skin_area_ratio": 1.0000000143924597,
+      "sections": [
+        {
+          "bind_height": 0.45,
+          "width_ratio": 1.0000000000541158,
+          "depth_ratio": 0.999999997147463,
+          "section_area_ratio": 0.9999999972015787
+        },
+        {
+          "bind_height": 0.65,
+          "width_ratio": 0.9999999995308413,
+          "depth_ratio": 1.0000000002568656,
+          "section_area_ratio": 0.9999999997877069
+        },
+        {
+          "bind_height": 0.85,
+          "width_ratio": 0.9999999998049974,
+          "depth_ratio": 0.9999999991764942,
+          "section_area_ratio": 0.9999999989814917
+        },
+        {
+          "bind_height": 1.05,
+          "width_ratio": 1.0000000006330287,
+          "depth_ratio": 0.999999999860911,
+          "section_area_ratio": 1.0000000004939396
+        }
+      ]
+    },
+    {
+      "action": "Wake",
+      "time": 3.4166666666666665,
+      "edge_p05": 0.9999959700577802,
+      "edge_p95": 1.0000041229545062,
+      "collapsed_edge_fraction": 0.0,
+      "stretched_edge_fraction": 0.0,
+      "skin_area_ratio": 1.0000000143924597,
+      "sections": [
+        {
+          "bind_height": 0.45,
+          "width_ratio": 1.0000000000541158,
+          "depth_ratio": 0.999999997147463,
+          "section_area_ratio": 0.9999999972015787
+        },
+        {
+          "bind_height": 0.65,
+          "width_ratio": 0.9999999995308413,
+          "depth_ratio": 1.0000000002568656,
+          "section_area_ratio": 0.9999999997877069
+        },
+        {
+          "bind_height": 0.85,
+          "width_ratio": 0.9999999998049974,
+          "depth_ratio": 0.9999999991764942,
+          "section_area_ratio": 0.9999999989814917
+        },
+        {
+          "bind_height": 1.05,
+          "width_ratio": 1.0000000006330287,
+          "depth_ratio": 0.999999999860911,
+          "section_area_ratio": 1.0000000004939396
+        }
+      ]
+    },
+    {
+      "action": "Wake",
+      "time": 3.5,
+      "edge_p05": 0.9999959700577802,
+      "edge_p95": 1.0000041229545062,
+      "collapsed_edge_fraction": 0.0,
+      "stretched_edge_fraction": 0.0,
+      "skin_area_ratio": 1.0000000143924597,
+      "sections": [
+        {
+          "bind_height": 0.45,
+          "width_ratio": 1.0000000000541158,
+          "depth_ratio": 0.999999997147463,
+          "section_area_ratio": 0.9999999972015787
+        },
+        {
+          "bind_height": 0.65,
+          "width_ratio": 0.9999999995308413,
+          "depth_ratio": 1.0000000002568656,
+          "section_area_ratio": 0.9999999997877069
+        },
+        {
+          "bind_height": 0.85,
+          "width_ratio": 0.9999999998049974,
+          "depth_ratio": 0.9999999991764942,
+          "section_area_ratio": 0.9999999989814917
+        },
+        {
+          "bind_height": 1.05,
+          "width_ratio": 1.0000000006330287,
+          "depth_ratio": 0.999999999860911,
+          "section_area_ratio": 1.0000000004939396
+        }
+      ]
+    },
+    {
+      "action": "Wake",
+      "time": 3.583333333333333,
+      "edge_p05": 0.9999959700577802,
+      "edge_p95": 1.0000041229545062,
+      "collapsed_edge_fraction": 0.0,
+      "stretched_edge_fraction": 0.0,
+      "skin_area_ratio": 1.0000000143924597,
+      "sections": [
+        {
+          "bind_height": 0.45,
+          "width_ratio": 1.0000000000541158,
+          "depth_ratio": 0.999999997147463,
+          "section_area_ratio": 0.9999999972015787
+        },
+        {
+          "bind_height": 0.65,
+          "width_ratio": 0.9999999995308413,
+          "depth_ratio": 1.0000000002568656,
+          "section_area_ratio": 0.9999999997877069
+        },
+        {
+          "bind_height": 0.85,
+          "width_ratio": 0.9999999998049974,
+          "depth_ratio": 0.9999999991764942,
+          "section_area_ratio": 0.9999999989814917
+        },
+        {
+          "bind_height": 1.05,
+          "width_ratio": 1.0000000006330287,
+          "depth_ratio": 0.999999999860911,
+          "section_area_ratio": 1.0000000004939396
+        }
+      ]
+    },
+    {
+      "action": "Wake",
+      "time": 3.6666666666666665,
+      "edge_p05": 0.9999959700577802,
+      "edge_p95": 1.0000041229545062,
+      "collapsed_edge_fraction": 0.0,
+      "stretched_edge_fraction": 0.0,
+      "skin_area_ratio": 1.0000000143924597,
+      "sections": [
+        {
+          "bind_height": 0.45,
+          "width_ratio": 1.0000000000541158,
+          "depth_ratio": 0.999999997147463,
+          "section_area_ratio": 0.9999999972015787
+        },
+        {
+          "bind_height": 0.65,
+          "width_ratio": 0.9999999995308413,
+          "depth_ratio": 1.0000000002568656,
+          "section_area_ratio": 0.9999999997877069
+        },
+        {
+          "bind_height": 0.85,
+          "width_ratio": 0.9999999998049974,
+          "depth_ratio": 0.9999999991764942,
+          "section_area_ratio": 0.9999999989814917
+        },
+        {
+          "bind_height": 1.05,
+          "width_ratio": 1.0000000006330287,
+          "depth_ratio": 0.999999999860911,
+          "section_area_ratio": 1.0000000004939396
+        }
+      ]
+    },
+    {
+      "action": "Wake",
+      "time": 3.75,
+      "edge_p05": 0.9999959700577802,
+      "edge_p95": 1.0000041229545062,
+      "collapsed_edge_fraction": 0.0,
+      "stretched_edge_fraction": 0.0,
+      "skin_area_ratio": 1.0000000143924597,
+      "sections": [
+        {
+          "bind_height": 0.45,
+          "width_ratio": 1.0000000000541158,
+          "depth_ratio": 0.999999997147463,
+          "section_area_ratio": 0.9999999972015787
+        },
+        {
+          "bind_height": 0.65,
+          "width_ratio": 0.9999999995308413,
+          "depth_ratio": 1.0000000002568656,
+          "section_area_ratio": 0.9999999997877069
+        },
+        {
+          "bind_height": 0.85,
+          "width_ratio": 0.9999999998049974,
+          "depth_ratio": 0.9999999991764942,
+          "section_area_ratio": 0.9999999989814917
+        },
+        {
+          "bind_height": 1.05,
+          "width_ratio": 1.0000000006330287,
+          "depth_ratio": 0.999999999860911,
+          "section_area_ratio": 1.0000000004939396
+        }
+      ]
+    },
+    {
+      "action": "Wake",
+      "time": 3.833333333333333,
+      "edge_p05": 0.9999959700577802,
+      "edge_p95": 1.0000041229545062,
+      "collapsed_edge_fraction": 0.0,
+      "stretched_edge_fraction": 0.0,
+      "skin_area_ratio": 1.0000000143924597,
+      "sections": [
+        {
+          "bind_height": 0.45,
+          "width_ratio": 1.0000000000541158,
+          "depth_ratio": 0.999999997147463,
+          "section_area_ratio": 0.9999999972015787
+        },
+        {
+          "bind_height": 0.65,
+          "width_ratio": 0.9999999995308413,
+          "depth_ratio": 1.0000000002568656,
+          "section_area_ratio": 0.9999999997877069
+        },
+        {
+          "bind_height": 0.85,
+          "width_ratio": 0.9999999998049974,
+          "depth_ratio": 0.9999999991764942,
+          "section_area_ratio": 0.9999999989814917
+        },
+        {
+          "bind_height": 1.05,
+          "width_ratio": 1.0000000006330287,
+          "depth_ratio": 0.999999999860911,
+          "section_area_ratio": 1.0000000004939396
+        }
+      ]
+    },
+    {
+      "action": "Wake",
+      "time": 3.9166666666666665,
+      "edge_p05": 0.9999959700577802,
+      "edge_p95": 1.0000041229545062,
+      "collapsed_edge_fraction": 0.0,
+      "stretched_edge_fraction": 0.0,
+      "skin_area_ratio": 1.0000000143924597,
+      "sections": [
+        {
+          "bind_height": 0.45,
+          "width_ratio": 1.0000000000541158,
+          "depth_ratio": 0.999999997147463,
+          "section_area_ratio": 0.9999999972015787
+        },
+        {
+          "bind_height": 0.65,
+          "width_ratio": 0.9999999995308413,
+          "depth_ratio": 1.0000000002568656,
+          "section_area_ratio": 0.9999999997877069
+        },
+        {
+          "bind_height": 0.85,
+          "width_ratio": 0.9999999998049974,
+          "depth_ratio": 0.9999999991764942,
+          "section_area_ratio": 0.9999999989814917
+        },
+        {
+          "bind_height": 1.05,
+          "width_ratio": 1.0000000006330287,
+          "depth_ratio": 0.999999999860911,
+          "section_area_ratio": 1.0000000004939396
+        }
+      ]
+    },
+    {
+      "action": "Wake",
+      "time": 4.0,
+      "edge_p05": 0.9999959700577802,
+      "edge_p95": 1.0000041229545062,
+      "collapsed_edge_fraction": 0.0,
+      "stretched_edge_fraction": 0.0,
+      "skin_area_ratio": 1.0000000143924597,
+      "sections": [
+        {
+          "bind_height": 0.45,
+          "width_ratio": 1.0000000000541158,
+          "depth_ratio": 0.999999997147463,
+          "section_area_ratio": 0.9999999972015787
+        },
+        {
+          "bind_height": 0.65,
+          "width_ratio": 0.9999999995308413,
+          "depth_ratio": 1.0000000002568656,
+          "section_area_ratio": 0.9999999997877069
+        },
+        {
+          "bind_height": 0.85,
+          "width_ratio": 0.9999999998049974,
+          "depth_ratio": 0.9999999991764942,
+          "section_area_ratio": 0.9999999989814917
+        },
+        {
+          "bind_height": 1.05,
+          "width_ratio": 1.0000000006330287,
+          "depth_ratio": 0.999999999860911,
+          "section_area_ratio": 1.0000000004939396
+        }
+      ]
+    }
+  ]
+}

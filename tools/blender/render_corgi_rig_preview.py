@@ -1,6 +1,7 @@
 """Render the delivered GLB's evaluated skeleton/morph geometry into RGBA frames."""
 import argparse
 import json
+import hashlib
 import io
 import subprocess
 from pathlib import Path
@@ -116,8 +117,11 @@ for action in args.actions.split(','):
             bg=Image.new('RGB',frame.size,(239,242,245));bg.paste(frame,(0,0),frame)
             draw=ImageDraw.Draw(bg);draw.text((12,10),labels[action],font=font,fill=(50,58,67))
             frames.append(bg)
-        frames[0].save(preview/(action+'.gif'),save_all=True,append_images=frames[1:],duration=round(1000/args.fps),loop=0,disposal=2)
-    records[action]={'peak_time':peak,'frames':len(frames),'duration':duration,'fps':args.fps,'preview_render':'Actual delivered GLB, evaluated joints and morphs, CPU texture/depth-buffer rendering'}
+        # GIF stores centiseconds; distribute 80/90 ms at 12 fps instead of
+        # truncating every 83 ms frame to 80 ms and shortening the preview.
+        delays=[10*(round((index+1)*100/args.fps)-round(index*100/args.fps)) for index in range(len(frames))]
+        frames[0].save(preview/(action+'.gif'),save_all=True,append_images=frames[1:],duration=delays,loop=0,disposal=2)
+    records[action]={'peak_time':peak,'frames':len(frames),'duration':duration,'fps':args.fps,'source_rig_sha256':hashlib.sha256(asset.raw).hexdigest(),'preview_render':'Actual delivered GLB, evaluated joints and morphs, CPU texture/depth-buffer rendering'}
     print('CORGI_ACTION_RENDERED',action,len(frames),flush=True)
 
 # Isolated closeups expose missed eyelid coverage and stretched lip membranes.

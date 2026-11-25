@@ -12,11 +12,12 @@ import numpy as np
 from PIL import Image, ImageFilter
 
 from corgi_glb_io import Builder, accessor, read_glb
-from corgi_rig_math import AXIS, BONES, DURATIONS, INDEX, PARENTS, PIVOTS, SHAPES, hierarchy, matrix_quaternion, pose, skin, smooth
+from corgi_rig_math import AXIS, BONES, DURATIONS, INDEX, PARENTS, PIVOTS, SHAPES, SLEEP_STEPS, SLEEP_CURVATURE, hierarchy, matrix_quaternion, pose, skin, smooth
 
 ROOT = Path(__file__).resolve().parents[2]
 OUT = ROOT / 'art/corgi-image-to-3d/rigged'
 OUT.mkdir(parents=True, exist_ok=True)
+previous_manifest = json.loads((OUT / 'rig-manifest.json').read_text(encoding='utf-8')) if (OUT / 'rig-manifest.json').exists() else {}
 SOURCE = ROOT / 'art/corgi-image-to-3d/source/corgi-meshy.glb'
 doc, binary = read_glb(SOURCE)
 original = doc['meshes'][0]['primitives'][0]
@@ -148,11 +149,56 @@ smile = np.exp(-((abs(x) - .15) / .055) ** 2 - ((y + .61) / .13) ** 2 - ((z - 1.
 targets[3, :, 2] = .010 * smile
 targets[3, :, 0] = np.sign(x) * .004 * smile
 lie_mask = smooth(.16, .45, y) * smooth(.30, .61, z) * (1 - smooth(.92, 1.10, z))
-targets[4, :, 1] = -.20 * lie_mask
-targets[4, :, 2] = -.12 * lie_mask
-chest_fold = smooth(-.43, -.68, y) * smooth(.31, .55, z) * (1 - smooth(.80, 1.02, z))
-targets[4, :, 1] += .19 * chest_fold
-targets[4, :, 2] += .035 * chest_fold
+targets[4, :, 1] = -.07 * lie_mask
+targets[4, :, 2] = -.025 * lie_mask
+# The source has a continuous breast surface between the forelegs. Bending
+# that surface with independent limb envelopes folds it through itself.
+# Bend transverse body sections around a circular centerline; each section
+# retains its width and depth. Unlike a height squash, this leaves a rounded
+# breast and belly even when the head settles forward. Invert the full sleep
+# skinning to store the target in a bind-space morph.
+sleep_r, sleep_o, sleep_m = pose('Sleep', DURATIONS['Sleep'])
+sleep_world = hierarchy(sleep_r, sleep_o)
+sleep_skin = sleep_world.copy()
+sleep_skin[:, :3, 3] -= np.einsum('nij,nj->ni', sleep_skin[:, :3, :3], PIVOTS)
+linear = np.sum(sleep_skin[joints, :3, :3] * weights[:, :, None, None], axis=1)
+translation = np.sum(sleep_skin[joints, :3, 3] * weights[:, :, None], axis=1)
+posed = skin(points, joints, weights, sleep_world, targets, sleep_m)
+ordered = points.copy()
+start, finish, curvature = .10, 1.05, SLEEP_CURVATURE
+height = np.clip(z - start, 0, finish - start)
+angle = curvature * height
+ordered[:, 1] = y * np.cos(angle) - (1 - np.cos(angle)) / curvature
+ordered[:, 2] = start + np.sin(angle) / curvature + y * np.sin(angle)
+above = np.maximum(0, z - finish)
+ordered[:, 1] -= above * np.sin(angle)
+ordered[:, 2] += above * np.cos(angle)
+below = z < start
+ordered[below] = points[below]
+# Match the full head to this rigid continuation rather than compressing it
+# into a separately lowered torso surface.
+head = smooth(1.01, 1.17, z)
+head_matrix = sleep_skin[INDEX['Head']]
+head_target = points @ head_matrix[:3, :3].T + head_matrix[:3, 3]
+desired = ordered * (1 - head[:, None]) + head_target * head[:, None]
+front = np.ones(len(points))
+targets[4] = np.linalg.solve(linear, (desired - translation)[:, :, None])[:, :, 0] - points
+# In-between correctives cancel the independent limb rotation throughout
+# descent. A final-pose morph alone still rolls the ankle through the shin.
+# The same progress-keyed shapes are played backwards when waking.
+front_transition = front * (1 - smooth(.70, 1.17, z))
+for shape, amount in enumerate(SLEEP_STEPS, 5):
+    lo, hi = 0., 1.
+    for _ in range(40):
+        middle = (lo + hi) / 2
+        if smooth(0, 1, middle) < amount: lo = middle
+        else: hi = middle
+    sample_r, sample_o, sample_m = pose('Sleep', .4 + 3.2 * (lo + hi) / 2)
+    sample_world = hierarchy(sample_r, sample_o)
+    sample_linear = np.sum(sample_world[joints, :3, :3] * weights[:, :, None, None], axis=1)
+    sample_posed = skin(points, joints, weights, sample_world, targets, sample_m)
+    sample_target = (1 - amount) * points + amount * desired
+    targets[shape] = np.linalg.solve(sample_linear, ((sample_target - sample_posed) * front_transition[:, None])[:, :, None])[:, :, 0]
 
 builder = Builder(doc, binary)
 doc['nodes'] = []
@@ -440,6 +486,10 @@ for action, duration in DURATIONS.items():
 
 builder.save(OUT / 'corgi-rigged.glb')
 manifest = {'status': 'authored, pending independent verification and preview review', 'source_file': str(SOURCE), 'source_sha256': hashlib.sha256(SOURCE.read_bytes()).hexdigest(), 'rigged_file': str(OUT / 'corgi-rigged.glb'), 'armature_object': 'Root', 'skin_objects': ['CorgiSkin'], 'required_shape_keys': SHAPES, 'joint_count': len(BONES), 'coordinate_system': 'glTF Y up, ground Y=0, height 2 units', 'up_axis': 1, 'ground_tolerance': .055, 'max_edge_growth': .16, 'actions': manifest_actions, 'split_lip_triangles': split_count, 'eyelid_patches': lid_report, 'surface_notes': 'Original texture/UV retained; lip triangles split with interpolated UV, curved eyelid cover primitives and inner mouth/tongue/teeth added.', 'blender_export_status': 'GLB authored without launching Blender; native blend save currently blocked by automatic approval service error.'}
+manifest['blender_export_status'] = 'GLB updated; native blend must be refreshed and reopened'
+manifest['rigged_sha256'] = hashlib.sha256((OUT / 'corgi-rigged.glb').read_bytes()).hexdigest()
+previous_manifest.update(manifest)
+manifest = previous_manifest
 (OUT / 'rig-manifest.json').write_text(json.dumps(manifest, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
 # Preview consumes the exact same positions, weights, joints and facial deltas.
 arrays = {}

@@ -37,7 +37,7 @@ col=colors(uv)
 # Fine facial cells keep eyelids/nose readable. Material classes prevent mixing
 # dark eyes, blue collar and pink ears into the white coat during clustering.
 face=(p[:,1]>1.05)&(p[:,2]>.65)
-cell=np.where(face,.0035,.022)
+cell=np.where(face,.007,.026)
 kind=np.where(col.max(1)<.35,1,np.where((col[:,2]>col[:,0]*1.13)&(col[:,0]<.7),2,
                np.where(col[:,0]>col[:,2]*1.18,3,0)))
 geo_keys=np.column_stack((np.floor(p/cell[:,None]),face)).astype(np.int32)
@@ -64,12 +64,17 @@ def weights(pos):
     x,y,z=pos.T
     # Bind the rear skull/ears as well as the front muzzle to the head. The
     # earlier front-only mask left parts of the skull anchored to the torso.
-    head=np.maximum(smooth(1.02,1.20,y)*smooth(.12,.35,z),
-                    smooth(.85,1.0,y)*smooth(.64,.80,z))
+    # Spread the chest/neck/head transitions over enough skin to bend without
+    # folding the short bands at the collar and throat back through themselves.
+    head=np.maximum(smooth(.90,1.30,y)*smooth(.05,.28,z),
+                    smooth(.85,1.0,y)*smooth(.62,.74,z))
     tail=smooth(.99,1.17,y)*(1-smooth(-.91,-.78,z))
     jaw=head*(1-smooth(1.17,1.28,y))*smooth(.82,.95,z)
-    neck=(1-head)*smooth(.76,1.02,y)*smooth(.12,.35,z)*(1-smooth(.75,.85,z))
+    neck=(1-head)*smooth(.55,1.10,y)*smooth(.05,.28,z)*(1-smooth(.75,.85,z))
     leg=1-smooth(.48,.79,y);front=smooth(-.03,.10,z);back=1-smooth(-.56,-.42,z)
+    # The central bib belongs to the ribcage, not to both front legs.
+    # Only the paired limbs below/alongside the chest follow the elbows.
+    front*=1-smooth(.30,.48,y)*(1-smooth(.10,.23,np.abs(x)))
     right=smooth(-.09,.09,x)
     w=np.column_stack((np.maximum(0,1-head-tail-neck)*(1-leg*np.maximum(front,back)),head-jaw,
         leg*front*right,leg*front*(1-right),leg*back*right,leg*back*(1-right),tail,jaw,neck))
@@ -86,7 +91,7 @@ fc=colors(fu)
 clear=(fc.min(1)>.70)&(fp[:,1]>.075)
 clear&=~((fp[:,2]>.66)&(fp[:,1]>1.27)&(fp[:,1]<1.58)&(np.abs(np.abs(fp[:,0])-.137)<.085))
 clear&=~((fp[:,2]>.90)&(fp[:,1]<1.34))
-fp,fn,fu=fp[clear][:6500],fn[clear][:6500],fu[clear][:6500];fn/=np.maximum(np.linalg.norm(fn,axis=1)[:,None],1e-9)
+fp,fn,fu=fp[clear][:3500],fn[clear][:3500],fu[clear][:3500];fn/=np.maximum(np.linalg.norm(fn,axis=1)[:,None],1e-9)
 flow=np.column_stack((fp[:,0]*.18,np.full(len(fp),-.85),np.full(len(fp),-.13)))
 flow[fp[:,1]>1.65,1]=.55;flow[(fp[:,2]<-.85)&(fp[:,1]>1),1]=.7
 flow-=fn*(flow*fn).sum(1)[:,None];flow/=np.maximum(np.linalg.norm(flow,axis=1)[:,None],1e-9)

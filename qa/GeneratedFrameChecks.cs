@@ -7,6 +7,7 @@ using System.IO;
 using System.Reflection;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Media.Media3D;
 using System.Windows.Threading;
 using WestiePet;
 
@@ -57,6 +58,7 @@ static class GeneratedFrameChecks
                     try
                     {
                         Measure(pet, baseline);
+                        if (!baseline) MeasureControls(pet);
                         if (baseline) finish(null);
                         else StartCadenceCheck(pet, finish);
                     }
@@ -74,8 +76,8 @@ static class GeneratedFrameChecks
                 if (AllocatedBytes != null)
                 {
                     long allocated = 0; foreach (Sample sample in Samples) allocated += sample.Allocated;
-                    Require(allocated / (double)Samples.Count < 8 * 1024 * 1024,
-                        "Complete frame allocates over 8 MiB on average; animation/point buffers may be duplicated per frame.");
+                    Require(allocated / (double)Samples.Count < 3 * 1024 * 1024,
+                        "Complete frame allocates over 3 MiB on average; animation buffers exceed the reduced geometry budget.");
                 }
             }
             Console.WriteLine((baseline ? "BASELINE recorded" : "PASS: cold complete-frame budgets") + ": " + Path.Combine(Output, prefix + ".txt"));
@@ -153,6 +155,28 @@ static class GeneratedFrameChecks
         Summary.Add(AllocatedBytes == null
             ? "Per-thread allocation counter unavailable on this .NET Framework; retained-memory delta and GC counts reported without treating them as allocation totals."
             : "Per-core-frame allocated bytes read from GC.GetAllocatedBytesForCurrentThread; CSV/report formatting and cache invalidation are outside this measurement.");
+    }
+
+    static void MeasureControls(PetWindow pet)
+    {
+        typeof(PetWindow).GetMethod("ShowHome", Private).Invoke(pet, null);
+        Viewport3D preview = Field<Viewport3D>(pet, "homePreview");
+        Require(preview != null && !preview.IsHitTestVisible, "Home preview must not hit-test the animated 3D triangle mesh.");
+        Stopwatch watch = Stopwatch.StartNew();
+        Window home = Field<Window>(pet, "home");
+        for (int i = 0; i < 1000; i++) home.InputHitTest(new Point(100 + i % 170, 100 + i % 110));
+        watch.Stop(); double hitMs = watch.Elapsed.TotalMilliseconds;
+        Require(hitMs < 150, "Home pointer routing blocks on 3D geometry: " + hitMs + "ms / 1000 points.");
+        pet.SwitchBreed("corgi"); // Exclude first construction from cached toggles.
+        List<double> switches = new List<double>();
+        for (int i = 0; i < 6; i++)
+        { watch.Restart(); pet.SwitchBreed(i % 2 == 0 ? "westie" : "corgi"); watch.Stop(); switches.Add(watch.Elapsed.TotalMilliseconds); }
+        switches.Sort();
+        Require(switches[switches.Count - 1] < 150, "Cached model switching synchronously rebuilds too many frames: " + switches[switches.Count - 1] + "ms.");
+        pet.SwitchBreed("westie"); home.Close();
+        string controls = "UI controls: 1000 home pointer probes=" + N(hitMs) + "ms; cached model switch median/max="
+            + N(Percentile(switches, .5)) + "/" + N(switches[switches.Count - 1]) + "ms.";
+        Summary.Add(controls); Console.WriteLine(controls);
     }
 
     static void ColdInput(PetWindow pet, FieldInfo key, FieldInfo masks)

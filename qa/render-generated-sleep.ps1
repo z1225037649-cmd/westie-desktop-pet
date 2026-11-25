@@ -1,4 +1,4 @@
-param([switch]$Neck)
+param([switch]$Neck, [switch]$Check)
 $ErrorActionPreference = 'Stop'
 $projectRoot = Split-Path -Parent $PSScriptRoot
 $compilerPath = Join-Path $env:WINDIR 'Microsoft.NET\Framework64\v4.0.30319\csc.exe'
@@ -20,6 +20,7 @@ foreach ($name in @('Program.cs', 'PetWindow.cs', 'WestieModel.cs', 'GeneratedWe
 }
 & $compilerPath ($compilerArgs + @("$PSScriptRoot\GeneratedChecks.cs"))
 if ($LASTEXITCODE -ne 0) { throw 'Sleep diagnostic did not compile.' }
-if ($Neck) { & "$PSScriptRoot\GeneratedChecks.exe" --sleep-neck-view }
+if ($Check) { & "$PSScriptRoot\GeneratedChecks.exe" --sleep-check }
+elseif ($Neck) { & "$PSScriptRoot\GeneratedChecks.exe" --sleep-neck-view }
 else { & "$PSScriptRoot\GeneratedChecks.exe" --sleep-view }
 if ($LASTEXITCODE -ne 0) { throw 'Sleep diagnostic did not render.' }

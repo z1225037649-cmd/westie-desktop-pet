@@ -1,9 +1,9 @@
 {
   "status": "packed",
   "resource_file": "C:\\Users\\user\\Desktop\\mimo\\westie-pet\\assets\\corgi-animation.frames",
-  "source_rig_sha256": "e8857443eb63ce2de49b698de3978515712a239f23b3d008ed01ce60e5151a55",
-  "resource_sha256": "5c24f7b2effb0186a83d70b8d79dc0dc378cec050f54ba9907e74ee933854731",
-  "bytes": 33119403,
+  "source_rig_sha256": "c1549da4a3bca85aa40d7a7c34e5f357fae9961489d0f2e67908f21152b4ce2b",
+  "resource_sha256": "e0c798eeda2090607230cda13eec72e9cd46c59577e1b11e740d354db87950c6",
+  "bytes": 33675279,
   "frame_count": 333,
   "resolution": [
     420,

@@ -108,6 +108,11 @@ static class CorgiAnimationChecks
             Require(Convert.ToBase64String(hash.ComputeHash(embedded)) == Convert.ToBase64String(hash.ComputeHash(original)),
                 "Embedded animation resource differs from its build input.");
         }
+        string project = Path.GetDirectoryName(AppDomain.CurrentDomain.BaseDirectory.TrimEnd(Path.DirectorySeparatorChar));
+        using (Stream rig = File.OpenRead(Path.Combine(project, "art", "corgi-image-to-3d", "rigged", "corgi-rigged.glb")))
+        using (System.Security.Cryptography.SHA256 hash = System.Security.Cryptography.SHA256.Create())
+            Require(BitConverter.ToString(hash.ComputeHash(rig)).Replace("-", "").ToLowerInvariant() == CorgiSprite.SourceRigSha256,
+                "Production animation frames were not exported from the current Corgi rig.");
         Pass("embedded animation data matches the exporter output byte for byte");
     }
     static void CheckClips()

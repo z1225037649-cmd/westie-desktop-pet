@@ -19,6 +19,7 @@ static class GeneratedChecks
     static readonly BindingFlags Private = BindingFlags.Instance | BindingFlags.NonPublic;
     static readonly string Output = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "generated");
     static readonly List<string> Results = new List<string>();
+    static readonly double[] SleepSamples = { .125, .25, .375, .50, .625, .75, 1.0, 1.5, 2.4 };
     static double time = 20;
 
     [STAThread]
@@ -55,6 +56,11 @@ static class GeneratedChecks
                     + "Bounds=" + generated.Bounds + ", HeadNod=" + generated.HeadNod + ", Mouth=" + generated.Mouth + "\r\n";
                 File.WriteAllText(Path.Combine(Output, "sleep-view-diagnostic.txt"), note);
                 Console.WriteLine(note + "DIAGNOSTIC output: " + Output);
+                return 0;
+            }
+            if (args.Length > 0 && args[0] == "--sleep-check")
+            {
+                CheckSleepFeet(model, generated);
                 return 0;
             }
             CheckResource("WestiePet.GeneratedMesh", "westie-generated.mesh");
@@ -392,20 +398,24 @@ static class GeneratedChecks
             + ", muzzleChinPawIntersections=" + chinContact.Intersections + "\r\n");
         Require(headContact.Intersections == 0 && clearance > .005,
             "Actual sleeping head and front-paw surfaces intersect or lose their small safety gap: gap=" + clearance + ", intersections=" + headContact.Intersections + ".");
-        Require(chinContact.Gap < .12, "The actual lower muzzle/chin remains too far above the front-paw surface: gap=" + chinContact.Gap + ".");
+        // A relaxed raised head keeps the ribcage and shoulder volume intact.
+        // The former .12 target forced the chest/forelegs into a flattened sheet.
+        Require(chinContact.Gap < .30, "The resting head is detached from the supported forelegs: gap=" + chinContact.Gap + ".");
         Point3D sleepingMouth = generated.Mouth;
         CheckSleepTransition(model, generated, "idle", rest, feet, frontFootTriangles, triangles, headTriangles, ankleEdges, collisionAudit);
         Point3D[] awake = generated.GetSkinnedPositions(0); double returnError = 0;
         foreach (int i in feet) returnError = Math.Max(returnError, (awake[i] - rest[i]).Length);
         Require(returnError < .015, "The flattened sleep feet did not blend back to their actual standing vertices: " + returnError + ".");
         CheckSleepingLegSupport(generated, rest, asleep, awake, sleepingMouth, triangles, headTriangles);
+        CheckSleepVolume(rest, asleep);
         File.WriteAllText(Path.Combine(Output, "sleep-feet.txt"), "footVertices=" + feet.Count + ", grounded=" + onFloor
             + ", lowestY=" + floor + ", highestY=" + maximum + ", flatUndersideTriangles=" + flatPads + "/" + padTriangles.Count
             + ", actualFrontPawToHeadTriangleGap=" + clearance + ", headPawIntersections=" + headContact.Intersections
             + ", actualMuzzleChinToFrontPawGap=" + chinContact.Gap + ", wakeReturnError=" + returnError + "\r\n");
         Pass("same actual foot vertices stay on the floor during sleep, underside triangles stay flat, front paws clear head/muzzle geometry, and waking restores standing feet");
-        Pass("sleep/wake at 0.25/0.50/0.75/2.40s preserve paw-floor and actual muzzle clearances; standing ankle-skin edge stretch remains below 6x");
+        Pass("nine samples in each sleep/wake transition preserve paw-floor and actual muzzle clearances; standing ankle-skin edge stretch remains below 6x");
         Pass("actual head/neck nonadjacent triangle pairs introduce no intersections beyond the source bind baseline during sleep and wake");
+        Pass("actual chest/foreleg skin has no new crossings deeper than .002 world units; raw pairs and measured depths remain in sleep-chest-crossings.csv");
     }
 
     static void CheckSleepingLegSupport(GeneratedWestie generated, Point3D[] rest, Point3D[] asleep, Point3D[] awake,
@@ -497,6 +507,38 @@ static class GeneratedChecks
         sum /= indices.Count; return (Point3D)sum;
     }
 
+    static void CheckSleepVolume(Point3D[] rest, Point3D[] asleep)
+    {
+        List<int> chest = new List<int>();
+        for (int i = 0; i < rest.Length; i++)
+        {
+            Point3D p = rest[i];
+            if (Math.Abs(p.X) < .22 && p.Y > .45 && p.Y < .90 && p.Z > .12 && p.Z < .65) chest.Add(i);
+        }
+        Require(chest.Count > 200, "Actual chest volume samples are missing.");
+        // The covariance ellipsoid measures all three spatial axes and is
+        // invariant to a rigid rotation; a bent neck is not mistaken for a
+        // flattened chest simply because its projected height changes.
+        double ratio = SpatialVolume(asleep, chest) / SpatialVolume(rest, chest);
+        File.WriteAllText(Path.Combine(Output, "sleep-volume.txt"), "actualChestVertices=" + chest.Count
+            + ", spatialVolumeRatio=" + ratio.ToString(CultureInfo.InvariantCulture)
+            + ", minimum=.55, priorFlattenedBuild=.23277\r\n");
+        Require(Finite(ratio) && ratio > .55, "The actual sleeping chest collapses into a thin sheet: volume ratio=" + ratio);
+        Pass("actual chest retains spatial volume through the resting pose; covariance-volume ratio=" + ratio.ToString("F3", CultureInfo.InvariantCulture));
+    }
+    static double SpatialVolume(Point3D[] positions, List<int> indices)
+    {
+        Point3D center = Centroid(positions, indices);
+        double xx = 0, yy = 0, zz = 0, xy = 0, xz = 0, yz = 0;
+        foreach (int i in indices)
+        {
+            Vector3D d = positions[i] - center;
+            xx += d.X * d.X; yy += d.Y * d.Y; zz += d.Z * d.Z;
+            xy += d.X * d.Y; xz += d.X * d.Z; yz += d.Y * d.Z;
+        }
+        return Math.Sqrt(Math.Max(0, xx * (yy * zz - yz * yz) - xy * (xy * zz - xz * yz) + xz * (xy * yz - xz * yy)));
+    }
+
     sealed class SleepEdge { internal int A, B; internal double Length; }
     static List<SleepEdge> SleepAnkleEdges(Point3D[] rest, int[] triangles)
     {
@@ -529,7 +571,7 @@ static class GeneratedChecks
         SleepCollisionAudit collisionAudit)
     {
         model.BeginAction(state); double previousAge = 0;
-        foreach (double targetAge in new[] { .25, .50, .75, 2.4 })
+        foreach (double targetAge in SleepSamples)
         {
             // Continue one real transition in chronological order; restarting
             // the pose at every sample would conceal the actual blended path.
@@ -592,6 +634,8 @@ static class GeneratedChecks
         internal int[] Indices;
         internal List<int> Head = new List<int>(), Neck = new List<int>(), Tail = new List<int>(), Back = new List<int>();
         internal HashSet<long> BindHeadNeckPairs, BindTailBackPairs;
+        internal List<int> Chest = new List<int>();
+        internal HashSet<long> BindChestPairs;
     }
     static void RenderSleepNeckDiagnostic(WestieModel model, GeneratedWestie generated)
     {
@@ -609,7 +653,7 @@ static class GeneratedChecks
         {
             string name = state == "sleep" ? "sleep" : "wake";
             model.BeginAction(state); double previousAge = 0;
-            foreach (double age in new[] { .25, .50, .75, 2.4 })
+            foreach (double age in SleepSamples)
             {
                 while (previousAge + .042 < age)
                 { previousAge += .042; Step(model, state, previousAge, .042); }
@@ -632,9 +676,9 @@ static class GeneratedChecks
                 model.Heading.Angle = 0; Step(model, state, age, .002);
             }
         }
-        string note = "DIAGNOSTIC: actual source Bind head/neck baseline and production sleep/wake at 0.25/0.50/0.75/2.40s.\r\n"
-            + "All eight samples were collected with enforce=false; discovered intersections do not abort this diagnostic.\r\n"
-            + "CSV: sleep-head-neck-crossings.csv, sleep-head-neck-bind-pairs.csv, sleep-head-neck-new-pairs.csv.\r\n"
+        string note = "DIAGNOSTIC: source bind baseline and nine production samples per sleep/wake transition.\r\n"
+            + "All eighteen samples use enforce=false; discovered intersections do not abort this diagnostic.\r\n"
+            + "CSV: sleep-head-neck-crossings.csv, sleep-head-neck-bind-pairs.csv, sleep-head-neck-new-pairs.csv, sleep-chest-crossings.csv.\r\n"
             + "Images: all samples have neck closeups; terminal sleep and wake have normal full-body front/52/90-degree views.\r\n"
             + "This is not a regression PASS or appearance approval. All normal regression assertions remain active outside this mode.\r\n";
         File.WriteAllText(Path.Combine(Output, "sleep-neck-view-diagnostic.txt"), note);
@@ -676,11 +720,15 @@ static class GeneratedChecks
                 (original[a].Y + original[b].Y + original[c].Y) / 3, (original[a].Z + original[b].Z + original[c].Z) / 3);
             if (center.Y > 1.20 && center.Z > .35) audit.Head.Add(t);
             if (center.Y >= .85 && center.Y <= 1.15 && center.Z >= .20 && center.Z <= .75) audit.Neck.Add(t);
+            if (center.Y >= .30 && center.Y <= 1.20 && center.Z >= .05 && center.Z <= .85) audit.Chest.Add(t);
             if ((distalTail[a] ? 1 : 0) + (distalTail[b] ? 1 : 0) + (distalTail[c] ? 1 : 0) >= 2) audit.Tail.Add(t);
             if ((rearBody[a] ? 1 : 0) + (rearBody[b] ? 1 : 0) + (rearBody[c] ? 1 : 0) >= 2) audit.Back.Add(t);
         }
         Require(audit.Head.Count > 20 && audit.Neck.Count > 20, "The actual source head/neck triangle regions are missing.");
         audit.BindHeadNeckPairs = SleepNonAdjacentCrossings(original, indices, audit.Head, audit.Neck);
+        audit.BindChestPairs = SleepNonAdjacentCrossings(original, indices, audit.Chest, audit.Chest);
+        File.WriteAllText(Path.Combine(Output, "sleep-chest-crossings.csv"), "sample,age,sourceBindPairs,currentPairs,introducedPairs,visibleCrossings,maxCrossingDepth\r\n");
+        File.WriteAllText(Path.Combine(Output, "sleep-chest-new-pairs.csv"), "sample,age,firstTriangle,secondTriangle\r\n");
         File.WriteAllText(Path.Combine(Output, "sleep-head-neck-crossings.csv"),
             "sample,age,sourceBindPairs,currentPairs,introducedPairs,headTriangles,neckTriangles\r\n"
             + "source-bind,0," + audit.BindHeadNeckPairs.Count + "," + audit.BindHeadNeckPairs.Count + ",0," + audit.Head.Count + "," + audit.Neck.Count + "\r\n");
@@ -704,6 +752,31 @@ static class GeneratedChecks
     }
     static void AuditSleepingHeadNeck(Point3D[] pose, string sample, double age, SleepCollisionAudit audit, bool enforce)
     {
+        if (!enforce) using (BinaryWriter writer = new BinaryWriter(File.Create(Path.Combine(Output,
+            "chest-pose-" + sample + "-" + age.ToString("0.00", CultureInfo.InvariantCulture) + ".bin"))))
+            foreach (Point3D point in pose) { writer.Write(point.X); writer.Write(point.Y); writer.Write(point.Z); }
+        HashSet<long> chestPairs = SleepNonAdjacentCrossings(pose, audit.Indices, audit.Chest, audit.Chest);
+        HashSet<long> newChestPairs = new HashSet<long>(chestPairs); newChestPairs.ExceptWith(audit.BindChestPairs);
+        int visibleCrossings = 0; double maxCrossingDepth = 0;
+        foreach (long pair in newChestPairs)
+        {
+            int a = (int)(pair >> 32) * 3, b = (int)(uint)pair * 3;
+            double depth = Math.Min(SleepPlaneCrossingDepth(pose, audit.Indices, a, b), SleepPlaneCrossingDepth(pose, audit.Indices, b, a));
+            maxCrossingDepth = Math.Max(maxCrossingDepth, depth);
+            // The reduced sculpt has UV seams and subpixel surface details.
+            // Keep every raw pair in the report; reject penetrations over .002
+            // world units (under half a pixel in the 512px review render).
+            if (depth > .002) visibleCrossings++;
+        }
+        File.AppendAllText(Path.Combine(Output, "sleep-chest-crossings.csv"), sample + "," + age.ToString(CultureInfo.InvariantCulture)
+            + "," + audit.BindChestPairs.Count + "," + chestPairs.Count + "," + newChestPairs.Count + "," + visibleCrossings
+            + "," + maxCrossingDepth.ToString(CultureInfo.InvariantCulture) + "\r\n");
+        List<string> chestRows = new List<string>();
+        foreach (long pair in newChestPairs) chestRows.Add(sample + "," + age.ToString(CultureInfo.InvariantCulture)
+            + "," + (pair >> 32) + "," + (uint)pair);
+        File.AppendAllLines(Path.Combine(Output, "sleep-chest-new-pairs.csv"), chestRows.ToArray());
+        if (enforce) Require(visibleCrossings == 0, "Chest surface folds through itself during " + sample + " at " + age + "s: "
+            + visibleCrossings + " crossings over .002 world units, maximum depth=" + maxCrossingDepth + ".");
         HashSet<long> pairs = SleepNonAdjacentCrossings(pose, audit.Indices, audit.Head, audit.Neck);
         HashSet<long> introduced = new HashSet<long>(pairs); introduced.ExceptWith(audit.BindHeadNeckPairs);
         File.AppendAllText(Path.Combine(Output, "sleep-head-neck-crossings.csv"), sample + "," + age.ToString(CultureInfo.InvariantCulture)
@@ -714,6 +787,19 @@ static class GeneratedChecks
         if (age >= 2.39 || sample == "standing") ReportSleepTail(pose, sample, age, audit);
         if (enforce) Require(introduced.Count == 0, "Actual nonadjacent head/neck triangles introduce intersections during "
             + sample + " at " + age + "s: source bind=" + audit.BindHeadNeckPairs.Count + ", current=" + pairs.Count + ", new pairs=" + introduced.Count + ".");
+    }
+    static double SleepPlaneCrossingDepth(Point3D[] pose, int[] indices, int triangle, int plane)
+    {
+        Point3D origin = pose[indices[plane]];
+        Vector3D normal = Vector3D.CrossProduct(pose[indices[plane + 1]] - origin, pose[indices[plane + 2]] - origin);
+        if (normal.LengthSquared < 1e-18) return 0;
+        normal.Normalize(); double lower = double.PositiveInfinity, upper = double.NegativeInfinity;
+        for (int corner = 0; corner < 3; corner++)
+        {
+            double distance = Vector3D.DotProduct(pose[indices[triangle + corner]] - origin, normal);
+            lower = Math.Min(lower, distance); upper = Math.Max(upper, distance);
+        }
+        return Math.Max(0, Math.Min(upper, -lower));
     }
     static void ReportSleepTail(Point3D[] pose, string sample, double age, SleepCollisionAudit audit)
     {
@@ -753,10 +839,11 @@ static class GeneratedChecks
             if (!cells.TryGetValue(SleepCollisionCell(x, y, z), out candidates)) continue;
             foreach (SleepTriangle b in candidates)
             {
-                long pair = ((long)(a.Offset / 3) << 32) | (uint)(b.Offset / 3);
-                if (!seen.Add(pair) || SleepTrianglesShareVertex(a, b)) continue;
+                if (ReferenceEquals(first, second) && a.Offset >= b.Offset) continue;
                 if (a.MinX > b.MaxX + epsilon || b.MinX > a.MaxX + epsilon || a.MinY > b.MaxY + epsilon
                     || b.MinY > a.MaxY + epsilon || a.MinZ > b.MaxZ + epsilon || b.MinZ > a.MaxZ + epsilon) continue;
+                long pair = ((long)(a.Offset / 3) << 32) | (uint)(b.Offset / 3);
+                if (!seen.Add(pair) || SleepTrianglesShareVertex(a, b)) continue;
                 if (SleepTrianglesCross(a, b)) crossings.Add(pair);
             }
         }
@@ -766,7 +853,11 @@ static class GeneratedChecks
     {
         return a.IndexA == b.IndexA || a.IndexA == b.IndexB || a.IndexA == b.IndexC
             || a.IndexB == b.IndexA || a.IndexB == b.IndexB || a.IndexB == b.IndexC
-            || a.IndexC == b.IndexA || a.IndexC == b.IndexB || a.IndexC == b.IndexC;
+            || a.IndexC == b.IndexA || a.IndexC == b.IndexB || a.IndexC == b.IndexC
+            // UV islands have distinct indices at the same geometric vertex.
+            || (a.A - b.A).LengthSquared < 1e-16 || (a.A - b.B).LengthSquared < 1e-16 || (a.A - b.C).LengthSquared < 1e-16
+            || (a.B - b.A).LengthSquared < 1e-16 || (a.B - b.B).LengthSquared < 1e-16 || (a.B - b.C).LengthSquared < 1e-16
+            || (a.C - b.A).LengthSquared < 1e-16 || (a.C - b.B).LengthSquared < 1e-16 || (a.C - b.C).LengthSquared < 1e-16;
     }
     static SleepSurfaceContact SleepingSurfaceContact(Point3D[] pose, int[] indices, List<int> first, List<int> second)
     {
