@@ -25,6 +25,7 @@ static class CorgiAnimationChecks
         {
             CheckEmbeddedResource();
             CheckIndexedFrames();
+            CheckLoopCache();
             CheckClips();
             CheckSleepWake();
             CheckRestartAndPause();
@@ -42,6 +43,24 @@ static class CorgiAnimationChecks
 
     static void Require(bool condition, string message)
     { if (!condition) throw new InvalidOperationException(message); }
+    static void CheckLoopCache()
+    {
+        var cache = (System.Collections.IDictionary)typeof(CorgiFrames).GetField("cache", BindingFlags.Static | BindingFlags.NonPublic).GetValue(null);
+        foreach (string name in new[] { "Idle", "Sleep" })
+        {
+            CorgiFrames.Clip clip = CorgiFrames.Clips[name];
+            var frames = new List<CorgiFrames.Frame>();
+            foreach (CorgiFrames.Info info in clip.Frames) frames.Add(CorgiFrames.Get(info));
+            var watch = System.Diagnostics.Stopwatch.StartNew();
+            for (int loop = 0; loop < 3; loop++)
+                for (int i = 0; i < clip.Frames.Length; i++)
+                    Require(ReferenceEquals(frames[i], CorgiFrames.Get(clip.Frames[i])), name + " loop decoded an already warm frame.");
+            watch.Stop();
+            Require(cache.Count <= 64, "Decoded frame cache exceeded its memory bound.");
+            Pass(name + " warm loops reuse every bitmap and mask; " + (3 * clip.Frames.Length)
+                + " lookups in " + watch.Elapsed.TotalMilliseconds.ToString("F3") + "ms, cached frames=" + cache.Count);
+        }
+    }
     static void Pass(string message) { Results.Add("PASS: " + message); Console.WriteLine("PASS: " + message); }
     static CorgiSprite Sprite(WestieModel model)
     { return (CorgiSprite)typeof(WestieModel).GetField("artwork", Private).GetValue(model); }

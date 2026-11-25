@@ -21,6 +21,8 @@ qa/*
 !qa/EyeChecks.cs
 !qa/GeneratedChecks.cs
 !qa/GeneratedFrameChecks.cs
+!qa/WindowPerformanceChecks.cs
+!qa/AnimationCadenceChecks.cs
 !qa/CorgiAnimationChecks.cs
 !qa/BreedChecks.cs
 !qa/ArtworkUiChecks.cs

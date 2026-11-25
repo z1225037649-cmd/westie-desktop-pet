@@ -1,4 +1,5 @@
-param([switch]$RenderDetails, [switch]$VisualStudy, [switch]$SkipRegistryChecks, [switch]$GeneratedOnly, [switch]$InspectGenerated, [switch]$CorgiOnly, [switch]$FrameOnly, [switch]$CompileInteraction)
+param([switch]$RenderDetails, [switch]$VisualStudy, [switch]$SkipRegistryChecks, [switch]$GeneratedOnly, [switch]$InspectGenerated, [switch]$CorgiOnly, [switch]$FrameOnly, [switch]$CompileInteraction,
+    [switch]$WindowPerformance, [string]$PerformanceAssembly, [string]$PerformanceOutput, [switch]$CadenceOnly)
 $ErrorActionPreference = 'Stop'
 $projectRoot = Split-Path -Parent $PSScriptRoot
 $compilerPath = Join-Path $env:WINDIR 'Microsoft.NET\Framework64\v4.0.30319\csc.exe'
@@ -17,6 +18,25 @@ foreach ($name in @('PresentationCore.dll','PresentationFramework.dll','WindowsB
     $commonArgs += "/reference:$assemblyPath"
 }
 $sources = @("$projectRoot\Program.cs", "$projectRoot\PetWindow.cs", "$projectRoot\WestieModel.cs", "$projectRoot\GeneratedWestie.cs", "$projectRoot\SculptedCoat.cs", "$projectRoot\CorgiSprite.cs", "$projectRoot\CorgiFrames.cs")
+function Test-AnimationCadence {
+    $cadencePath = Join-Path $PSScriptRoot 'AnimationCadenceChecks.exe'
+    & $compilerPath ($commonArgs + @('/target:exe','/main:AnimationCadenceChecks',"/out:$cadencePath") + $sources + @("$PSScriptRoot\AnimationCadenceChecks.cs"))
+    if ($LASTEXITCODE -ne 0) { throw 'Animation cadence checks did not compile.' }
+    & $cadencePath
+    if ($LASTEXITCODE -ne 0) { throw 'Animation cadence or home-move checks failed.' }
+}
+if ($CadenceOnly) { Test-AnimationCadence; return }
+if ($WindowPerformance) {
+    $windowCheck = Join-Path $PSScriptRoot 'WindowPerformanceChecks.exe'
+    $windowRefs = $commonArgs | Where-Object { $_ -like '/reference:*' }
+    & $compilerPath (@('/nologo','/optimize+','/target:exe',"/out:$windowCheck") + $windowRefs + @("$PSScriptRoot\WindowPerformanceChecks.cs"))
+    if ($LASTEXITCODE -ne 0) { throw 'Window performance diagnostic did not compile.' }
+    if (-not $PerformanceAssembly) { $PerformanceAssembly = Join-Path $projectRoot '小白-西高地桌面宠物.exe' }
+    if (-not $PerformanceOutput) { $PerformanceOutput = Join-Path $PSScriptRoot 'window-performance' }
+    & $windowCheck $PerformanceAssembly $PerformanceOutput
+    if ($LASTEXITCODE -ne 0) { throw 'Window performance diagnostic failed.' }
+    return
+}
 if ($CompileInteraction) {
     $interactionPath = Join-Path $PSScriptRoot 'InteractionHarness.exe'
     & $compilerPath ($commonArgs + @('/target:winexe','/main:InteractionHarness',"/out:$interactionPath") + $sources + @("$PSScriptRoot\InteractionHarness.cs"))
@@ -99,6 +119,7 @@ if ($LASTEXITCODE -ne 0) { throw 'Generated frame checks did not compile.' }
 & $framePath
 if ($LASTEXITCODE -ne 0) { throw 'Generated frame checks failed.' }
 $breedPath = Join-Path $PSScriptRoot 'BreedChecks.exe'
+Test-AnimationCadence
 $corgiPath = Join-Path $PSScriptRoot 'CorgiAnimationChecks.exe'
 & $compilerPath ($commonArgs + @('/target:exe','/main:CorgiAnimationChecks',"/out:$corgiPath") + $sources + @("$PSScriptRoot\CorgiAnimationChecks.cs"))
 if ($LASTEXITCODE -ne 0) { throw 'Corgi animation checks did not compile.' }

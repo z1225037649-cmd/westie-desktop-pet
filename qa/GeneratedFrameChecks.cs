@@ -58,7 +58,7 @@ static class GeneratedFrameChecks
                     try
                     {
                         Measure(pet, baseline);
-                        if (!baseline) MeasureControls(pet);
+                        if (!baseline) { MeasureControls(pet); CheckWalkingTick(pet); }
                         if (baseline) finish(null);
                         else StartCadenceCheck(pet, finish);
                     }
@@ -185,6 +185,41 @@ static class GeneratedFrameChecks
         if (masks == null) return;
         IDictionary dictionary = masks.GetValue(pet) as IDictionary;
         if (dictionary != null) dictionary.Clear();
+    }
+    static void CheckWalkingTick(PetWindow pet)
+    {
+        // Keep the window vertically outside every monitor while exercising
+        // the real Tick, including its native window-position update.
+        double savedLeft = pet.Left, savedTop = pet.Top;
+        MethodInfo state = typeof(PetWindow).GetMethod("SetState", Private);
+        MethodInfo tick = typeof(PetWindow).GetMethod("Tick", Private);
+        Stopwatch clock = Field<Stopwatch>(pet, "clock");
+        WestieModel model = Field<WestieModel>(pet, "model");
+        try
+        {
+            pet.Top = System.Windows.SystemParameters.VirtualScreenTop - pet.Height - 100;
+            pet.Left = System.Windows.SystemParameters.WorkArea.Left + 30;
+            state.Invoke(pet, new object[] { "walk", 6.0 });
+            Set(pet, "walkDirection", 1.0);
+            Set(pet, "stateUntil", double.PositiveInfinity);
+            double start = pet.Left, phase = model.GeneratedPet.LimbPhase;
+            for (int i = 0; i < 4; i++)
+            {
+                Set(pet, "lastTick", clock.Elapsed.TotalSeconds - .04);
+                Set(pet, "nextGeneratedFrame", 0.0);
+                tick.Invoke(pet, new object[] { null, EventArgs.Empty });
+            }
+            Require(pet.Left > start && pet.Left - start < 10,
+                "Production walk Tick did not advance the window at its bounded walking speed.");
+            Require(model.GeneratedPet.LimbPhase > phase && !model.WalkingPaused,
+                "Moving the window skipped the actual leg animation.");
+            Summary.Add("PASS: production walk Tick advances the offscreen window and its actual limb phase together.");
+        }
+        finally
+        {
+            state.Invoke(pet, new object[] { "idle", 0.0 });
+            pet.Left = savedLeft; pet.Top = savedTop;
+        }
     }
     static void StartCadenceCheck(PetWindow pet, Action<Exception> finish)
     {

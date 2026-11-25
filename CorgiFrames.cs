@@ -27,6 +27,9 @@ namespace WestiePet
         internal static readonly string SourceHash;
         static readonly Dictionary<int, Frame> cache = new Dictionary<int, Frame>();
         static readonly Queue<int> order = new Queue<int>();
+        // The longest shipped clip has 61 frames. Keep one complete clip so
+        // idle loops/repeated actions do not continuously decode the same PNGs.
+        internal const int CacheLimit = 64;
         static CorgiFrames()
         {
             using (Stream stream = Open()) using (BinaryReader reader = new BinaryReader(stream))
@@ -84,7 +87,7 @@ namespace WestiePet
                     byte[] mask = reader.ReadBytes(info.MaskLength); if (mask.Length != info.MaskLength) throw new EndOfStreamException();
                     result = new Frame { Bitmap = bitmap, HitBits = mask };
                 }
-                while (cache.Count >= 24) cache.Remove(order.Dequeue());
+                while (cache.Count >= CacheLimit) cache.Remove(order.Dequeue());
                 cache.Add(info.Key, result); order.Enqueue(info.Key); return result;
             }
         }

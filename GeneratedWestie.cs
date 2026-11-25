@@ -47,6 +47,8 @@ namespace WestiePet
         Rect3D bindBounds;
         readonly Matrix3D[] bones = new Matrix3D[9];
         readonly Matrix3D[] cervicalPoses = new Matrix3D[257];
+        readonly SkinMatrix[] skinBones = new SkinMatrix[9];
+        readonly SkinMatrix[] skinNeck = new SkinMatrix[257];
         readonly Point3D[] pivots = new Point3D[9];
         readonly Point3D[] anchors = new Point3D[6];
         readonly ScaleTransform3D glintVisibility = new ScaleTransform3D(1, 1, 1);
@@ -73,6 +75,7 @@ namespace WestiePet
             internal Vector3D SleepNormal;
             internal double CervicalWeight;
             internal ushort CervicalPoseIndex;
+            internal double ClosedEyeOffsetY;
         }
 
         sealed class Surface
@@ -81,6 +84,20 @@ namespace WestiePet
             internal Point3D[] Positions;
             internal Vector3D[] Normals;
             internal MeshGeometry3D Mesh;
+        }
+
+        // Matrix3D property access checks its special identity representation.
+        // Expand that representation once per bone, outside the vertex loop.
+        struct SkinMatrix
+        {
+            internal double M11, M12, M13, M21, M22, M23, M31, M32, M33, OffsetX, OffsetY, OffsetZ;
+            internal SkinMatrix(Matrix3D m)
+            {
+                M11 = m.M11; M12 = m.M12; M13 = m.M13;
+                M21 = m.M21; M22 = m.M22; M23 = m.M23;
+                M31 = m.M31; M32 = m.M32; M33 = m.M33;
+                OffsetX = m.OffsetX; OffsetY = m.OffsetY; OffsetZ = m.OffsetZ;
+            }
         }
 
         struct SleepSegment
@@ -125,6 +142,7 @@ namespace WestiePet
             AddEyeGlints();
             CacheSleepingBody();
             CacheCervicalJoint();
+            CacheEyeClosure();
             Update(0, "idle", 0, 52, false);
         }
 
@@ -392,24 +410,27 @@ namespace WestiePet
 
         void RefreshGeometry()
         {
+            for (int i = 0; i < bones.Length; i++) skinBones[i] = new SkinMatrix(bones[i]);
+            for (int i = 0; i < cervicalPoses.Length; i++) skinNeck[i] = new SkinMatrix(cervicalPoses[i]);
             glintVisibility.ScaleX = glintVisibility.ScaleY = glintVisibility.ScaleZ = eyeClosure > .85 ? 0 : 1;
             double minX = double.PositiveInfinity, minY = minX, minZ = minX;
             double maxX = double.NegativeInfinity, maxY = maxX, maxZ = maxX;
+            double blinkAmount = Smooth(eyeClosure);
             foreach (Surface surface in surfaces)
             {
                 for (int i = 0; i < surface.Bind.Length; i++)
                 {
                     Vertex vertex = surface.Bind[i];
                     Point3D bind = vertex.Position;
-                    CloseEyes(ref bind);
+                    bind.Y += vertex.ClosedEyeOffsetY * blinkAmount;
                     double x = 0, y = 0, z = 0, nx = 0, ny = 0, nz = 0;
                     double legBlend = sleepPose;
-                    Accumulate(bind, vertex.Normal, ref bones[vertex.B0], MovingWeight(vertex.B0, vertex.W0, legBlend, vertex.CervicalWeight), ref x, ref y, ref z, ref nx, ref ny, ref nz);
-                    Accumulate(bind, vertex.Normal, ref bones[vertex.B1], MovingWeight(vertex.B1, vertex.W1, legBlend, vertex.CervicalWeight), ref x, ref y, ref z, ref nx, ref ny, ref nz);
-                    Accumulate(bind, vertex.Normal, ref bones[vertex.B2], MovingWeight(vertex.B2, vertex.W2, legBlend, vertex.CervicalWeight), ref x, ref y, ref z, ref nx, ref ny, ref nz);
-                    Accumulate(bind, vertex.Normal, ref bones[vertex.B3], MovingWeight(vertex.B3, vertex.W3, legBlend, vertex.CervicalWeight), ref x, ref y, ref z, ref nx, ref ny, ref nz);
+                    Accumulate(bind, vertex.Normal, ref skinBones[vertex.B0], MovingWeight(vertex.B0, vertex.W0, legBlend, vertex.CervicalWeight), ref x, ref y, ref z, ref nx, ref ny, ref nz);
+                    Accumulate(bind, vertex.Normal, ref skinBones[vertex.B1], MovingWeight(vertex.B1, vertex.W1, legBlend, vertex.CervicalWeight), ref x, ref y, ref z, ref nx, ref ny, ref nz);
+                    Accumulate(bind, vertex.Normal, ref skinBones[vertex.B2], MovingWeight(vertex.B2, vertex.W2, legBlend, vertex.CervicalWeight), ref x, ref y, ref z, ref nx, ref ny, ref nz);
+                    Accumulate(bind, vertex.Normal, ref skinBones[vertex.B3], MovingWeight(vertex.B3, vertex.W3, legBlend, vertex.CervicalWeight), ref x, ref y, ref z, ref nx, ref ny, ref nz);
                     if (vertex.CervicalWeight > 0)
-                        Accumulate(bind, vertex.Normal, ref cervicalPoses[vertex.CervicalPoseIndex], vertex.CervicalWeight, ref x, ref y, ref z, ref nx, ref ny, ref nz);
+                        Accumulate(bind, vertex.Normal, ref skinNeck[vertex.CervicalPoseIndex], vertex.CervicalWeight, ref x, ref y, ref z, ref nx, ref ny, ref nz);
                     // The root lowering is shared by skin, fur and landmarks.
                     x += vertex.SleepPosition.X * legBlend; y += vertex.SleepPosition.Y * legBlend; z += vertex.SleepPosition.Z * legBlend;
                     nx += vertex.SleepNormal.X * legBlend; ny += vertex.SleepNormal.Y * legBlend; nz += vertex.SleepNormal.Z * legBlend;
@@ -605,6 +626,21 @@ namespace WestiePet
             }
         }
 
+        void CacheEyeClosure()
+        {
+            // The Hermite eyelid shape is linear in Smooth(eyeClosure).
+            // Cache its full-closure displacement once for each bind vertex.
+            eyeClosure = 1;
+            foreach (Surface surface in surfaces)
+                for (int i = 0; i < surface.Bind.Length; i++)
+                {
+                    Point3D point = surface.Bind[i].Position;
+                    CloseEyes(ref point);
+                    surface.Bind[i].ClosedEyeOffsetY = point.Y - surface.Bind[i].Position.Y;
+                }
+            eyeClosure = 0;
+        }
+
         Point3D DeformAnchor(Point3D point, int bone)
         {
             Point3D result = bones[bone].Transform(point);
@@ -629,7 +665,7 @@ namespace WestiePet
             matrix.Translate(offset); return matrix;
         }
 
-        static void Accumulate(Point3D p, Vector3D n, ref Matrix3D m, double weight,
+        static void Accumulate(Point3D p, Vector3D n, ref SkinMatrix m, double weight,
             ref double x, ref double y, ref double z, ref double nx, ref double ny, ref double nz)
         {
             if (weight <= 0) return;

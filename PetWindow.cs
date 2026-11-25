@@ -148,6 +148,7 @@ namespace WestiePet
         Point[] westieHitShape;
         Point3D[] generatedHitPoints;
         byte[] generatedHitMask;
+        readonly byte[] generatedHitCenters = new byte[314 * 268];
         bool hitFacesLeft;
         CheckBox startup;
         CheckBox roamOption;
@@ -158,17 +159,24 @@ namespace WestiePet
         int frameStatsCount;
         double frameStatsStart, frameStatsSum, frameStatsMax, frameStatsGapMax;
         double nextGeneratedFrame;
+        double nextSleepingModelFrame;
         bool generatedRenderingAttached;
         double heading = 52, targetHeading = 52, walkDirection = -1;
         double toolbarHideAt;
         bool pressed, dragging, closing, menuOpen;
         bool manuallyHidden, fullscreenHidden;
+        bool homeMoving;
+        double homeMoveStarted;
+        System.Windows.Interop.HwndSource homeSource;
+        double nextFullscreenCheck;
+        static readonly uint CurrentProcessId = (uint)Process.GetCurrentProcess().Id;
         bool lastCorgiRecovering;
         Point dragPoint;
         double dragLeft, dragTop;
         int affection, treats;
         public bool TestFailed { get; private set; }
         static readonly Brush Ink = Brush("#2B443D"), Muted = Brush("#78867D"), Sage = Brush("#6B927E"), Paper = Brush("#FCFBF6");
+        static readonly Brush TreatEffect = Brush("#C4A165"), HeartEffect = Brush("#D98D87");
 
         public PetWindow(PetSettings settings, bool verify, bool startQuietly = false, bool runSelfTest = true)
         {
@@ -643,6 +651,7 @@ namespace WestiePet
                 });
             }
             Array.Clear(generatedHitMask, 0, generatedHitMask.Length);
+            Array.Clear(generatedHitCenters, 0, generatedHitCenters.Length);
             pet.CopyHitPoints(generatedHitPoints);
             OrthographicCamera camera = (OrthographicCamera)viewport.Camera;
             Vector3D forward = camera.LookDirection; forward.Normalize();
@@ -654,6 +663,12 @@ namespace WestiePet
                 Vector3D delta = point - camera.Position;
                 int x = (int)Math.Floor(153 + Vector3D.DotProduct(delta, right) * pixels);
                 int y = (int)Math.Floor(130 - Vector3D.DotProduct(delta, up) * pixels);
+                // Many surface vertices project onto the same pixel. A disk
+                // is idempotent, so stamp each center only once per frame.
+                if (x < -4 || x >= 310 || y < -4 || y >= 264) continue;
+                int center = (y + 4) * 314 + x + 4;
+                if (generatedHitCenters[center] != 0) continue;
+                generatedHitCenters[center] = 1;
                 // A small disk bridges surface-sample spacing, including thin
                 // fur edges, while preserving the gaps between moving legs.
                 for (int dy = -4; dy <= 4; dy++)
@@ -682,6 +697,7 @@ namespace WestiePet
                 : state == "walk" ? (walkDirection < 0 ? -68 : 68) : 52;
             if (homeStatus != null) homeStatus.Text = StatusText();
             nextGeneratedFrame = 0;
+            nextSleepingModelFrame = 0;
             UpdateRenderingSubscription();
         }
         string StatusText()
@@ -716,7 +732,7 @@ namespace WestiePet
 
         void UpdateRenderingSubscription()
         {
-            bool required = !verify && !closing && IsLoaded && IsVisible && model.GeneratedPet != null && mode != "sleep";
+            bool required = !verify && !closing && IsLoaded && IsVisible && !homeMoving && UsesSmoothRendering;
             if (required == generatedRenderingAttached) return;
             generatedRenderingAttached = required;
             if (required) CompositionTarget.Rendering += RenderGeneratedFrame;
@@ -725,23 +741,30 @@ namespace WestiePet
 
         void RenderGeneratedFrame(object sender, EventArgs e)
         {
-            if (!closing && IsVisible && model.GeneratedPet != null && mode != "sleep"
+            if (!closing && IsVisible && !homeMoving && UsesSmoothRendering
                 && clock.Elapsed.TotalSeconds >= nextGeneratedFrame) Tick(sender, e);
         }
+
+        bool UsesSmoothRendering { get { return model.GeneratedPet != null || model.CorgiPet != null; } }
 
         void Tick(object sender, EventArgs e)
         {
             long frameStarted = Stopwatch.GetTimestamp();
             if (Program.OpenRequested != null && Program.OpenRequested.WaitOne(0)) ShowHome();
-            if (settings.AutoHideFullscreen)
+            double t = clock.Elapsed.TotalSeconds;
+            if (settings.AutoHideFullscreen && t >= nextFullscreenCheck)
             {
+                // Visibility is a service check, not a per-render operation.
+                // Keep polling while hidden so leaving fullscreen restores us.
+                nextFullscreenCheck = t + .20;
                 bool covered = IsAnotherProcessFullscreen();
                 if (covered != fullscreenHidden) { fullscreenHidden = covered; ApplyPetVisibility(); }
             }
-            else if (fullscreenHidden) { fullscreenHidden = false; ApplyPetVisibility(); }
+            else if (!settings.AutoHideFullscreen && fullscreenHidden) { fullscreenHidden = false; ApplyPetVisibility(); }
             if (!IsVisible) { timer.Interval = TimeSpan.FromMilliseconds(350); return; }
-            double t = clock.Elapsed.TotalSeconds, gap = t - lastTick;
-            if (model.GeneratedPet != null && mode != "sleep")
+            if (homeMoving) { timer.Interval = TimeSpan.FromMilliseconds(100); return; }
+            double gap = t - lastTick;
+            if (UsesSmoothRendering)
             {
                 // Display callbacks and the service timer share one deadline.
                 // No duplicate updates or bursts after a delayed frame.
@@ -766,6 +789,7 @@ namespace WestiePet
                 else if (t >= toolbarHideAt) quickActions.IsOpen = false;
             }
             bool blocked = pressed || IsMouseOver || quickActions.IsOpen || (home != null && home.IsVisible);
+            double nextWalkLeft = double.NaN;
             if (mode == "walk" && !blocked && !model.IsPreRendered)
             {
                 Rect area = CurrentArea();
@@ -776,7 +800,7 @@ namespace WestiePet
                 }
                 else
                 {
-                    Left = AdvanceWalk(Left, ref walkDirection, 27 * dt, minimum, maximum);
+                    nextWalkLeft = AdvanceWalk(Left, ref walkDirection, 27 * dt, minimum, maximum);
                     targetHeading = walkDirection < 0 ? -68 : 68;
                 }
             }
@@ -804,22 +828,32 @@ namespace WestiePet
             double proximity = Math.Max(0, Math.Min(1, 1.45 - Math.Sqrt(attentionX * attentionX + attentionY * attentionY) * .55));
             model.LookAt(attentionX, attentionY, proximity);
             model.WalkingPaused = blocked && mode == "walk";
-            model.Animate(t, mode, t - stateStart);
+            // Descent and wake remain at 30 Hz. Only the settled sleeping mesh
+            // slows down; the light overlay keeps moving at the UI cadence.
+            bool settledSleep = model.GeneratedPet != null && mode == "sleep"
+                && t - stateStart >= 3 && model.GeneratedPet.SleepPose > .999;
+            bool updateModel = !settledSleep || t >= nextSleepingModelFrame;
+            if (updateModel)
+            {
+                model.Animate(t, mode, t - stateStart);
+                if (model.GeneratedPet != null) UpdateGeneratedHitArea();
+                nextSleepingModelFrame = t + .15;
+            }
             bool recovering = model.CorgiPet != null && model.CorgiPet.IsRecovering;
             if (lastCorgiRecovering != recovering)
             {
                 lastCorgiRecovering = recovering;
                 if (homeStatus != null) homeStatus.Text = StatusText();
             }
-            if (model.GeneratedPet != null) UpdateGeneratedHitArea();
-            PositionDialogue();
+            // Moving a transparent HWND can synchronously flush its visual.
+            // Submit this frame's model first, then move once. LocationChanged
+            // positions the dialogue using the same finished pose.
+            if (!double.IsNaN(nextWalkLeft) && nextWalkLeft != Left) Left = nextWalkLeft;
+            else PositionDialogue();
             UpdateEffects(t);
             if (t > bubbleUntil) bubble.Visibility = Visibility.Hidden;
             UpdateDialogue();
-            TimeSpan desiredInterval = model.CorgiPet != null
-                ? TimeSpan.FromMilliseconds(model.CorgiPet.CurrentClip == "Sleep"
-                    && model.CorgiPet.CurrentFrame == model.CorgiPet.FrameCount - 1 ? 250 : 83)
-                : TimeSpan.FromMilliseconds(mode == "sleep" ? 150 : model.GeneratedPet != null ? 33 : 56);
+            TimeSpan desiredInterval = TimeSpan.FromMilliseconds(UsesSmoothRendering ? 33 : mode == "sleep" ? 150 : 56);
             if (timer.Interval != desiredInterval) timer.Interval = desiredInterval;
             RecordFrameStats(t, (Stopwatch.GetTimestamp() - frameStarted) * 1000.0 / Stopwatch.Frequency, gap);
         }
@@ -850,9 +884,10 @@ namespace WestiePet
             { effect.Visibility = Visibility.Hidden; return; }
             bool heart = mode == "pet", sleep = mode == "sleep", feed = mode == "feed";
             effect.Visibility = heart || sleep || feed ? Visibility.Visible : Visibility.Hidden;
+            if (!heart && !sleep && !feed) return;
             effect.Text = sleep ? "z Z" : feed ? "✦" : "♥";
             effect.FontSize = sleep ? 21 / settings.Size : 29;
-            effect.Foreground = sleep ? Sage : feed ? Brush("#C4A165") : Brush("#D98D87");
+            effect.Foreground = sleep ? Sage : feed ? TreatEffect : HeartEffect;
             Canvas.SetTop(effect, 100 - (t * 18 % 26)); effect.Opacity = .6 + Math.Sin(t * 3) * .3;
         }
         void HandleKey(object sender, KeyEventArgs e)
@@ -893,7 +928,7 @@ namespace WestiePet
             if (foreground == IntPtr.Zero) return false;
             uint processId;
             GetWindowThreadProcessId(foreground, out processId);
-            if (processId == (uint)Process.GetCurrentProcess().Id) return false;
+            if (processId == CurrentProcessId) return false;
             NativeRect window;
             if (!GetWindowRect(foreground, out window)) return false;
             foreach (Forms.Screen screen in Forms.Screen.AllScreens)
@@ -1007,6 +1042,10 @@ namespace WestiePet
                 Height = Math.Min(714, Math.Max(480, SystemParameters.WorkArea.Height - 50)), ResizeMode = ResizeMode.NoResize,
                 WindowStartupLocation = WindowStartupLocation.CenterScreen, Background = Brush("#F8F8F1"),
                 FontFamily = FontFamily, Foreground = Ink, Topmost = settings.Topmost };
+            home.SourceInitialized += delegate {
+                homeSource = System.Windows.Interop.HwndSource.FromHwnd(new System.Windows.Interop.WindowInteropHelper(home).Handle);
+                if (homeSource != null) homeSource.AddHook(HomeWindowMessage);
+            };
             StackPanel page = new StackPanel { Margin = new Thickness(28, 21, 28, 20) };
             home.Content = new ScrollViewer { Content = page, VerticalScrollBarVisibility = ScrollBarVisibility.Auto,
                 HorizontalScrollBarVisibility = ScrollBarVisibility.Disabled };
@@ -1075,7 +1114,10 @@ namespace WestiePet
             page.Children.Add(new TextBlock { Text = "拖动小狗移动位置 · 右键打开菜单 · 滚轮调整大小\n关闭小窝后，小白依然会在桌面陪你。", FontSize = 10, Foreground = Muted, Margin = new Thickness(0, 15, 0, 0), LineHeight = 18 });
             home.Activated += delegate { RefreshStartupSetting(); };
             home.Closing += delegate { saveName(); };
-            home.Closed += delegate { home = null; homeStatus = null; homePreview = null; breedChoice = null;
+            home.Closed += delegate {
+                if (homeSource != null) { homeSource.RemoveHook(HomeWindowMessage); homeSource = null; }
+                SetHomeMoving(false);
+                home = null; homeStatus = null; homePreview = null; breedChoice = null;
                 homeBreedDescription = null; homeModelHint = null; roamOption = null; startup = null;
                 if (!closing) nextAction = clock.Elapsed.TotalSeconds + 20; };
             if (verify) {
@@ -1084,6 +1126,34 @@ namespace WestiePet
                 home.Top = SystemParameters.VirtualScreenTop;
             }
             home.Show(); if (!verify) home.Activate();
+        }
+
+        IntPtr HomeWindowMessage(IntPtr hwnd, int message, IntPtr wParam, IntPtr lParam, ref bool handled)
+        {
+            // Native title-bar dragging uses a nested message loop. Retain the
+            // rendered pose so that geometry uploads do not compete with it.
+            if (message == 0x0231) SetHomeMoving(true); // WM_ENTERSIZEMOVE
+            else if (message == 0x0232) SetHomeMoving(false); // WM_EXITSIZEMOVE
+            return IntPtr.Zero;
+        }
+
+        void SetHomeMoving(bool moving)
+        {
+            if (homeMoving == moving) return;
+            double now = clock.Elapsed.TotalSeconds;
+            homeMoving = moving;
+            if (moving) homeMoveStarted = now;
+            else
+            {
+                double paused = Math.Max(0, now - homeMoveStarted);
+                stateStart += paused;
+                if (!double.IsInfinity(stateUntil)) stateUntil += paused;
+                bubbleUntil += paused; nextAction += paused;
+                lastTick = now; nextGeneratedFrame = 0; nextSleepingModelFrame = 0;
+            }
+            timer.Interval = TimeSpan.FromMilliseconds(moving ? 100 : 33);
+            UpdateRenderingSubscription();
+            TraceState(moving ? "home-move-start" : "home-move-end");
         }
 
         double nextHeartbeat = 30;
