@@ -11,6 +11,80 @@ dist/
 bin/
 obj/
 
+# Regenerable animation renders and Python caches
+/art/corgi-image-to-3d/rigged/previews/
+/art/corgi-image-to-3d/rigged/blender-save-report.json
+/art/corgi-image-to-3d/rigged/preview-geometry.npz
+/art/corgi-image-to-3d/rigged/preview-parts.json
+__pycache__/
+*.pyc
+
+# Local modeling archives, source references and visual studies
+# Existing tracked production assets and reports remain tracked.
+/art/corgi-3d/
+/art/corgi-film/
+/art/corgi-original/
+/art/corgi-realistic/
+/art/corgi-refined/
+/art/corgi-turnaround/
+/art/corgi-image-to-3d/blender/
+/art/corgi-image-to-3d/input/
+/art/corgi-image-to-3d/rig-analysis/
+/art/corgi-image-to-3d/status.md
+/assets/blender/lighting/
+/assets/blender/westie/
+/assets/blender/westie-approved/
+/assets/blender/westie-cinematic/
+/assets/blender/westie-photo/
+/assets/blender/westie-generated/Generated-Westie.blend
+/assets/blender/westie-generated/back.png
+/assets/blender/westie-generated/beauty.png
+/assets/blender/westie-generated/front.png
+/assets/blender/westie-generated/hero.png
+/assets/blender/westie-generated/import-review.jpg
+/assets/blender/westie-generated/inspection.json
+/assets/blender/westie-generated/render-checks.json
+/assets/blender/westie-generated/side.png
+
+# Local modeling notes; application documentation remains visible to Git.
+/docs/corgi-3d-workflow.md
+/docs/corgi-window-integration.md
+/docs/westie-approved-model-status.md
+/docs/westie-blender-lookdev.md
+/docs/westie-cinematic-study.md
+/docs/westie-generated-glb.md
+/docs/westie-photo-model.md
+
+# Local research scripts; do not hide new production Blender tools.
+/tools/blender/compose_corgi_review.py
+/tools/blender/compose_film_corgi.py
+/tools/blender/compose_meshy_corgi.py
+/tools/blender/compose_original_corgi.py
+/tools/blender/compose_realistic_corgi.py
+/tools/blender/compose_westie_cinematic.py
+/tools/blender/compose_westie_photo.py
+/tools/blender/compose_westie_preview.py
+/tools/blender/create_corgi_preview.py
+/tools/blender/create_film_corgi.py
+/tools/blender/create_original_corgi.py
+/tools/blender/create_realistic_corgi.py
+/tools/blender/create_turnaround_corgi.py
+/tools/blender/create_westie.py
+/tools/blender/create_westie_approved.py
+/tools/blender/create_westie_cinematic.py
+/tools/blender/create_westie_photo.py
+/tools/blender/finish_original_corgi.py
+/tools/blender/inspect_corgi_rig_input.py
+/tools/blender/inspect_generated_westie.py
+/tools/blender/original_smile.py
+/tools/blender/refine_original_shape.py
+/tools/blender/render_film_corgi.py
+/tools/blender/verify_corgi_scene.py
+/tools/blender/westie_anatomy.py
+/tools/blender/westie_approved_face.py
+/tools/blender/westie_approved_groom.py
+/tools/blender/westie_groom.py
+
 # Research/install notes are not part of the application
 assetfurnace-install-review.ps1
 
